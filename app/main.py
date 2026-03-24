@@ -104,6 +104,12 @@ st.markdown("""
     margin-bottom: 1rem; padding-left: 2px;
 }
 
+/* Nav card links */
+.nav-card-link {
+    text-decoration: none; color: inherit; display: block;
+}
+.nav-card-link:hover { text-decoration: none; color: inherit; }
+
 /* Nav cards */
 .nav-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;
@@ -203,38 +209,46 @@ st.markdown("""
   <!-- Nav cards -->
   <div class="section-lbl">Navigate</div>
   <div class="nav-grid">
-    <div class="nav-card" onclick="window.location.href='/Team_Ratings'" style="cursor:pointer; --nc-accent:#4f46e5; --nc-icon-bg:#eef2ff; --nc-tag-bg:#eef2ff; --nc-tag-color:#4f46e5;">
-      <div class="nav-icon">📊</div>
-      <div>
-        <div class="nav-title">Team Ratings</div>
-        <div class="nav-desc">PPG, OPPG, net rating, and an offense vs. defense scatter with team logos.</div>
-        <span class="nav-tag">Rankings · Scatter</span>
+    <a href="/Team_Ratings" class="nav-card-link" style="--nc-accent:#4f46e5; --nc-icon-bg:#eef2ff; --nc-tag-bg:#eef2ff; --nc-tag-color:#4f46e5;">
+      <div class="nav-card">
+        <div class="nav-icon">📊</div>
+        <div>
+          <div class="nav-title">Team Ratings</div>
+          <div class="nav-desc">PPG, OPPG, net rating, and an offense vs. defense scatter with team logos.</div>
+          <span class="nav-tag">Rankings · Scatter</span>
+        </div>
       </div>
-    </div>
-    <div class="nav-card" onclick="window.location.href='/Player_Stats'" style="cursor:pointer; --nc-accent:#3b82f6; --nc-icon-bg:#eff6ff; --nc-tag-bg:#eff6ff; --nc-tag-color:#3b82f6;">
-      <div class="nav-icon">🏃</div>
-      <div>
-        <div class="nav-title">Player Stats</div>
-        <div class="nav-desc">Season leaders in passing, rushing, and receiving with full leaderboards.</div>
-        <span class="nav-tag">Passing · Rushing · Receiving</span>
+    </a>
+    <a href="/Player_Stats" class="nav-card-link" style="--nc-accent:#3b82f6; --nc-icon-bg:#eff6ff; --nc-tag-bg:#eff6ff; --nc-tag-color:#3b82f6;">
+      <div class="nav-card">
+        <div class="nav-icon">🏃</div>
+        <div>
+          <div class="nav-title">Player Stats</div>
+          <div class="nav-desc">Season leaders in passing, rushing, and receiving with full leaderboards.</div>
+          <span class="nav-tag">Passing · Rushing · Receiving</span>
+        </div>
       </div>
-    </div>
-    <div class="nav-card" onclick="window.location.href='/Schedule'" style="cursor:pointer; --nc-accent:#10b981; --nc-icon-bg:#ecfdf5; --nc-tag-bg:#ecfdf5; --nc-tag-color:#059669;">
-      <div class="nav-icon">📅</div>
-      <div>
-        <div class="nav-title">Schedule</div>
-        <div class="nav-desc">Full game results with scores and upcoming matchup listings by week.</div>
-        <span class="nav-tag">Results · Upcoming</span>
+    </a>
+    <a href="/Schedule" class="nav-card-link" style="--nc-accent:#10b981; --nc-icon-bg:#ecfdf5; --nc-tag-bg:#ecfdf5; --nc-tag-color:#059669;">
+      <div class="nav-card">
+        <div class="nav-icon">📅</div>
+        <div>
+          <div class="nav-title">Schedule</div>
+          <div class="nav-desc">Full game results with scores and upcoming matchup listings by week.</div>
+          <span class="nav-tag">Results · Upcoming</span>
+        </div>
       </div>
-    </div>
-    <div class="nav-card" onclick="window.location.href='/Historical'" style="cursor:pointer; --nc-accent:#f59e0b; --nc-icon-bg:#fffbeb; --nc-tag-bg:#fffbeb; --nc-tag-color:#d97706;">
-      <div class="nav-icon">📈</div>
-      <div>
-        <div class="nav-title">Historical</div>
-        <div class="nav-desc">Multi-season trend lines and a league-wide performance heatmap.</div>
-        <span class="nav-tag">Trends · Heatmap</span>
+    </a>
+    <a href="/Historical" class="nav-card-link" style="--nc-accent:#f59e0b; --nc-icon-bg:#fffbeb; --nc-tag-bg:#fffbeb; --nc-tag-color:#d97706;">
+      <div class="nav-card">
+        <div class="nav-icon">📈</div>
+        <div>
+          <div class="nav-title">Historical</div>
+          <div class="nav-desc">Multi-season trend lines and a league-wide performance heatmap.</div>
+          <span class="nav-tag">Trends · Heatmap</span>
+        </div>
       </div>
-    </div>
+    </a>
   </div>
 
   <!-- Footer -->
