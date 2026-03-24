@@ -40,7 +40,10 @@ def _ensure_weekly_data():
     weekly_path = base_dir / "data" / "raw" / "weekly.csv"
     if not weekly_path.exists():
         with st.spinner("Downloading weekly player data (this may take a minute)..."):
-            _run_nfl_download()
+            try:
+                _run_nfl_download()
+            except Exception as e:
+                st.warning(f"Could not download weekly player data: {e}")
 
 
 def _ensure_processed_data():
