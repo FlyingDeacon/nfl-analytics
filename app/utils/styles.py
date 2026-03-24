@@ -352,14 +352,44 @@ hr {
     flex: 1 1 320px !important;
 }
 
-/* ── Mobile: restore hamburger menu & add bottom nav ── */
+/* ── Mobile: bottom nav + filter button ── */
 @media (max-width: 768px) {
-    /* Restore Streamlit's header so the sidebar hamburger is accessible */
-    [data-testid="stHeader"] { display: flex !important; }
-    .stAppHeader { display: flex !important; }
+    /* Keep Streamlit header hidden — we provide our own filter button,
+       so the profile picture / Streamlit logo never overlap the nav bar */
+    [data-testid="stHeader"]  { display: none !important; }
+    .stAppHeader               { display: none !important; }
 
-    /* Push main content up so it clears the bottom nav */
-    [data-testid="stMainBlockContainer"] { padding-bottom: 80px !important; }
+    /* Push main content above the bottom nav bar */
+    [data-testid="stMainBlockContainer"] { padding-bottom: 90px !important; }
+
+    /* Ensure our nav bar floats above everything Streamlit renders */
+    .mobile-nav-bar { z-index: 2147483646 !important; }
+
+    /* Filter button only on mobile */
+    .mobile-filter-btn { display: flex !important; }
+}
+
+/* ── Mobile filter toggle button (hidden on desktop) ── */
+.mobile-filter-btn {
+    display: none;
+    position: fixed;
+    right: 14px;
+    bottom: 72px;          /* sits just above the nav bar */
+    z-index: 2147483645;
+    background: #6b7280;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 14px 8px 11px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+    align-items: center;
+    gap: 5px;
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.02em;
 }
 
 /* ── Mobile bottom navigation bar ── */
