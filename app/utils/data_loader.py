@@ -43,7 +43,13 @@ def load_schedules() -> pd.DataFrame:
 def load_weekly() -> pd.DataFrame:
     path = get_base_dir() / "data" / "raw" / "weekly.csv"
     if not path.exists():
-        st.warning("weekly.csv not found — player stats page unavailable.")
+        raw_dir = path.parent
+        existing = list(raw_dir.iterdir()) if raw_dir.exists() else []
+        st.warning(
+            f"weekly.csv not found at {path}. "
+            f"Base dir: {get_base_dir()}. "
+            f"Files in data/raw/: {[f.name for f in existing]}"
+        )
         return pd.DataFrame()
     df = pd.read_csv(path, low_memory=False)
     df.columns = [c.lower().strip() for c in df.columns]
