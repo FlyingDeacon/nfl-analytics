@@ -23,9 +23,20 @@ def main():
     teams.to_csv(raw_dir / "teams.csv", index=False)
 
     print("Loading weekly player data...")
-    weekly = nfl.import_weekly_data(years)
-    print("weekly:", weekly.shape)
-    weekly.to_csv(raw_dir / "weekly.csv", index=False)
+    weekly_frames = []
+    for yr in years:
+        try:
+            weekly_frames.append(nfl.import_weekly_data([yr]))
+            print(f"  weekly {yr}: ok")
+        except Exception as e:
+            print(f"  weekly {yr}: skipped ({e})")
+    if weekly_frames:
+        import pandas as pd
+        weekly = pd.concat(weekly_frames, ignore_index=True)
+        print("weekly total:", weekly.shape)
+        weekly.to_csv(raw_dir / "weekly.csv", index=False)
+    else:
+        print("No weekly data could be fetched.")
 
     print(f"\nSaved files to {raw_dir}")
 
