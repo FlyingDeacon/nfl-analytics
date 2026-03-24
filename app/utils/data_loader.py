@@ -1,4 +1,5 @@
 import re
+import sys
 from pathlib import Path
 from typing import Optional
 import pandas as pd
@@ -10,29 +11,62 @@ def get_base_dir() -> Path:
     return Path(__file__).resolve().parent.parent.parent
 
 
+def _ensure_raw_data():
+    """Run the data pipeline if raw CSVs are missing."""
+    base_dir = get_base_dir()
+    teams_path = base_dir / "data" / "raw" / "teams.csv"
+    if not teams_path.exists():
+        with st.spinner("Downloading NFL data for the first time (this may take a minute)..."):
+            src_dir = str(base_dir / "src")
+            if src_dir not in sys.path:
+                sys.path.insert(0, src_dir)
+            import load_nfl_data
+            import build_team_ratings
+            load_nfl_data.main()
+            build_team_ratings.main()
+
+
+def _ensure_processed_data():
+    """Run build_team_ratings if processed CSV is missing but raw data exists."""
+    base_dir = get_base_dir()
+    processed_path = base_dir / "data" / "processed" / "team_ratings.csv"
+    schedules_path = base_dir / "data" / "raw" / "schedules.csv"
+    if not processed_path.exists() and schedules_path.exists():
+        with st.spinner("Building team ratings..."):
+            src_dir = str(base_dir / "src")
+            if src_dir not in sys.path:
+                sys.path.insert(0, src_dir)
+            import build_team_ratings
+            build_team_ratings.main()
+
+
 @st.cache_data(show_spinner=False)
 def load_ratings() -> pd.DataFrame:
+    _ensure_raw_data()
+    _ensure_processed_data()
     path = get_base_dir() / "data" / "processed" / "team_ratings.csv"
     if not path.exists():
-        st.error(f"team_ratings.csv not found at {path}. Run build_team_ratings.py first.")
+        st.error("Failed to build team_ratings.csv. Check logs.")
         st.stop()
     return pd.read_csv(path)
 
 
 @st.cache_data(show_spinner=False)
 def load_teams() -> pd.DataFrame:
+    _ensure_raw_data()
     path = get_base_dir() / "data" / "raw" / "teams.csv"
     if not path.exists():
-        st.error(f"teams.csv not found at {path}. Run load_nfl_data.py first.")
+        st.error("Failed to download teams.csv. Check logs.")
         st.stop()
     return pd.read_csv(path)
 
 
 @st.cache_data(show_spinner=False)
 def load_schedules() -> pd.DataFrame:
+    _ensure_raw_data()
     path = get_base_dir() / "data" / "raw" / "schedules.csv"
     if not path.exists():
-        st.error(f"schedules.csv not found at {path}. Run load_nfl_data.py first.")
+        st.error("Failed to download schedules.csv. Check logs.")
         st.stop()
     df = pd.read_csv(path, low_memory=False)
     df.columns = [c.lower().strip() for c in df.columns]
