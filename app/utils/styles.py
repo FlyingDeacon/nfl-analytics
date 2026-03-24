@@ -362,17 +362,17 @@ hr {
 .mobile-nav-bar {
     display: none;
     position: fixed;
-    bottom: 0; left: 0; right: 0;
+    /* sit ABOVE Safari's toolbar + Streamlit Cloud badge */
+    bottom: 48px;
+    left: 0; right: 0;
     background: #ffffff;
     border-top: 1px solid var(--border);
-    /* generous padding: 8px top + safe-area + 16px extra for Safari/Cloud chrome */
-    padding: 8px 4px calc(env(safe-area-inset-bottom, 8px) + 16px);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 4px;
     z-index: 999999;
     box-shadow: 0 -4px 16px rgba(0,0,0,0.07);
     justify-content: space-around;
     align-items: center;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
 }
 .mobile-nav-item {
     display: flex;
@@ -396,35 +396,11 @@ hr {
 .mobile-nav-item.active { color: var(--accent) !important; }
 .mobile-nav-item .nav-emoji { font-size: 1.15rem; line-height: 1; }
 
-/* ── Mobile filter toggle button (hidden on desktop) ── */
-.mobile-filter-btn {
-    display: none;
-    position: fixed;
-    right: 14px;
-    bottom: calc(76px + env(safe-area-inset-bottom, 8px));
-    z-index: 999998;
-    background: #6b7280;
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    padding: 8px 14px 8px 11px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.22);
-    align-items: center;
-    gap: 5px;
-    font-family: 'Inter', sans-serif;
-    -webkit-tap-highlight-color: transparent;
-    letter-spacing: 0.02em;
-}
-
 /* ── Mobile overrides ── */
 @media (max-width: 768px) {
-    .mobile-nav-bar    { display: flex !important; }
-    .mobile-filter-btn { display: flex !important; }
+    .mobile-nav-bar { display: flex !important; }
 
-    /* Prevent horizontal overflow on body / app */
+    /* Prevent horizontal overflow */
     html, body,
     [data-testid="stAppViewContainer"],
     [data-testid="stApp"] {
@@ -432,25 +408,32 @@ hr {
         max-width: 100vw !important;
     }
 
-    /* Extra bottom padding so content doesn't hide behind the nav bar */
+    /* Extra bottom padding so content clears the raised nav bar */
     [data-testid="stMainBlockContainer"] {
-        padding-bottom: 110px !important;
+        padding-bottom: 120px !important;
         overflow-x: hidden !important;
     }
 
-    /* When sidebar opens on mobile, make it a high-z overlay with backdrop */
-    [data-testid="stSidebar"][aria-expanded="true"] {
+    /* ── Force sidebar OFF-SCREEN by default on mobile ── */
+    [data-testid="stSidebar"] {
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease !important;
         position: fixed !important;
         left: 0 !important; top: 0 !important;
         height: 100vh !important; height: 100dvh !important;
         width: 85vw !important;
-        max-width: 320px !important;
+        max-width: 300px !important;
         z-index: 999997 !important;
+        background: var(--surface) !important;
+    }
+    /* When our JS adds this class, slide it in */
+    [data-testid="stSidebar"].sidebar-open {
+        transform: translateX(0) !important;
         box-shadow: 4px 0 24px rgba(0,0,0,0.25) !important;
     }
-    /* Ensure collapsed sidebar is fully off-screen */
-    [data-testid="stSidebar"][aria-expanded="false"] {
-        transform: translateX(-100%) !important;
+    /* Hide Streamlit's own sidebar toggle — we use our filter button */
+    [data-testid="stSidebarCollapsedControl"] {
+        display: none !important;
     }
 }
 </style>

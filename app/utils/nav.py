@@ -27,10 +27,7 @@ def render_sidebar_nav(current_page: str = ""):
 
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
-    # ── Mobile bottom nav (only visible on small screens via CSS) ─────────────
-    # NOTE: st.markdown strips <script> and onclick, so the nav bar is pure
-    # HTML links (no JS needed).  The filter button is a plain element whose
-    # click handler is wired up by the components.html() block below.
+    # ── Mobile bottom nav (rendered via st.markdown — pure HTML, no JS) ───────
     st.markdown("""
     <div class="mobile-nav-bar">
       <a href="/"             class="mobile-nav-item"><span class="nav-emoji">🏠</span><span>Home</span></a>
@@ -40,57 +37,67 @@ def render_sidebar_nav(current_page: str = ""):
       <a href="/Historical"   class="mobile-nav-item"><span class="nav-emoji">📈</span><span>History</span></a>
       <a href="/Fantasy"      class="mobile-nav-item"><span class="nav-emoji">🏆</span><span>Fantasy</span></a>
     </div>
-
-    <!-- Filter button (visible on mobile only via CSS).
-         The onclick is wired by the components.html JS below. -->
-    <div class="mobile-filter-btn" id="mobile-filter-btn" role="button"
-         aria-label="Toggle filters" tabindex="0">
-      &#9776; Filters
-    </div>
     """, unsafe_allow_html=True)
 
-    # ── JS sidebar toggle ─────────────────────────────────────────────────────
-    # components.html() renders in an iframe where <script> actually executes.
-    # The script reaches into window.parent.document to:
-    #   1. Find our #mobile-filter-btn in the parent DOM
-    #   2. Attach a click handler that toggles the Streamlit sidebar
+    # ── Mobile filter button + sidebar toggle ─────────────────────────────────
+    # st.markdown strips ALL <script> and onclick handlers, so we CANNOT use it
+    # for interactive elements.  Instead, components.html() runs in an iframe
+    # where JS executes.  The script creates the filter button directly in the
+    # PARENT document and attaches the click handler there.
     components.html("""
     <script>
     (function() {
-        function setup() {
-            var doc = window.parent.document;
+        var pdoc = window.parent.document;
 
-            // Wait for the button to appear in the parent DOM
-            var btn = doc.getElementById('mobile-filter-btn');
-            if (!btn) { setTimeout(setup, 300); return; }
+        // Guard: only create the button once, only on narrow screens
+        if (pdoc.getElementById('nfl-filter-btn')) return;
+        if (window.parent.innerWidth > 768) return;
 
-            btn.onclick = function() {
-                // 1. Try Streamlit's own toggle buttons (only if visible)
-                var selectors = [
-                    '[data-testid="stSidebarCollapsedControl"] button',
-                    '[data-testid="stSidebarCollapseButton"]',
-                    'button[aria-label="Open sidebar"]',
-                    'button[aria-label="Close sidebar"]',
-                ];
-                for (var i = 0; i < selectors.length; i++) {
-                    var toggle = doc.querySelector(selectors[i]);
-                    if (toggle && toggle.offsetParent !== null) {
-                        toggle.click();
-                        return;
-                    }
-                }
-                // 2. Fallback: toggle sidebar aria-expanded + transform
-                var sb = doc.querySelector('[data-testid="stSidebar"]');
-                if (sb) {
-                    var isOpen = sb.getAttribute('aria-expanded') === 'true';
-                    sb.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-                    sb.style.transform = isOpen ? 'translateX(-100%)' : 'translateX(0)';
-                    sb.style.transition = 'transform 0.3s ease';
-                    if (!isOpen) sb.style.zIndex = '999997';
-                }
-            };
-        }
-        setup();
+        // ── Create the floating filter button in the parent DOM ──
+        var btn = pdoc.createElement('div');
+        btn.id = 'nfl-filter-btn';
+        btn.textContent = '\\u2630 Filters';       // ☰ Filters
+        btn.setAttribute('role', 'button');
+        btn.setAttribute('tabindex', '0');
+        btn.style.cssText = [
+            'position:fixed',
+            'right:14px',
+            'bottom:108px',                         // above the raised nav bar
+            'z-index:999998',
+            'background:#6b7280',
+            'color:#fff',
+            'border:none',
+            'border-radius:20px',
+            'padding:8px 14px 8px 11px',
+            'font-size:0.78rem',
+            'font-weight:600',
+            'cursor:pointer',
+            'box-shadow:0 2px 10px rgba(0,0,0,0.22)',
+            'display:flex',
+            'align-items:center',
+            'gap:5px',
+            'font-family:Inter,sans-serif',
+            '-webkit-tap-highlight-color:transparent',
+            'letter-spacing:0.02em',
+        ].join(';');
+
+        // ── Toggle sidebar on tap ──
+        btn.addEventListener('click', function() {
+            var sb = pdoc.querySelector('[data-testid="stSidebar"]');
+            if (!sb) return;
+            sb.classList.toggle('sidebar-open');
+        });
+
+        // ── Optional: close sidebar when tapping outside it ──
+        pdoc.addEventListener('click', function(e) {
+            var sb = pdoc.querySelector('[data-testid="stSidebar"]');
+            if (!sb || !sb.classList.contains('sidebar-open')) return;
+            // If the click is inside the sidebar or on the filter button, ignore
+            if (sb.contains(e.target) || e.target.id === 'nfl-filter-btn') return;
+            sb.classList.remove('sidebar-open');
+        });
+
+        pdoc.body.appendChild(btn);
     })();
     </script>
     """, height=0)
