@@ -10,7 +10,7 @@ st.set_page_config(
     page_title="NFL Analytics",
     page_icon="🏈",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 st.markdown(NFL_CSS, unsafe_allow_html=True)
 

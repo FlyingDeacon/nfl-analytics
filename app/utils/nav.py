@@ -1,5 +1,6 @@
 """Shared sidebar navigation component for all pages."""
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 def render_sidebar_nav(current_page: str = ""):
@@ -26,7 +27,10 @@ def render_sidebar_nav(current_page: str = ""):
 
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
-    # ── Mobile bottom nav + filter button (only visible on small screens via CSS) ──
+    # ── Mobile bottom nav (only visible on small screens via CSS) ─────────────
+    # NOTE: st.markdown strips <script> and onclick, so the nav bar is pure
+    # HTML links (no JS needed).  The filter button is a plain element whose
+    # click handler is wired up by the components.html() block below.
     st.markdown("""
     <div class="mobile-nav-bar">
       <a href="/"             class="mobile-nav-item"><span class="nav-emoji">🏠</span><span>Home</span></a>
@@ -37,40 +41,56 @@ def render_sidebar_nav(current_page: str = ""):
       <a href="/Fantasy"      class="mobile-nav-item"><span class="nav-emoji">🏆</span><span>Fantasy</span></a>
     </div>
 
-    <!-- Grey filter button — toggles the sidebar on mobile -->
-    <button class="mobile-filter-btn" onclick="toggleSidebar()" aria-label="Toggle filters">
+    <!-- Filter button (visible on mobile only via CSS).
+         The onclick is wired by the components.html JS below. -->
+    <div class="mobile-filter-btn" id="mobile-filter-btn" role="button"
+         aria-label="Toggle filters" tabindex="0">
       &#9776; Filters
-    </button>
-
-    <script>
-    function toggleSidebar() {
-        // 1. Try clicking Streamlit's own sidebar toggle buttons (only if visible)
-        var selectors = [
-            '[data-testid="stSidebarCollapsedControl"] button',
-            '[data-testid="stSidebarCollapseButton"]',
-            'button[aria-label="Open sidebar"]',
-            'button[aria-label="Close sidebar"]',
-        ];
-        for (var i = 0; i < selectors.length; i++) {
-            var btn = document.querySelector(selectors[i]);
-            if (btn && btn.offsetParent !== null) { btn.click(); return; }
-        }
-
-        // 2. Fallback: toggle the sidebar's aria-expanded + transform directly
-        var sb = document.querySelector('[data-testid="stSidebar"]');
-        if (sb) {
-            var isOpen = sb.getAttribute('aria-expanded') === 'true';
-            if (isOpen) {
-                sb.setAttribute('aria-expanded', 'false');
-                sb.style.transform = 'translateX(-100%)';
-                sb.style.transition = 'transform 0.3s ease';
-            } else {
-                sb.setAttribute('aria-expanded', 'true');
-                sb.style.transform = 'translateX(0)';
-                sb.style.transition = 'transform 0.3s ease';
-                sb.style.zIndex = '999997';
-            }
-        }
-    }
-    </script>
+    </div>
     """, unsafe_allow_html=True)
+
+    # ── JS sidebar toggle ─────────────────────────────────────────────────────
+    # components.html() renders in an iframe where <script> actually executes.
+    # The script reaches into window.parent.document to:
+    #   1. Find our #mobile-filter-btn in the parent DOM
+    #   2. Attach a click handler that toggles the Streamlit sidebar
+    components.html("""
+    <script>
+    (function() {
+        function setup() {
+            var doc = window.parent.document;
+
+            // Wait for the button to appear in the parent DOM
+            var btn = doc.getElementById('mobile-filter-btn');
+            if (!btn) { setTimeout(setup, 300); return; }
+
+            btn.onclick = function() {
+                // 1. Try Streamlit's own toggle buttons (only if visible)
+                var selectors = [
+                    '[data-testid="stSidebarCollapsedControl"] button',
+                    '[data-testid="stSidebarCollapseButton"]',
+                    'button[aria-label="Open sidebar"]',
+                    'button[aria-label="Close sidebar"]',
+                ];
+                for (var i = 0; i < selectors.length; i++) {
+                    var toggle = doc.querySelector(selectors[i]);
+                    if (toggle && toggle.offsetParent !== null) {
+                        toggle.click();
+                        return;
+                    }
+                }
+                // 2. Fallback: toggle sidebar aria-expanded + transform
+                var sb = doc.querySelector('[data-testid="stSidebar"]');
+                if (sb) {
+                    var isOpen = sb.getAttribute('aria-expanded') === 'true';
+                    sb.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                    sb.style.transform = isOpen ? 'translateX(-100%)' : 'translateX(0)';
+                    sb.style.transition = 'transform 0.3s ease';
+                    if (!isOpen) sb.style.zIndex = '999997';
+                }
+            };
+        }
+        setup();
+    })();
+    </script>
+    """, height=0)

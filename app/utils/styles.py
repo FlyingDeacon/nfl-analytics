@@ -365,11 +365,14 @@ hr {
     bottom: 0; left: 0; right: 0;
     background: #ffffff;
     border-top: 1px solid var(--border);
-    padding: 8px 0 calc(env(safe-area-inset-bottom, 8px) + 4px);
+    /* generous padding: 8px top + safe-area + 16px extra for Safari/Cloud chrome */
+    padding: 8px 4px calc(env(safe-area-inset-bottom, 8px) + 16px);
     z-index: 999999;
     box-shadow: 0 -4px 16px rgba(0,0,0,0.07);
     justify-content: space-around;
     align-items: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 .mobile-nav-item {
     display: flex;
@@ -378,26 +381,27 @@ hr {
     justify-content: center;
     text-decoration: none !important;
     color: var(--muted);
-    font-size: 0.58rem;
+    font-size: 0.55rem;
     font-weight: 600;
     letter-spacing: 0.03em;
-    gap: 3px;
-    padding: 4px 6px;
+    gap: 2px;
+    padding: 4px 2px;
     border-radius: 8px;
     transition: color 0.2s;
-    min-width: 48px;
+    min-width: 44px;
+    flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
 }
 .mobile-nav-item:hover,
 .mobile-nav-item.active { color: var(--accent) !important; }
-.mobile-nav-item .nav-emoji { font-size: 1.25rem; line-height: 1; }
+.mobile-nav-item .nav-emoji { font-size: 1.15rem; line-height: 1; }
 
 /* ── Mobile filter toggle button (hidden on desktop) ── */
 .mobile-filter-btn {
     display: none;
     position: fixed;
     right: 14px;
-    bottom: calc(68px + env(safe-area-inset-bottom, 8px));
+    bottom: calc(76px + env(safe-area-inset-bottom, 8px));
     z-index: 999998;
     background: #6b7280;
     color: #fff;
@@ -417,17 +421,36 @@ hr {
 
 /* ── Mobile overrides ── */
 @media (max-width: 768px) {
-    .mobile-nav-bar   { display: flex !important; }
+    .mobile-nav-bar    { display: flex !important; }
     .mobile-filter-btn { display: flex !important; }
+
+    /* Prevent horizontal overflow on body / app */
+    html, body,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stApp"] {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
 
     /* Extra bottom padding so content doesn't hide behind the nav bar */
     [data-testid="stMainBlockContainer"] {
-        padding-bottom: 100px !important;
+        padding-bottom: 110px !important;
+        overflow-x: hidden !important;
     }
 
-    /* When sidebar opens on mobile, make it a high-z overlay */
+    /* When sidebar opens on mobile, make it a high-z overlay with backdrop */
     [data-testid="stSidebar"][aria-expanded="true"] {
+        position: fixed !important;
+        left: 0 !important; top: 0 !important;
+        height: 100vh !important; height: 100dvh !important;
+        width: 85vw !important;
+        max-width: 320px !important;
         z-index: 999997 !important;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.25) !important;
+    }
+    /* Ensure collapsed sidebar is fully off-screen */
+    [data-testid="stSidebar"][aria-expanded="false"] {
+        transform: translateX(-100%) !important;
     }
 }
 </style>
