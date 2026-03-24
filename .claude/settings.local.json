@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python -c \"import streamlit; print\\(streamlit.__version__\\)\")",
+      "Bash(find /Users/brw8201/Coding/nfl-analytics/data -type f -name *.csv)",
+      "Bash(python3 -c \"import pandas as pd; df=pd.read_csv\\(''data/raw/weekly.csv''\\); print\\(''Rows:'', len\\(df\\)\\); print\\(''Seasons:'', sorted\\(df[''season''].unique\\(\\)\\)\\); print\\(''Columns:'', list\\(df.columns\\)\\)\")",
+      "Bash(.venv/bin/python3 -c \"import pandas as pd; df=pd.read_csv\\(''data/raw/weekly.csv''\\); print\\(''Rows:'', len\\(df\\)\\); print\\(''Seasons:'', sorted\\(df[''season''].unique\\(\\)\\)\\)\")",
+      "Bash(.venv/bin/python3 -c \":*)",
+      "Bash(.venv/bin/python3 -c \"import py_compile; py_compile.compile\\(''app/pages/5_Fantasy.py'', doraise=True\\); print\\(''OK''\\)\")",
+      "Bash(.venv/bin/python3 -c \"import py_compile; py_compile.compile\\(''app/pages/2_Player_Stats.py'', doraise=True\\); print\\(''OK''\\)\")",
+      "Bash(find /Users/brw8201/Coding/nfl-analytics/app -name \"*.pyc\" -delete)",
+      "Bash(find /Users/brw8201/Coding/nfl-analytics/app -name \"__pycache__\" -type d -exec rm -rf {} +)",
+      "Bash(.venv/bin/python3 -c \"import nfl_data_py as nfl; df = nfl.import_weekly_data\\([2025]\\); print\\(df.shape\\); print\\(df[''season''].unique\\(\\)\\)\")",
+      "Bash(.venv/bin/python3 -c \"import nfl_data_py as nfl; df = nfl.import_pbp_data\\([2025]\\); print\\(df.shape\\); print\\(df.columns.tolist\\(\\)[:20]\\)\")",
+      "Bash(.venv/bin/python3 -c \"import nfl_data_py as nfl; print\\(dir\\(nfl\\)\\)\")",
+      "Bash(.venv/bin/python3 -c \"import nfl_data_py; print\\(nfl_data_py.__version__\\)\")",
+      "Bash(.venv/bin/python3 -c \"import nfl_data_py as nfl; df = nfl.import_seasonal_data\\([2025]\\); print\\(df.shape\\); print\\(list\\(df.columns\\)\\)\")",
+      "Bash(.venv/bin/python3 -c \"import nfl_data_py as nfl; df = nfl.import_rosters\\([2025]\\); print\\(df.shape\\)\")",
+      "Bash(.venv/bin/python3 -c \"import nfl_data_py as nfl; df = nfl.import_seasonal_rosters\\([2025]\\); print\\(df.shape\\)\")",
+      "Bash(.venv/bin/python3 -c \"import nfl_data_py as nfl; df = nfl.import_weekly_rosters\\([2025]\\); print\\(df.shape\\); print\\(list\\(df.columns\\)\\)\")",
+      "Bash(python src/load_preseason_rankings.py)",
+      "Bash(python3 src/load_preseason_rankings.py)",
+      "Bash(source venv/bin/activate)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(python3 -c 'import pandas')",
+      "Bash(.venv/bin/python3 src/load_preseason_rankings.py)",
+      "Bash(.venv/bin/pip install:*)"
+    ]
+  }
+}
