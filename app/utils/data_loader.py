@@ -34,16 +34,39 @@ def _ensure_raw_data():
             build_team_ratings.main()
 
 
+_WEEKLY_URL = (
+    "https://github.com/nflverse/nflverse-data/releases/download/"
+    "player_stats/player_stats_{year}.parquet"
+)
+_WEEKLY_YEARS = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
+
+
 def _ensure_weekly_data():
-    """Run NFL download if weekly.csv is missing (may exist separately from teams.csv)."""
+    """Fetch weekly parquets directly, year-by-year, if weekly.csv is missing."""
+    import io
+    import requests
+    import pandas as pd
+
     base_dir = get_base_dir()
     weekly_path = base_dir / "data" / "raw" / "weekly.csv"
-    if not weekly_path.exists():
-        with st.spinner("Downloading weekly player data (this may take a minute)..."):
+    if weekly_path.exists():
+        return
+
+    with st.spinner("Downloading weekly player data (this may take a minute)..."):
+        frames = []
+        for yr in _WEEKLY_YEARS:
             try:
-                _run_nfl_download()
+                resp = requests.get(_WEEKLY_URL.format(year=yr), timeout=60, allow_redirects=True)
+                resp.raise_for_status()
+                frames.append(pd.read_parquet(io.BytesIO(resp.content)))
+                print(f"Weekly {yr}: ok")
             except Exception as e:
-                st.warning(f"Could not download weekly player data: {e}")
+                print(f"Weekly {yr}: skipped — {e}")
+
+        if frames:
+            pd.concat(frames, ignore_index=True).to_csv(weekly_path, index=False)
+        else:
+            st.warning("Weekly player data unavailable from nflverse — player stats and fantasy pages will be empty.")
 
 
 def _ensure_processed_data():
