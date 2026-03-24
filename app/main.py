@@ -201,7 +201,7 @@ st.markdown("""
       <div class="strip-lbl">Seasons of Data</div>
     </div>
     <div class="strip-item">
-      <div class="strip-num">4</div>
+      <div class="strip-num">5</div>
       <div class="strip-lbl">Analytics Modules</div>
     </div>
   </div>
@@ -246,6 +246,16 @@ st.markdown("""
           <div class="nav-title">Historical</div>
           <div class="nav-desc">Multi-season trend lines and a league-wide performance heatmap.</div>
           <span class="nav-tag">Trends · Heatmap</span>
+        </div>
+      </div>
+    </a>
+    <a href="/Fantasy" class="nav-card-link" style="--nc-accent:#8b5cf6; --nc-icon-bg:#f5f3ff; --nc-tag-bg:#f5f3ff; --nc-tag-color:#7c3aed;">
+      <div class="nav-card">
+        <div class="nav-icon">🏆</div>
+        <div>
+          <div class="nav-title">Fantasy Football</div>
+          <div class="nav-desc">Season totals, per-game averages, and weekly consistency for PPR leagues.</div>
+          <span class="nav-tag">PPR · Leaders · Weekly</span>
         </div>
       </div>
     </a>
