@@ -313,6 +313,9 @@ hr {
     padding: 0.6rem 0 0.3rem 4px; margin: 0;
 }
 
+/* ── Hide Plotly chart toolbar (modebar) ── */
+.modebar-container { display: none !important; }
+
 /* ── Tabs ── */
 .stTabs [data-baseweb="tab-list"] {
     gap: 0;
@@ -362,17 +365,17 @@ hr {
 .mobile-nav-bar {
     display: none;
     position: fixed;
-    /* sit ABOVE Safari's toolbar + Streamlit Cloud badge */
-    bottom: 48px;
+    bottom: 0;
     left: 0; right: 0;
     background: #ffffff;
     border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: 6px 4px;
+    /* Top padding for the tappable items, bottom padding clears Safari bar
+       and Streamlit Cloud badge — white background covers everything below */
+    padding: 8px 4px calc(env(safe-area-inset-bottom, 8px) + 52px);
     z-index: 999999;
     box-shadow: 0 -4px 16px rgba(0,0,0,0.07);
     justify-content: space-around;
-    align-items: center;
+    align-items: flex-start;
 }
 .mobile-nav-item {
     display: flex;
@@ -408,9 +411,9 @@ hr {
         max-width: 100vw !important;
     }
 
-    /* Extra bottom padding so content clears the raised nav bar */
+    /* Extra bottom padding so content clears the nav bar */
     [data-testid="stMainBlockContainer"] {
-        padding-bottom: 120px !important;
+        padding-bottom: 160px !important;
         overflow-x: hidden !important;
     }
 

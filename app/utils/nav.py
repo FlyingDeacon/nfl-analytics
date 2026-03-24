@@ -62,7 +62,7 @@ def render_sidebar_nav(current_page: str = ""):
         btn.style.cssText = [
             'position:fixed',
             'right:14px',
-            'bottom:108px',                         // above the raised nav bar
+            'bottom:calc(120px + env(safe-area-inset-bottom, 8px))',
             'z-index:999998',
             'background:#6b7280',
             'color:#fff',
