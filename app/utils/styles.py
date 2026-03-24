@@ -351,6 +351,53 @@ hr {
     min-width: min(320px, 100%) !important;
     flex: 1 1 320px !important;
 }
+
+/* ── Mobile: restore hamburger menu & add bottom nav ── */
+@media (max-width: 768px) {
+    /* Restore Streamlit's header so the sidebar hamburger is accessible */
+    [data-testid="stHeader"] { display: flex !important; }
+    .stAppHeader { display: flex !important; }
+
+    /* Push main content up so it clears the bottom nav */
+    [data-testid="stMainBlockContainer"] { padding-bottom: 80px !important; }
+}
+
+/* ── Mobile bottom navigation bar ── */
+.mobile-nav-bar {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 6px 0 env(safe-area-inset-bottom, 6px);
+    z-index: 9999;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.07);
+    justify-content: space-around;
+    align-items: center;
+}
+@media (max-width: 768px) {
+    .mobile-nav-bar { display: flex; }
+}
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    color: var(--muted);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    gap: 3px;
+    padding: 4px 6px;
+    border-radius: 8px;
+    transition: color 0.2s;
+    min-width: 48px;
+    -webkit-tap-highlight-color: transparent;
+}
+.mobile-nav-item:hover,
+.mobile-nav-item.active { color: var(--accent) !important; }
+.mobile-nav-item .nav-emoji { font-size: 1.25rem; line-height: 1; }
 </style>
 """
 

@@ -203,7 +203,7 @@ st.markdown("""
   <!-- Nav cards -->
   <div class="section-lbl">Navigate</div>
   <div class="nav-grid">
-    <div class="nav-card" style="--nc-accent:#4f46e5; --nc-icon-bg:#eef2ff; --nc-tag-bg:#eef2ff; --nc-tag-color:#4f46e5;">
+    <div class="nav-card" onclick="window.location.href='/Team_Ratings'" style="cursor:pointer; --nc-accent:#4f46e5; --nc-icon-bg:#eef2ff; --nc-tag-bg:#eef2ff; --nc-tag-color:#4f46e5;">
       <div class="nav-icon">📊</div>
       <div>
         <div class="nav-title">Team Ratings</div>
@@ -211,7 +211,7 @@ st.markdown("""
         <span class="nav-tag">Rankings · Scatter</span>
       </div>
     </div>
-    <div class="nav-card" style="--nc-accent:#3b82f6; --nc-icon-bg:#eff6ff; --nc-tag-bg:#eff6ff; --nc-tag-color:#3b82f6;">
+    <div class="nav-card" onclick="window.location.href='/Player_Stats'" style="cursor:pointer; --nc-accent:#3b82f6; --nc-icon-bg:#eff6ff; --nc-tag-bg:#eff6ff; --nc-tag-color:#3b82f6;">
       <div class="nav-icon">🏃</div>
       <div>
         <div class="nav-title">Player Stats</div>
@@ -219,7 +219,7 @@ st.markdown("""
         <span class="nav-tag">Passing · Rushing · Receiving</span>
       </div>
     </div>
-    <div class="nav-card" style="--nc-accent:#10b981; --nc-icon-bg:#ecfdf5; --nc-tag-bg:#ecfdf5; --nc-tag-color:#059669;">
+    <div class="nav-card" onclick="window.location.href='/Schedule'" style="cursor:pointer; --nc-accent:#10b981; --nc-icon-bg:#ecfdf5; --nc-tag-bg:#ecfdf5; --nc-tag-color:#059669;">
       <div class="nav-icon">📅</div>
       <div>
         <div class="nav-title">Schedule</div>
@@ -227,7 +227,7 @@ st.markdown("""
         <span class="nav-tag">Results · Upcoming</span>
       </div>
     </div>
-    <div class="nav-card" style="--nc-accent:#f59e0b; --nc-icon-bg:#fffbeb; --nc-tag-bg:#fffbeb; --nc-tag-color:#d97706;">
+    <div class="nav-card" onclick="window.location.href='/Historical'" style="cursor:pointer; --nc-accent:#f59e0b; --nc-icon-bg:#fffbeb; --nc-tag-bg:#fffbeb; --nc-tag-color:#d97706;">
       <div class="nav-icon">📈</div>
       <div>
         <div class="nav-title">Historical</div>

@@ -25,3 +25,15 @@ def render_sidebar_nav(current_page: str = ""):
     st.sidebar.page_link("pages/5_Fantasy.py",         label="Fantasy Football", icon="🏆")
 
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+
+    # ── Mobile bottom nav (only visible on small screens via CSS) ─────────────
+    st.markdown("""
+    <div class="mobile-nav-bar">
+      <a href="/"             class="mobile-nav-item"><span class="nav-emoji">🏠</span><span>Home</span></a>
+      <a href="/Team_Ratings" class="mobile-nav-item"><span class="nav-emoji">📊</span><span>Ratings</span></a>
+      <a href="/Player_Stats" class="mobile-nav-item"><span class="nav-emoji">🏃</span><span>Players</span></a>
+      <a href="/Schedule"     class="mobile-nav-item"><span class="nav-emoji">📅</span><span>Schedule</span></a>
+      <a href="/Historical"   class="mobile-nav-item"><span class="nav-emoji">📈</span><span>History</span></a>
+      <a href="/Fantasy"      class="mobile-nav-item"><span class="nav-emoji">🏆</span><span>Fantasy</span></a>
+    </div>
+    """, unsafe_allow_html=True)
