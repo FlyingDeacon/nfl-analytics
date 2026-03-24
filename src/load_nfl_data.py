@@ -3,7 +3,7 @@ import nfl_data_py as nfl
 
 
 def main():
-    years = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
+    years = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
 
     base_dir = Path(__file__).resolve().parent.parent
     raw_dir = base_dir / "data" / "raw"
@@ -22,14 +22,10 @@ def main():
     schedules.to_csv(raw_dir / "schedules.csv", index=False)
     teams.to_csv(raw_dir / "teams.csv", index=False)
 
-    # Try weekly player data, but don't let it break the whole pipeline
-    try:
-        print("Loading weekly player data...")
-        weekly = nfl.import_weekly_data(years)
-        print("weekly:", weekly.shape)
-        weekly.to_csv(raw_dir / "weekly.csv", index=False)
-    except Exception as e:
-        print(f"Skipping weekly player data: {e}")
+    print("Loading weekly player data...")
+    weekly = nfl.import_weekly_data(years)
+    print("weekly:", weekly.shape)
+    weekly.to_csv(raw_dir / "weekly.csv", index=False)
 
     print(f"\nSaved files to {raw_dir}")
 

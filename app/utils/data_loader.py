@@ -75,9 +75,10 @@ def load_schedules() -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False)
 def load_weekly() -> pd.DataFrame:
+    _ensure_raw_data()
     path = get_base_dir() / "data" / "raw" / "weekly.csv"
     if not path.exists():
-        st.warning("weekly.csv not found — player stats page unavailable.")
+        st.warning("weekly.csv could not be loaded. Check app logs.")
         return pd.DataFrame()
     df = pd.read_csv(path, low_memory=False)
     df.columns = [c.lower().strip() for c in df.columns]
