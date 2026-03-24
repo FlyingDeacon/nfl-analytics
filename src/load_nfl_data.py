@@ -5,12 +5,15 @@ import nfl_data_py as nfl
 import pandas as pd
 import requests
 
+# Schedules include future/current seasons; weekly stats only go through
+# the last completed season that nflverse has published.
+SCHEDULE_YEARS = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
+WEEKLY_YEARS = [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
+
 WEEKLY_URL = (
     "https://github.com/nflverse/nflverse-data/releases/download/"
     "player_stats/player_stats_{year}.parquet"
 )
-
-YEARS = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
 
 
 def _fetch_weekly_year(year: int) -> pd.DataFrame:
@@ -26,7 +29,7 @@ def main():
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     print("Loading schedules...")
-    schedules = nfl.import_schedules(YEARS)
+    schedules = nfl.import_schedules(SCHEDULE_YEARS)
 
     print("Loading team descriptions...")
     teams = nfl.import_team_desc()
@@ -37,7 +40,7 @@ def main():
 
     print("Loading weekly player data (year by year)...")
     frames = []
-    for yr in YEARS:
+    for yr in WEEKLY_YEARS:
         try:
             frames.append(_fetch_weekly_year(yr))
             print(f"  {yr}: ok")

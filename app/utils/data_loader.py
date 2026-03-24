@@ -38,7 +38,7 @@ _WEEKLY_URL = (
     "https://github.com/nflverse/nflverse-data/releases/download/"
     "player_stats/player_stats_{year}.parquet"
 )
-_WEEKLY_YEARS = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
+_WEEKLY_YEARS = [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
 
 
 def _ensure_weekly_data():
@@ -64,6 +64,7 @@ def _ensure_weekly_data():
                 print(f"Weekly {yr}: skipped — {e}")
 
         if frames:
+            weekly_path.parent.mkdir(parents=True, exist_ok=True)
             pd.concat(frames, ignore_index=True).to_csv(weekly_path, index=False)
         else:
             st.warning("Weekly player data unavailable from nflverse — player stats and fantasy pages will be empty.")
