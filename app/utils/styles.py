@@ -13,14 +13,20 @@ NFL_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
 
-/* ── Hide Streamlit chrome (Deploy button, top toolbar, header bar, footer) ── */
-[data-testid="stToolbar"]         { display: none !important; }
-[data-testid="stDecoration"]      { display: none !important; }
-[data-testid="stStatusWidget"]    { display: none !important; }
-[data-testid="stHeader"]          { display: none !important; }
-footer                            { display: none !important; }
-#MainMenu                         { display: none !important; }
-.stAppHeader                      { display: none !important; }
+/* ── Hide ALL Streamlit chrome (toolbar, header, footer, deploy, profile) ── */
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+[data-testid="stHeader"],
+[data-testid="stAppHeader"],
+[data-testid="stMetaDatas"],
+[data-testid="stDeployLogsButton"],
+footer,
+#MainMenu,
+.stAppHeader,
+.stDeployButton,
+header[data-testid],
+[data-testid="stBottom"] > div:empty { display: none !important; }
 
 :root {
     --bg:         #f5f6fa;
@@ -352,61 +358,18 @@ hr {
     flex: 1 1 320px !important;
 }
 
-/* ── Mobile: bottom nav + filter button ── */
-@media (max-width: 768px) {
-    /* Keep Streamlit header hidden — we provide our own filter button,
-       so the profile picture / Streamlit logo never overlap the nav bar */
-    [data-testid="stHeader"]  { display: none !important; }
-    .stAppHeader               { display: none !important; }
-
-    /* Push main content above the bottom nav bar */
-    [data-testid="stMainBlockContainer"] { padding-bottom: 90px !important; }
-
-    /* Ensure our nav bar floats above everything Streamlit renders */
-    .mobile-nav-bar { z-index: 2147483646 !important; }
-
-    /* Filter button only on mobile */
-    .mobile-filter-btn { display: flex !important; }
-}
-
-/* ── Mobile filter toggle button (hidden on desktop) ── */
-.mobile-filter-btn {
-    display: none;
-    position: fixed;
-    right: 14px;
-    bottom: 72px;          /* sits just above the nav bar */
-    z-index: 2147483645;
-    background: #6b7280;
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    padding: 8px 14px 8px 11px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.22);
-    align-items: center;
-    gap: 5px;
-    font-family: 'Inter', sans-serif;
-    -webkit-tap-highlight-color: transparent;
-    letter-spacing: 0.02em;
-}
-
-/* ── Mobile bottom navigation bar ── */
+/* ── Mobile bottom navigation bar (hidden on desktop, flex on mobile) ── */
 .mobile-nav-bar {
     display: none;
     position: fixed;
     bottom: 0; left: 0; right: 0;
     background: #ffffff;
     border-top: 1px solid var(--border);
-    padding: 6px 0 env(safe-area-inset-bottom, 6px);
-    z-index: 9999;
+    padding: 8px 0 calc(env(safe-area-inset-bottom, 8px) + 4px);
+    z-index: 999999;
     box-shadow: 0 -4px 16px rgba(0,0,0,0.07);
     justify-content: space-around;
     align-items: center;
-}
-@media (max-width: 768px) {
-    .mobile-nav-bar { display: flex; }
 }
 .mobile-nav-item {
     display: flex;
@@ -428,6 +391,45 @@ hr {
 .mobile-nav-item:hover,
 .mobile-nav-item.active { color: var(--accent) !important; }
 .mobile-nav-item .nav-emoji { font-size: 1.25rem; line-height: 1; }
+
+/* ── Mobile filter toggle button (hidden on desktop) ── */
+.mobile-filter-btn {
+    display: none;
+    position: fixed;
+    right: 14px;
+    bottom: calc(68px + env(safe-area-inset-bottom, 8px));
+    z-index: 999998;
+    background: #6b7280;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 14px 8px 11px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+    align-items: center;
+    gap: 5px;
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.02em;
+}
+
+/* ── Mobile overrides ── */
+@media (max-width: 768px) {
+    .mobile-nav-bar   { display: flex !important; }
+    .mobile-filter-btn { display: flex !important; }
+
+    /* Extra bottom padding so content doesn't hide behind the nav bar */
+    [data-testid="stMainBlockContainer"] {
+        padding-bottom: 100px !important;
+    }
+
+    /* When sidebar opens on mobile, make it a high-z overlay */
+    [data-testid="stSidebar"][aria-expanded="true"] {
+        z-index: 999997 !important;
+    }
+}
 </style>
 """
 

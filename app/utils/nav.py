@@ -37,31 +37,39 @@ def render_sidebar_nav(current_page: str = ""):
       <a href="/Fantasy"      class="mobile-nav-item"><span class="nav-emoji">🏆</span><span>Fantasy</span></a>
     </div>
 
-    <!-- Grey filter arrow button — toggles the sidebar on mobile -->
+    <!-- Grey filter button — toggles the sidebar on mobile -->
     <button class="mobile-filter-btn" onclick="toggleSidebar()" aria-label="Toggle filters">
       &#9776; Filters
     </button>
 
     <script>
     function toggleSidebar() {
-        // Try every known Streamlit sidebar toggle selector
+        // 1. Try clicking Streamlit's own sidebar toggle buttons (only if visible)
         var selectors = [
             '[data-testid="stSidebarCollapsedControl"] button',
             '[data-testid="stSidebarCollapseButton"]',
             'button[aria-label="Open sidebar"]',
             'button[aria-label="Close sidebar"]',
-            'button[aria-controls="bui3-tabpanel-0"]',
-            '[data-testid="collapsedControl"] button',
-            'section[data-testid="stSidebar"] button',
         ];
         for (var i = 0; i < selectors.length; i++) {
             var btn = document.querySelector(selectors[i]);
-            if (btn) { btn.click(); return; }
+            if (btn && btn.offsetParent !== null) { btn.click(); return; }
         }
-        // Fallback: toggle sidebar visibility directly
+
+        // 2. Fallback: toggle the sidebar's aria-expanded + transform directly
         var sb = document.querySelector('[data-testid="stSidebar"]');
         if (sb) {
-            sb.style.transform = sb.style.transform === 'none' ? 'translateX(-110%)' : 'none';
+            var isOpen = sb.getAttribute('aria-expanded') === 'true';
+            if (isOpen) {
+                sb.setAttribute('aria-expanded', 'false');
+                sb.style.transform = 'translateX(-100%)';
+                sb.style.transition = 'transform 0.3s ease';
+            } else {
+                sb.setAttribute('aria-expanded', 'true');
+                sb.style.transform = 'translateX(0)';
+                sb.style.transition = 'transform 0.3s ease';
+                sb.style.zIndex = '999997';
+            }
         }
     }
     </script>
