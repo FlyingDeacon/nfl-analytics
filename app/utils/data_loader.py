@@ -11,19 +11,36 @@ def get_base_dir() -> Path:
     return Path(__file__).resolve().parent.parent.parent
 
 
+def _run_nfl_download():
+    base_dir = get_base_dir()
+    src_dir = str(base_dir / "src")
+    if src_dir not in sys.path:
+        sys.path.insert(0, src_dir)
+    import load_nfl_data
+    load_nfl_data.main()
+
+
 def _ensure_raw_data():
-    """Run the data pipeline if raw CSVs are missing."""
+    """Run the data pipeline if core raw CSVs are missing."""
     base_dir = get_base_dir()
     teams_path = base_dir / "data" / "raw" / "teams.csv"
     if not teams_path.exists():
         with st.spinner("Downloading NFL data for the first time (this may take a minute)..."):
+            _run_nfl_download()
             src_dir = str(base_dir / "src")
             if src_dir not in sys.path:
                 sys.path.insert(0, src_dir)
-            import load_nfl_data
             import build_team_ratings
-            load_nfl_data.main()
             build_team_ratings.main()
+
+
+def _ensure_weekly_data():
+    """Run NFL download if weekly.csv is missing (may exist separately from teams.csv)."""
+    base_dir = get_base_dir()
+    weekly_path = base_dir / "data" / "raw" / "weekly.csv"
+    if not weekly_path.exists():
+        with st.spinner("Downloading weekly player data (this may take a minute)..."):
+            _run_nfl_download()
 
 
 def _ensure_processed_data():
@@ -76,6 +93,7 @@ def load_schedules() -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def load_weekly() -> pd.DataFrame:
     _ensure_raw_data()
+    _ensure_weekly_data()
     path = get_base_dir() / "data" / "raw" / "weekly.csv"
     if not path.exists():
         st.warning("weekly.csv could not be loaded. Check app logs.")
