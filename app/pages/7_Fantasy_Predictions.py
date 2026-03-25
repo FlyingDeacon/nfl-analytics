@@ -67,36 +67,56 @@ POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
 # Applied as post-model corrections on top of the statistical projection.
 # ══════════════════════════════════════════════════════════════════════════════
 
-# Players removed from 2026 board (not projected starters / retired / injury)
+# Players removed from 2026 board (not projected starters / retired / injury risk)
 EXPERT_REMOVE = {
     "Kirk Cousins",      # Not a projected 2026 starter
-    "Matthew Stafford",  # Aging (38), likely retired or backup
+    "Matthew Stafford",  # Likely retired / backup at age 38
+    "Rob Gronkowski",    # Officially retired March 2026
+    "Michael Penix",     # ACL surgery (Nov 2025) — Week 1 availability uncertain
 }
 
 # Team corrections: player name fragment → corrected 2026 team abbreviation
+# Sources: ESPN / NFL.com free agency trackers, March 2026
 EXPERT_TEAM_CORRECTIONS = {
-    "Travis Etienne": "NO",   # Signed with New Orleans Saints (left JAX)
+    "Travis Etienne":    "NO",   # Signed with New Orleans Saints (left JAX)
+    "Tua Tagovailoa":    "ATL",  # 1-year deal with Falcons
+    "Kyler Murray":      "MIN",  # 1-year deal with Vikings
+    "Jaylen Waddle":     "DEN",  # Traded MIA → DEN (pairs with Bo Nix)
+    "Michael Pittman":   "PIT",  # Traded IND → PIT
+    "DJ Moore":          "BUF",  # Traded CHI → BUF (Josh Allen boost)
+    "Malik Willis":      "MIA",  # 3-yr $67.5M deal — new MIA starter replacing Tua
+    "Kenneth Walker":    "KC",   # 3-yr $43M deal — joins Kansas City
+    "Mike Evans":        "SF",   # 3-yr $60M deal — joins 49ers
 }
 
 # Point multipliers based on NFL Expert contextual analysis.
 # Values < 1.0 = overvalued by the model; > 1.0 = undervalued.
 EXPERT_MULTIPLIERS = {
-    # ── Overvalued ────────────────────────────────────────────────────────────
-    "Travis Kelce":       0.82,   # Age cliff (36 in 2026); declining target share
-    "Derrick Henry":      0.85,   # RB age regression (32+); carry accumulation
-    "Patrick Mahomes":    0.95,   # Conservative ACL recovery / workload discount
-    "Puka Nacua":         0.87,   # Injury-prone; disappointing 2024 volume
-    "Trey McBride":       0.90,   # Regression expected after career-year spike
-    "Drake Maye":         0.88,   # Year-2 uncertainty; thin supporting cast
-    "Josh Allen":         0.95,   # Mild regression signal; still top-tier
-    # ── Undervalued ───────────────────────────────────────────────────────────
-    "Garrett Wilson":     1.12,   # Elite route runner; improved QB situation
-    "Jaxon Smith-Njigba": 1.15,   # WR1 role fully cemented; breakout expected
-    "Bucky Irving":       1.18,   # Projected RB1 in Tampa Bay
-    "Cam Skattebo":       1.20,   # High-volume Giants starter; data underweights him
-    "C.J. Stroud":        1.10,   # Bounce-back from shoulder injury
-    "Tucker Kraft":       1.15,   # Ascending TE1 in Green Bay
-    "Rashee Rice":        0.70,   # Suspension — available ~Week 7+ only (~10 games)
+    # ── Overvalued — reduce projections ───────────────────────────────────────
+    "Travis Kelce":      0.82,   # Age cliff (36 in 2026); declining target share
+    "Derrick Henry":     0.85,   # RB age regression (32+); carry accumulation
+    "Patrick Mahomes":   0.92,   # ACL recovery ongoing; uncertainty for Week 1
+    "Puka Nacua":        0.87,   # Injury-prone; disappointing 2024 volume
+    "Trey McBride":      0.90,   # Regression expected after career-year spike
+    "Drake Maye":        0.88,   # Year-2 uncertainty; thin supporting cast
+    "Josh Allen":        0.95,   # Mild regression signal; still top-tier
+    "Rashee Rice":       0.70,   # Suspension carryover — available ~Week 7+ (~10 games)
+    "Tua Tagovailoa":    0.75,   # Weak situation in ATL; competing with Penix; veteran min
+    "Mike Evans":        0.80,   # Age 32 + injury (8 games in 2025); high-risk
+    "De'Von Achane":     0.80,   # QB downgrade (Malik Willis replaces Tua in MIA)
+    "Devon Achane":      0.80,   # Alt spelling — same player
+    # ── Undervalued — boost projections ───────────────────────────────────────
+    "Garrett Wilson":    1.12,   # Elite route runner; improved QB situation
+    "Jaxon Smith-Njigba":1.18,   # Highest-paid WR in NFL; WR1 fully established
+    "Bucky Irving":      1.18,   # Projected RB1 in Tampa Bay
+    "Cam Skattebo":      1.20,   # High-volume starter; model underweights him
+    "C.J. Stroud":       1.10,   # Bounce-back from shoulder injury
+    "Tucker Kraft":      1.15,   # Ascending TE1 in Green Bay
+    "Kyler Murray":      1.05,   # Excellent new situation (MIN/Jefferson/Addison)
+    "Kenneth Walker":    1.05,   # Great landing spot — Andy Reid system
+    "Jaylen Waddle":     1.10,   # Better QB stability with Bo Nix in DEN
+    "DJ Moore":          1.10,   # Huge boost — now catching passes from Josh Allen
+    "Michael Pittman":   1.08,   # Upgrade from IND; solid target in PIT offense
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -529,45 +549,6 @@ st.caption("Ranked by % change within each position — QBs and skill positions 
 
 positions_to_show = [sel_pos] if sel_pos != "All" else list(POSITION_FEATURES.keys())
 
-def _rf_table_html(df: pd.DataFrame, is_riser: bool) -> str:
-    """Render a risers/fallers DataFrame as a crisp HTML table (no canvas → never blurry)."""
-    arrow = "▲" if is_riser else "▼"
-    hdr_color = "#10b981" if is_riser else "#ef4444"
-    rows_html = ""
-    for _, row in df.iterrows():
-        delta_pts = row.get("Δ Pts", 0)
-        delta_pct = row.get("Δ %",  0)
-        color = "#10b981" if float(delta_pts) >= 0 else "#ef4444"
-        sign  = "+" if float(delta_pts) >= 0 else ""
-        rows_html += (
-            f"<tr>"
-            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;'>{row.get('Player','')}</td>"
-            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;color:#8b8fa8;'>{row.get('Team','')}</td>"
-            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;text-align:right;font-weight:600;'>{row.get('2026 Proj','')}</td>"
-            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;text-align:right;color:#8b8fa8;'>{row.get('2025 Pts','')}</td>"
-            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;text-align:right;color:{color};font-weight:700;'>"
-            f"{sign}{delta_pts:+.1f}</td>"
-            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;text-align:right;color:{color};font-weight:700;'>"
-            f"{sign}{delta_pct:+.1f}%</td>"
-            f"</tr>"
-        )
-    th = (
-        "<thead><tr style='background:#1a1d2e;'>"
-        + "".join(
-            f"<th style='padding:8px 10px;text-align:{'right' if i>1 else 'left'};"
-            f"font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;"
-            f"color:{hdr_color if col in ('Δ Pts','Δ %') else '#8b8fa8'};white-space:nowrap;'>{col}</th>"
-            for i, col in enumerate(["Player", "Team", "2026 Proj", "2025 Pts", "Δ Pts", "Δ %"])
-        )
-        + "</tr></thead>"
-    )
-    return (
-        f"<table style='width:100%;border-collapse:collapse;font-size:0.88rem;"
-        f"background:#12152a;border-radius:8px;overflow:hidden;'>"
-        f"{th}<tbody>{rows_html}</tbody></table>"
-    )
-
-
 for pos in positions_to_show:
     pos_preds = all_preds[all_preds[pos_col] == pos].copy()
     pos_preds["last_season_pts"] = pos_preds[TARGET_COL].round(1)
@@ -589,20 +570,18 @@ for pos in positions_to_show:
     fallers = pos_preds.nsmallest(5, "change_pct")[rise_cols].rename(columns=rise_rename)
 
     st.markdown(f"**{POSITION_LABELS[pos]}**")
-    # Render as HTML tables — avoids canvas/AG Grid blur inside narrow columns
-    st.markdown(
-        f'<div style="display:flex;gap:16px;margin-bottom:20px;">'
-        f'<div style="flex:1;">'
-        f'<div style="font-size:0.8rem;color:#10b981;font-weight:700;margin-bottom:6px;">📈 Risers</div>'
-        f'{_rf_table_html(risers, is_riser=True)}'
-        f'</div>'
-        f'<div style="flex:1;">'
-        f'<div style="font-size:0.8rem;color:#ef4444;font-weight:700;margin-bottom:6px;">📉 Fallers</div>'
-        f'{_rf_table_html(fallers, is_riser=False)}'
-        f'</div>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
+    # Tabs give each table full width → no canvas blur that occurs inside narrow st.columns
+    tab_r, tab_f = st.tabs(["📈 Risers", "📉 Fallers"])
+    with tab_r:
+        st.dataframe(risers.rename(columns=rise_rename), hide_index=True,
+                     use_container_width=True,
+                     column_config={"Δ Pts": st.column_config.NumberColumn(format="%+.1f"),
+                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%")})
+    with tab_f:
+        st.dataframe(fallers.rename(columns=rise_rename), hide_index=True,
+                     use_container_width=True,
+                     column_config={"Δ Pts": st.column_config.NumberColumn(format="%+.1f"),
+                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%")})
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.caption(
@@ -612,7 +591,8 @@ st.caption(
     "Projected 2026 games blends the last two seasons (65 / 35 weighting) with a conservative ceiling of "
     f"{MAX_PROJ_GAMES} games. QB qualifier: {MIN_GAMES_BY_POS['QB']}+ games started. "
     "Skill positions: 6+ games. "
-    "**Expert overlays** applied post-model: age-cliff discounts (Kelce, Henry), injury/suspension adjustments "
-    "(Rice, Mahomes), team corrections (Etienne → NO), and named boosts for undervalued breakout candidates "
-    "(Skattebo, Irving, JSN, Tucker Kraft)."
+    "**Expert overlays** applied post-model using live 2026 offseason data: team corrections (Tua → ATL, Kyler → MIN, "
+    "Waddle → DEN, DJ Moore → BUF, Pittman → PIT, Walker → KC, Evans → SF, Etienne → NO), age-cliff discounts "
+    "(Kelce, Henry, Evans), injury/suspension adjustments (Rice, Mahomes ACL, Penix removed), QB-situation impacts "
+    "(Achane −, Willis −, Murray +, Moore +, Waddle +), and breakout boosts (Skattebo, Irving, JSN, Tucker Kraft)."
 )
