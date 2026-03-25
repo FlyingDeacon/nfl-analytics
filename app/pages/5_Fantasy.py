@@ -28,6 +28,12 @@ st.markdown("""
 <div class="gold-rule"></div>
 """, unsafe_allow_html=True)
 
+# ── Quick actions ────────────────────────────────────────────────────────────
+col1, col2, col3 = st.columns([2, 0.5, 2])
+with col1:
+    if st.button("🔮 2026 Fantasy Predictions", use_container_width=True, key="btn_fantasy_pred"):
+        st.switch_page("pages/7_Fantasy_Predictions.py")
+
 weekly = load_weekly()
 teams  = load_teams()
 
