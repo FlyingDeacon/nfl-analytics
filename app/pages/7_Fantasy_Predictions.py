@@ -616,7 +616,10 @@ st.caption("Ranked by % change within each position — QBs and skill positions 
 positions_to_show = [sel_pos] if sel_pos != "All" else list(POSITION_FEATURES.keys())
 
 # Only show risers/fallers for players in the top 200 overall
-top_200_board = all_preds.nlargest(200, "predicted_pts")[name_col].tolist()
+top_200_df = all_preds.nlargest(200, "predicted_pts").reset_index(drop=True).copy()
+top_200_df.insert(0, "overall_rank", range(1, len(top_200_df) + 1))
+top_200_board = top_200_df[name_col].tolist()
+rank_map = dict(zip(top_200_df[name_col], top_200_df["overall_rank"]))
 
 for pos in positions_to_show:
     pos_preds = all_preds[(all_preds[pos_col] == pos) & (all_preds[name_col].isin(top_200_board))].copy()
@@ -631,26 +634,37 @@ for pos in positions_to_show:
 
     rise_cols = [name_col, team_col, "predicted_pts", "last_season_pts", "change", "change_pct"]
     rise_cols = [c for c in rise_cols if c in pos_preds.columns]
+
+    # Get risers and fallers
+    risers_df  = pos_preds.nlargest(5,  "change_pct")[rise_cols].copy()
+    fallers_df = pos_preds.nsmallest(5, "change_pct")[rise_cols].copy()
+
+    # Add overall rank column
+    risers_df["overall_rank"]  = risers_df[name_col].map(rank_map)
+    fallers_df["overall_rank"] = fallers_df[name_col].map(rank_map)
+
     rise_rename = {name_col: "Player", team_col: "Team",
                    "predicted_pts": "2026 Proj", "last_season_pts": "2025 Pts",
-                   "change": "Δ Pts", "change_pct": "Δ %"}
+                   "change": "Δ Pts", "change_pct": "Δ %", "overall_rank": "Rank"}
 
-    risers  = pos_preds.nlargest(5,  "change_pct")[rise_cols].rename(columns=rise_rename)
-    fallers = pos_preds.nsmallest(5, "change_pct")[rise_cols].rename(columns=rise_rename)
+    risers  = risers_df.rename(columns=rise_rename)
+    fallers = fallers_df.rename(columns=rise_rename)
 
     st.markdown(f"**{POSITION_LABELS[pos]}**")
     # Tabs give each table full width → no canvas blur that occurs inside narrow st.columns
     tab_r, tab_f = st.tabs(["📈 Risers", "📉 Fallers"])
     with tab_r:
-        st.dataframe(risers.rename(columns=rise_rename), hide_index=True,
+        st.dataframe(risers, hide_index=True,
                      use_container_width=True,
                      column_config={"Δ Pts": st.column_config.NumberColumn(format="%+.1f"),
-                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%")})
+                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%"),
+                                    "Rank":  st.column_config.NumberColumn(format="%d")})
     with tab_f:
-        st.dataframe(fallers.rename(columns=rise_rename), hide_index=True,
+        st.dataframe(fallers, hide_index=True,
                      use_container_width=True,
                      column_config={"Δ Pts": st.column_config.NumberColumn(format="%+.1f"),
-                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%")})
+                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%"),
+                                    "Rank":  st.column_config.NumberColumn(format="%d")})
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.caption(
