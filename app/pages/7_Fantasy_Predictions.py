@@ -611,12 +611,15 @@ st.markdown("---")
 # ══════════════════════════════════════════════════════════════════════════════
 
 st.markdown("### 📈 Risers &nbsp;&nbsp; 📉 Fallers")
-st.caption("Ranked by % change within each position — QBs and skill positions compared fairly on relative improvement.")
+st.caption("Ranked by % change within each position — QBs and skill positions compared fairly on relative improvement. (Top 200 players only)")
 
 positions_to_show = [sel_pos] if sel_pos != "All" else list(POSITION_FEATURES.keys())
 
+# Only show risers/fallers for players in the top 200 overall
+top_200_board = all_preds.nlargest(200, "predicted_pts")[name_col].tolist()
+
 for pos in positions_to_show:
-    pos_preds = all_preds[all_preds[pos_col] == pos].copy()
+    pos_preds = all_preds[(all_preds[pos_col] == pos) & (all_preds[name_col].isin(top_200_board))].copy()
     pos_preds["last_season_pts"] = pos_preds[TARGET_COL].round(1)
     pos_preds["change"]          = (pos_preds["predicted_pts"] - pos_preds["last_season_pts"]).round(1)
     pos_preds["change_pct"]      = ((pos_preds["change"] /
