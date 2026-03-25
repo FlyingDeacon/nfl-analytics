@@ -317,39 +317,40 @@ st.markdown("---")
 st.markdown(f"### 🏆 2026 Projected Top 3 {'(' + sel_pos + ')' if sel_pos != 'All' else '(Overall)'}")
 
 if len(preds) >= 3:
-    c1, c2, c3 = st.columns(3)
-    for i, (col, medal) in enumerate(zip([c1, c2, c3], ["🥇 #1", "🥈 #2", "🥉 #3"])):
+    # Build all three cards in one markdown block so the browser flex row
+    # controls height — avoids Streamlit column height-estimation overlap.
+    cards_html = '<div style="display:flex; gap:16px; align-items:stretch; margin-bottom:8px;">'
+    for i, medal in enumerate(["🥇 #1", "🥈 #2", "🥉 #3"]):
         row = preds.iloc[i]
-        player = row[name_col]
+        player    = row[name_col]
         team_abbr = row[team_col] if team_col else "—"
-        pos  = row[pos_col] if pos_col else ""
-        pred_pts = row["predicted_pts"]
-        pred_ppg = row["pred_ppg"]
-        last_pts = row[TARGET_COL]
-        delta = pred_pts - last_pts
+        pos_label = row[pos_col] if pos_col else ""
+        pred_pts  = row["predicted_pts"]
+        pred_ppg  = row["pred_ppg"]
+        last_pts  = row[TARGET_COL]
+        delta     = pred_pts - last_pts
         delta_sign = "+" if delta >= 0 else ""
-        logo_html = ""
+        delta_color = "#10b981" if delta >= 0 else "#ef4444"
         url = get_logo(team_abbr, teams)
-        if url:
-            logo_html = f'<img src="{url}" width="40" style="margin:6px 0;">'
-        with col:
-            delta_color = "#10b981" if delta >= 0 else "#ef4444"
-            st.markdown(f"""
-            <div class="stat-card">
-                <div class="label">{medal}</div>
-                {logo_html}
-                <div class="value" style="font-size:1.1rem; line-height:1.3;">{player}</div>
-                <div class="sub">{team_abbr} &nbsp;·&nbsp; {pos}</div>
-                <div style="font-size:1.45rem; font-weight:800; color:#f59e0b; margin:8px 0 2px;">
-                    {pred_pts:,.1f}&thinsp;<span style="font-size:0.78rem; font-weight:500; color:#8b8fa8;">proj pts</span>
-                </div>
-                <div class="sub">{pred_ppg} PPG</div>
-                <div class="sub" style="margin-top:4px;">
-                    <span style="color:{delta_color}; font-weight:600;">{delta_sign}{delta:,.1f}</span>
-                    <span style="color:#8b8fa8;"> vs last season</span>
-                </div>
+        logo_html = (f'<img src="{url}" width="40" style="margin:6px 0 4px;">'
+                     if url else "")
+        cards_html += f"""
+        <div class="stat-card" style="flex:1; min-width:0; text-align:center;">
+            <div class="label">{medal}</div>
+            {logo_html}
+            <div class="value" style="font-size:1.1rem; line-height:1.3; word-break:break-word;">{player}</div>
+            <div class="sub">{team_abbr} &nbsp;·&nbsp; {pos_label}</div>
+            <div style="font-size:1.45rem; font-weight:800; color:#f59e0b; margin:8px 0 2px;">
+                {pred_pts:,.1f}<span style="font-size:0.78rem; font-weight:500; color:#8b8fa8;">&thinsp;proj pts</span>
             </div>
-            """, unsafe_allow_html=True)
+            <div class="sub">{pred_ppg} PPG</div>
+            <div class="sub" style="margin-top:4px;">
+                <span style="color:{delta_color}; font-weight:600;">{delta_sign}{delta:,.1f}</span>
+                <span style="color:#8b8fa8;"> vs last season</span>
+            </div>
+        </div>"""
+    cards_html += "</div>"
+    st.markdown(cards_html, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
