@@ -51,7 +51,9 @@ seasons = sorted(weekly["season"].dropna().unique().astype(int), reverse=True)
 sel_season = st.sidebar.selectbox("Season", seasons, key=f"fan_season_{_v}")
 
 scoring = st.sidebar.radio("Scoring Format", ["PPR", "Standard", "Half PPR"], key=f"fan_scoring_{_v}")
-pts_col = "fantasy_points_ppr" if scoring == "PPR" else "fantasy_points"
+# Determine preferred points column; will be validated/overridden after data is loaded
+_pts_col_pref = "fantasy_points_ppr" if scoring == "PPR" else "fantasy_points"
+pts_col = _pts_col_pref
 
 sel_pos = st.sidebar.selectbox("Position", ["All"] + FANTASY_POSITIONS, key=f"fan_pos_{_v}")
 
@@ -94,6 +96,14 @@ if df.empty:
 if scoring == "Half PPR" and "fantasy_points" in df.columns and "fantasy_points_ppr" in df.columns:
     df["half_ppr"] = ((df["fantasy_points"] + df["fantasy_points_ppr"]) / 2).round(2)
     pts_col = "half_ppr"
+elif pts_col not in df.columns:
+    # Fallback: try the other known fantasy points column
+    fallback = "fantasy_points" if pts_col == "fantasy_points_ppr" else "fantasy_points_ppr"
+    if fallback in df.columns:
+        pts_col = fallback
+    else:
+        st.error(f"Fantasy points column not found. Available columns: {list(df.columns[:20])}")
+        st.stop()
 
 # ── Aggregate season totals ──────────────────────────────────────────────────
 group_cols = [name_col]

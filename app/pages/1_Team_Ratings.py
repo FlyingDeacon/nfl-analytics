@@ -177,6 +177,7 @@ st.session_state["_sc_base"]    = _scatter_base
 st.session_state["_sc_teams"]   = teams
 st.session_state["_sc_div_col"] = div_col
 st.session_state["_sc_conf_col"] = conf_col
+st.session_state["_sc_tr_v"]    = _v  # pass reset version into fragment
 
 
 @st.fragment
@@ -185,6 +186,7 @@ def _scatter_section():
     _teams       = st.session_state["_sc_teams"]
     _div_col     = st.session_state["_sc_div_col"]
     _conf_col    = st.session_state["_sc_conf_col"]
+    _fv          = st.session_state.get("_sc_tr_v", 0)  # version for reset
 
     # Filter row — two small columns above the chart
     fcol1, fcol2, _ = st.columns([1, 1, 3])
@@ -192,7 +194,7 @@ def _scatter_section():
     with fcol1:
         if _conf_col:
             confs    = ["All"] + sorted(scatter_base[_conf_col].dropna().unique().tolist())
-            sel_conf = st.selectbox("Conference", confs, key="s_conf")
+            sel_conf = st.selectbox("Conference", confs, key=f"s_conf_{_fv}")
         else:
             sel_conf = "All"
 
@@ -201,7 +203,7 @@ def _scatter_section():
             div_src = (scatter_base if sel_conf == "All"
                        else scatter_base[scatter_base[_conf_col] == sel_conf])
             divs    = ["All"] + sorted(div_src[_div_col].dropna().unique().tolist())
-            sel_div = st.selectbox("Division", divs, key="s_div")
+            sel_div = st.selectbox("Division", divs, key=f"s_div_{_fv}")
         else:
             sel_div = "All"
 

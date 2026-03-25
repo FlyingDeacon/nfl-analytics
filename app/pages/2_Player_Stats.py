@@ -27,6 +27,12 @@ st.markdown("""
 <div class="gold-rule"></div>
 """, unsafe_allow_html=True)
 
+# ── Quick actions ────────────────────────────────────────────────────────────
+col1, col2, col3 = st.columns([2, 0.5, 2])
+with col1:
+    if st.button("🔍 Search Individual Player", use_container_width=True, key="btn_player_search"):
+        st.switch_page("pages/6_Player_Search.py")
+
 weekly = load_weekly()
 teams  = load_teams()
 

@@ -100,9 +100,9 @@ if view == "Results":
 
     if week_col:
         weeks = sorted(res[week_col].dropna().unique())
-        sel_week = st.selectbox("Week", ["All Weeks"] + [int(w) for w in weeks])
+        sel_week = st.selectbox("Week", ["All Weeks"] + [int(w) for w in weeks], key=f"sch_week_res_{_v}")
         if sel_week != "All Weeks":
-            res = res[res[week_col] == sel_week]
+            res = res[res[week_col].astype(float) == float(sel_week)]
 
     if res.empty:
         st.info("No completed games for the selected filters.")
@@ -136,9 +136,9 @@ else:
     elif home_team_col and away_team_col:
         if week_col:
             weeks = sorted(upc[week_col].dropna().unique())
-            sel_week = st.selectbox("Week", ["All Weeks"] + [int(w) for w in weeks])
+            sel_week = st.selectbox("Week", ["All Weeks"] + [int(w) for w in weeks], key=f"sch_week_upc_{_v}")
             if sel_week != "All Weeks":
-                upc = upc[upc[week_col] == sel_week]
+                upc = upc[upc[week_col].astype(float) == float(sel_week)]
 
         for _, row in upc.iterrows():
             home = row.get(home_team_col, "?")
