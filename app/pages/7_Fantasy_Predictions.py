@@ -175,7 +175,7 @@ _v = st.session_state["pred_v"]
 
 sel_pos = st.sidebar.selectbox("Position", ["All"] + list(POSITION_FEATURES.keys()),
                                key=f"pred_pos_{_v}")
-top_n = st.sidebar.slider("Big Board Size", 10, 100, 50, key=f"pred_top_{_v}")
+top_n = st.sidebar.slider("Big Board Size", 10, 200, 50, key=f"pred_top_{_v}")
 
 if st.sidebar.button("Reset Filters", key="pred_reset", use_container_width=True):
     st.session_state["pred_v"] = _v + 1
