@@ -67,6 +67,14 @@ POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
 # Applied as post-model corrections on top of the statistical projection.
 # ══════════════════════════════════════════════════════════════════════════════
 
+# Confirmed 2026 starters who had injury-shortened seasons and fall below the
+# games minimum in the model. We force-inject them using their last qualifying
+# season's per-game rate, then apply any EXPERT_MULTIPLIERS on top.
+# Format: player_name → (player_id, position, 2026_team)
+FORCE_INCLUDE_STARTERS = {
+    "Kyler Murray": ("00-0035228", "QB", "MIN"),   # 5 games in 2025 (ARI injury); 17 games / 297 pts in 2024
+}
+
 # Players removed from 2026 board (not projected starters / retired / injury risk)
 EXPERT_REMOVE = {
     "Kirk Cousins",      # Not a projected 2026 starter
@@ -175,7 +183,7 @@ _v = st.session_state["pred_v"]
 
 sel_pos = st.sidebar.selectbox("Position", ["All"] + list(POSITION_FEATURES.keys()),
                                key=f"pred_pos_{_v}")
-top_n = st.sidebar.slider("Big Board Size", 10, 200, 50, key=f"pred_top_{_v}")
+top_n = st.sidebar.slider("Big Board Size", 10, 200, 100, key=f"pred_top_{_v}")
 
 if st.sidebar.button("Reset Filters", key="pred_reset", use_container_width=True):
     st.session_state["pred_v"] = _v + 1
@@ -317,7 +325,8 @@ def build_predictions(weekly_df: pd.DataFrame):
 all_preds_raw, hist_totals = build_predictions(weekly)
 
 
-def apply_expert_adjustments(df: pd.DataFrame) -> pd.DataFrame:
+def apply_expert_adjustments(df: pd.DataFrame,
+                              raw_weekly: pd.DataFrame | None = None) -> pd.DataFrame:
     """Apply NFL Expert 2026 roster corrections on top of the statistical model."""
     if df.empty:
         return df
@@ -331,13 +340,70 @@ def apply_expert_adjustments(df: pd.DataFrame) -> pd.DataFrame:
         subset=[name_col, pos_col], keep="first"
     )
 
-    # 3. Team corrections (trades / FA signings not captured in historical data)
+    # 3. Force-inject confirmed starters filtered out by injury-shortened seasons
+    if raw_weekly is not None and not raw_weekly.empty:
+        reg_w = raw_weekly.copy()
+        if "season_type" in reg_w.columns:
+            reg_w = reg_w[reg_w["season_type"] == "REG"]
+
+        for player_name, (player_id, pos, team_2026) in FORCE_INCLUDE_STARTERS.items():
+            already_in = out[name_col].str.contains(player_name, case=False, na=False).any()
+            if already_in:
+                continue
+
+            p_data = reg_w[reg_w[name_col] == player_name].copy()
+            if p_data.empty:
+                continue
+
+            # Find most recent qualifying season
+            p_seas = (p_data.groupby("season")[TARGET_COL]
+                      .agg(games="count", total_pts="sum")
+                      .reset_index())
+            min_g = MIN_GAMES_BY_POS.get(pos, 6)
+            qualifying = p_seas[p_seas["games"] >= min_g].sort_values("season", ascending=False)
+            if qualifying.empty:
+                continue
+
+            best = qualifying.iloc[0]
+            ppg = float(best["total_pts"]) / float(best["games"])
+
+            # Project 2026 games: blend best-season games with a recovery discount
+            games_2025 = int(p_seas[p_seas["season"] == PREDICTION_YEAR - 1]["games"].sum()
+                             if (PREDICTION_YEAR - 1) in p_seas["season"].values else 0)
+            proj_g = round(min(MAX_PROJ_GAMES,
+                               max(float(min_g),
+                                   0.65 * float(best["games"]) + 0.35 * DEFAULT_PROJ_GAMES)), 1)
+            proj_pts = round(ppg * proj_g, 1)
+
+            # 2025 actual (partial season) for "last_season_pts" column
+            actual_2025 = float(p_data[p_data["season"] == PREDICTION_YEAR - 1][TARGET_COL].sum())
+            display_games = games_2025 if games_2025 > 0 else float(best["games"])
+
+            new_row: dict = {
+                name_col:      player_name,
+                pos_col:       pos,
+                "season":      PREDICTION_YEAR - 1,
+                "games":       display_games,
+                TARGET_COL:    round(actual_2025, 1) if actual_2025 > 0 else round(float(best["total_pts"]), 1),
+                "predicted_pts": proj_pts,
+                "proj_games":  proj_g,
+                "pred_ppg":    round(ppg, 2),
+                "rmse":        0.0,
+            }
+            if track_col != name_col:
+                new_row[track_col] = player_id
+            if team_col:
+                new_row[team_col] = team_2026
+
+            out = pd.concat([out, pd.DataFrame([new_row])], ignore_index=True)
+
+    # 4. Team corrections (trades / FA signings not captured in historical data)
     if team_col:
         for player_fragment, new_team in EXPERT_TEAM_CORRECTIONS.items():
             mask = out[name_col].str.contains(player_fragment, case=False, na=False)
             out.loc[mask, team_col] = new_team
 
-    # 4. Named point multipliers
+    # 5. Named point multipliers
     for player_fragment, mult in EXPERT_MULTIPLIERS.items():
         mask = out[name_col].str.contains(player_fragment, case=False, na=False)
         if mask.any():
@@ -347,7 +413,7 @@ def apply_expert_adjustments(df: pd.DataFrame) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
-all_preds = apply_expert_adjustments(all_preds_raw)
+all_preds = apply_expert_adjustments(all_preds_raw, weekly)
 
 if all_preds.empty:
     st.error("Not enough historical data to build predictions.")
