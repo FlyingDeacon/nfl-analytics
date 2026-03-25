@@ -333,16 +333,21 @@ if len(preds) >= 3:
         if url:
             logo_html = f'<img src="{url}" width="40" style="margin:6px 0;">'
         with col:
+            delta_color = "#10b981" if delta >= 0 else "#ef4444"
             st.markdown(f"""
             <div class="stat-card">
                 <div class="label">{medal}</div>
                 {logo_html}
-                <div class="value" style="font-size:1.15rem;">{player}</div>
-                <div class="sub">{team_abbr} · {pos}</div>
-                <div style="font-size:1.5rem; font-weight:800; color:var(--gold); margin:8px 0;">
-                    {pred_pts:,.1f} <span style="font-size:0.8rem; font-weight:400;">proj pts</span>
+                <div class="value" style="font-size:1.1rem; line-height:1.3;">{player}</div>
+                <div class="sub">{team_abbr} &nbsp;·&nbsp; {pos}</div>
+                <div style="font-size:1.45rem; font-weight:800; color:#f59e0b; margin:8px 0 2px;">
+                    {pred_pts:,.1f}&thinsp;<span style="font-size:0.78rem; font-weight:500; color:#8b8fa8;">proj pts</span>
                 </div>
-                <div class="sub">{pred_ppg} PPG · <span style="color:{'#10b981' if delta >= 0 else '#ef4444'};">{delta_sign}{delta:,.1f} vs last season</span></div>
+                <div class="sub">{pred_ppg} PPG</div>
+                <div class="sub" style="margin-top:4px;">
+                    <span style="color:{delta_color}; font-weight:600;">{delta_sign}{delta:,.1f}</span>
+                    <span style="color:#8b8fa8;"> vs last season</span>
+                </div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -419,8 +424,8 @@ if chart_players:
         yaxis_title="Total Fantasy Points (PPR)",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         hovermode="x unified",
-        xaxis=dict(dtick=1),
     )
+    fig.update_xaxes(dtick=1)
 
     # Add a subtle annotation for the prediction zone
     fig.add_vrect(
