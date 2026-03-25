@@ -63,6 +63,43 @@ POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
                    "WR": "Wide Receivers",  "TE": "Tight Ends"}
 
 # ══════════════════════════════════════════════════════════════════════════════
+# NFL EXPERT ADJUSTMENTS — 2026 roster intelligence
+# Applied as post-model corrections on top of the statistical projection.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Players removed from 2026 board (not projected starters / retired / injury)
+EXPERT_REMOVE = {
+    "Kirk Cousins",      # Not a projected 2026 starter
+    "Matthew Stafford",  # Aging (38), likely retired or backup
+}
+
+# Team corrections: player name fragment → corrected 2026 team abbreviation
+EXPERT_TEAM_CORRECTIONS = {
+    "Travis Etienne": "NO",   # Signed with New Orleans Saints (left JAX)
+}
+
+# Point multipliers based on NFL Expert contextual analysis.
+# Values < 1.0 = overvalued by the model; > 1.0 = undervalued.
+EXPERT_MULTIPLIERS = {
+    # ── Overvalued ────────────────────────────────────────────────────────────
+    "Travis Kelce":       0.82,   # Age cliff (36 in 2026); declining target share
+    "Derrick Henry":      0.85,   # RB age regression (32+); carry accumulation
+    "Patrick Mahomes":    0.95,   # Conservative ACL recovery / workload discount
+    "Puka Nacua":         0.87,   # Injury-prone; disappointing 2024 volume
+    "Trey McBride":       0.90,   # Regression expected after career-year spike
+    "Drake Maye":         0.88,   # Year-2 uncertainty; thin supporting cast
+    "Josh Allen":         0.95,   # Mild regression signal; still top-tier
+    # ── Undervalued ───────────────────────────────────────────────────────────
+    "Garrett Wilson":     1.12,   # Elite route runner; improved QB situation
+    "Jaxon Smith-Njigba": 1.15,   # WR1 role fully cemented; breakout expected
+    "Bucky Irving":       1.18,   # Projected RB1 in Tampa Bay
+    "Cam Skattebo":       1.20,   # High-volume Giants starter; data underweights him
+    "C.J. Stroud":        1.10,   # Bounce-back from shoulder injury
+    "Tucker Kraft":       1.15,   # Ascending TE1 in Green Bay
+    "Rashee Rice":        0.70,   # Suspension — available ~Week 7+ only (~10 games)
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
 # RIDGE REGRESSION (pure numpy — no sklearn dependency)
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -257,7 +294,40 @@ def build_predictions(weekly_df: pd.DataFrame):
     return all_preds, hist
 
 
-all_preds, hist_totals = build_predictions(weekly)
+all_preds_raw, hist_totals = build_predictions(weekly)
+
+
+def apply_expert_adjustments(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply NFL Expert 2026 roster corrections on top of the statistical model."""
+    if df.empty:
+        return df
+    out = df.copy()
+
+    # 1. Remove players not projected as 2026 starters
+    out = out[~out[name_col].isin(EXPERT_REMOVE)].copy()
+
+    # 2. Deduplicate (keep highest predicted_pts per player/position)
+    out = out.sort_values("predicted_pts", ascending=False).drop_duplicates(
+        subset=[name_col, pos_col], keep="first"
+    )
+
+    # 3. Team corrections (trades / FA signings not captured in historical data)
+    if team_col:
+        for player_fragment, new_team in EXPERT_TEAM_CORRECTIONS.items():
+            mask = out[name_col].str.contains(player_fragment, case=False, na=False)
+            out.loc[mask, team_col] = new_team
+
+    # 4. Named point multipliers
+    for player_fragment, mult in EXPERT_MULTIPLIERS.items():
+        mask = out[name_col].str.contains(player_fragment, case=False, na=False)
+        if mask.any():
+            out.loc[mask, "predicted_pts"] = (out.loc[mask, "predicted_pts"] * mult).round(1)
+            out.loc[mask, "pred_ppg"]      = (out.loc[mask, "pred_ppg"] * mult).round(2)
+
+    return out.reset_index(drop=True)
+
+
+all_preds = apply_expert_adjustments(all_preds_raw)
 
 if all_preds.empty:
     st.error("Not enough historical data to build predictions.")
@@ -454,10 +524,49 @@ st.markdown("---")
 # RISERS & FALLERS — per-position % change so QBs don't dominate raw-point deltas
 # ══════════════════════════════════════════════════════════════════════════════
 
-st.markdown("### 📈 Biggest Risers &nbsp;&nbsp; 📉 Biggest Fallers")
-st.caption("Ranked by % change within each position so QBs and skill players are compared fairly.")
+st.markdown("### 📈 Risers &nbsp;&nbsp; 📉 Fallers")
+st.caption("Ranked by % change within each position — QBs and skill positions compared fairly on relative improvement.")
 
 positions_to_show = [sel_pos] if sel_pos != "All" else list(POSITION_FEATURES.keys())
+
+def _rf_table_html(df: pd.DataFrame, is_riser: bool) -> str:
+    """Render a risers/fallers DataFrame as a crisp HTML table (no canvas → never blurry)."""
+    arrow = "▲" if is_riser else "▼"
+    hdr_color = "#10b981" if is_riser else "#ef4444"
+    rows_html = ""
+    for _, row in df.iterrows():
+        delta_pts = row.get("Δ Pts", 0)
+        delta_pct = row.get("Δ %",  0)
+        color = "#10b981" if float(delta_pts) >= 0 else "#ef4444"
+        sign  = "+" if float(delta_pts) >= 0 else ""
+        rows_html += (
+            f"<tr>"
+            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;'>{row.get('Player','')}</td>"
+            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;color:#8b8fa8;'>{row.get('Team','')}</td>"
+            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;text-align:right;font-weight:600;'>{row.get('2026 Proj','')}</td>"
+            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;text-align:right;color:#8b8fa8;'>{row.get('2025 Pts','')}</td>"
+            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;text-align:right;color:{color};font-weight:700;'>"
+            f"{sign}{delta_pts:+.1f}</td>"
+            f"<td style='padding:6px 10px;border-bottom:1px solid #2a2d3e;text-align:right;color:{color};font-weight:700;'>"
+            f"{sign}{delta_pct:+.1f}%</td>"
+            f"</tr>"
+        )
+    th = (
+        "<thead><tr style='background:#1a1d2e;'>"
+        + "".join(
+            f"<th style='padding:8px 10px;text-align:{'right' if i>1 else 'left'};"
+            f"font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;"
+            f"color:{hdr_color if col in ('Δ Pts','Δ %') else '#8b8fa8'};white-space:nowrap;'>{col}</th>"
+            for i, col in enumerate(["Player", "Team", "2026 Proj", "2025 Pts", "Δ Pts", "Δ %"])
+        )
+        + "</tr></thead>"
+    )
+    return (
+        f"<table style='width:100%;border-collapse:collapse;font-size:0.88rem;"
+        f"background:#12152a;border-radius:8px;overflow:hidden;'>"
+        f"{th}<tbody>{rows_html}</tbody></table>"
+    )
+
 
 for pos in positions_to_show:
     pos_preds = all_preds[all_preds[pos_col] == pos].copy()
@@ -470,27 +579,30 @@ for pos in positions_to_show:
     if pos_preds.empty:
         continue
 
-    st.markdown(f"**{POSITION_LABELS[pos]}**")
-    r_col, f_col = st.columns(2)
-
     rise_cols = [name_col, team_col, "predicted_pts", "last_season_pts", "change", "change_pct"]
     rise_cols = [c for c in rise_cols if c in pos_preds.columns]
     rise_rename = {name_col: "Player", team_col: "Team",
                    "predicted_pts": "2026 Proj", "last_season_pts": "2025 Pts",
                    "change": "Δ Pts", "change_pct": "Δ %"}
 
-    with r_col:
-        risers = pos_preds.nlargest(5, "change_pct")[rise_cols].copy()
-        st.dataframe(risers.rename(columns=rise_rename), hide_index=True,
-                     use_container_width=True,
-                     column_config={"Δ Pts": st.column_config.NumberColumn(format="%+.1f"),
-                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%")})
-    with f_col:
-        fallers = pos_preds.nsmallest(5, "change_pct")[rise_cols].copy()
-        st.dataframe(fallers.rename(columns=rise_rename), hide_index=True,
-                     use_container_width=True,
-                     column_config={"Δ Pts": st.column_config.NumberColumn(format="%+.1f"),
-                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%")})
+    risers  = pos_preds.nlargest(5,  "change_pct")[rise_cols].rename(columns=rise_rename)
+    fallers = pos_preds.nsmallest(5, "change_pct")[rise_cols].rename(columns=rise_rename)
+
+    st.markdown(f"**{POSITION_LABELS[pos]}**")
+    # Render as HTML tables — avoids canvas/AG Grid blur inside narrow columns
+    st.markdown(
+        f'<div style="display:flex;gap:16px;margin-bottom:20px;">'
+        f'<div style="flex:1;">'
+        f'<div style="font-size:0.8rem;color:#10b981;font-weight:700;margin-bottom:6px;">📈 Risers</div>'
+        f'{_rf_table_html(risers, is_riser=True)}'
+        f'</div>'
+        f'<div style="flex:1;">'
+        f'<div style="font-size:0.8rem;color:#ef4444;font-weight:700;margin-bottom:6px;">📉 Fallers</div>'
+        f'{_rf_table_html(fallers, is_riser=False)}'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.caption(
@@ -499,5 +611,8 @@ st.caption(
     "season totals, so a player who missed games due to injury is not penalised for low counting stats. "
     "Projected 2026 games blends the last two seasons (65 / 35 weighting) with a conservative ceiling of "
     f"{MAX_PROJ_GAMES} games. QB qualifier: {MIN_GAMES_BY_POS['QB']}+ games started. "
-    "Skill positions: 6+ games."
+    "Skill positions: 6+ games. "
+    "**Expert overlays** applied post-model: age-cliff discounts (Kelce, Henry), injury/suspension adjustments "
+    "(Rice, Mahomes), team corrections (Etienne → NO), and named boosts for undervalued breakout candidates "
+    "(Skattebo, Irving, JSN, Tucker Kraft)."
 )
