@@ -8,71 +8,8 @@ import numpy as np
 import plotly.graph_objects as go
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
-from utils.data_loader import load_ratings, load_teams, load_schedules, load_weekly, get_logo, add_ranks
+from utils.data_loader import load_ratings, load_teams, load_schedules, load_weekly, get_logo, add_ranks, load_depth_charts, load_divisions
 from utils.nav import render_sidebar_nav
-
-# ── Load depth charts CSV ─────────────────────────────────────────────────────
-@st.cache_data
-def load_depth_charts():
-    p = Path(__file__).resolve().parent.parent.parent / "data" / "raw" / "depth_charts.csv"
-    if p.exists():
-        return pd.read_csv(p)
-    return pd.DataFrame()
-
-# PFR roster team code map for depth chart fallback
-PFR_TEAM_CODES = {
-    'ARI': 'ari', 'ATL': 'atl', 'BAL': 'rav', 'BUF': 'buf', 'CAR': 'car',
-    'CHI': 'chi', 'CIN': 'cin', 'CLE': 'cle', 'DAL': 'dal', 'DEN': 'den',
-    'DET': 'det', 'GB': 'gnb', 'HOU': 'hou', 'IND': 'ind', 'JAX': 'jac',
-    'KC': 'kan', 'LAR': 'ram', 'LA': 'ram', 'LAC': 'lac', 'LV': 'rai',
-    'MIA': 'mia', 'MIN': 'min', 'NE': 'nwe', 'NO': 'nor', 'NYG': 'nyg',
-    'NYJ': 'nyj', 'PHI': 'phi', 'PIT': 'pit', 'SEA': 'sea', 'SF': 'sfo',
-    'TB': 'tam', 'TEN': 'ten', 'WAS': 'wsh'
-}
-
-@st.cache_data(show_spinner=False)
-def load_pfr_depth_chart(team_abbr: str, season: int) -> pd.DataFrame:
-    import requests
-
-    pfr_code = PFR_TEAM_CODES.get(team_abbr.upper(), team_abbr.lower())
-    url = f"https://www.pro-football-reference.com/teams/{pfr_code}/{season}_roster.htm"
-
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (compatible; NFL-Analytics/1.0; +https://github.com/)' }
-
-    try:
-        r = requests.get(url, headers=headers, timeout=20)
-        r.raise_for_status()
-        tables = pd.read_html(r.text, attrs={'id': 'roster'})
-        if not tables:
-            return pd.DataFrame()
-
-        roster_df = tables[0].copy()
-        if 'Player' not in roster_df.columns or 'Pos' not in roster_df.columns:
-            return pd.DataFrame()
-
-        # Normalize to depth chart format used in this app
-        roster_df = roster_df.loc[:, roster_df.columns.intersection(['No.', 'Player', 'Pos'])]
-        roster_df = roster_df.rename(columns={'No.': 'jersey_number', 'Player': 'player_name', 'Pos': 'position'})
-        roster_df['team'] = team_abbr
-        roster_df['season'] = season
-
-        # Depth order per position from roster listing order
-        roster_df['depth_order'] = roster_df.groupby('position').cumcount() + 1
-
-        # set side by pos type
-        offense = {'QB', 'RB', 'FB', 'WR', 'TE'}
-        defense = {'DE', 'DT', 'NT', 'DL', 'EDGE', 'LB', 'ILB', 'OLB', 'MLB', 'CB', 'S', 'SS', 'FS', 'DB'}
-        roster_df['side'] = roster_df['position'].apply(
-            lambda p: 'offense' if p in offense else ('defense' if p in defense else 'offense')
-        )
-
-        return roster_df
-
-    except Exception as e:
-        st.warning(f"Unable to load PFR depth chart for {team_abbr} {season}: {e}")
-        return pd.DataFrame()
-
 
 st.set_page_config(page_title="Team Profile · NFL", page_icon="🏟️", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
@@ -380,12 +317,8 @@ def _merge_stats(dc_pos_df):
     return merged.drop(columns=["player_display_name"], errors="ignore")
 
 
-# Get team's depth chart rows from the CSV (fallback to PFR roster if missing)
+# Get team's depth chart rows from nflverse data
 _dc = depth_charts[(depth_charts["team"] == sel_team)].copy() if not depth_charts.empty else pd.DataFrame()
-
-if _dc.empty:
-    # PFR team roster page for depth chart (example: Panthers 2025)
-    _dc = load_pfr_depth_chart(sel_team, sel_season)
 
 # preserve season label for caption
 if not _dc.empty and "season" in _dc.columns:

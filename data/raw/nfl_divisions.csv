@@ -1,0 +1,33 @@
+team,team_abbr,team_name,division,conference
+Buffalo Bills,BUF,Buffalo Bills,AFC East,AFC
+Miami Dolphins,MIA,Miami Dolphins,AFC East,AFC
+New England Patriots,NE,New England Patriots,AFC East,AFC
+New York Jets,NYJ,New York Jets,AFC East,AFC
+Baltimore Ravens,BAL,Baltimore Ravens,AFC North,AFC
+Cincinnati Bengals,CIN,Cincinnati Bengals,AFC North,AFC
+Cleveland Browns,CLE,Cleveland Browns,AFC North,AFC
+Pittsburgh Steelers,PIT,Pittsburgh Steelers,AFC North,AFC
+Houston Texans,HOU,Houston Texans,AFC South,AFC
+Indianapolis Colts,IND,Indianapolis Colts,AFC South,AFC
+Jacksonville Jaguars,JAX,Jacksonville Jaguars,AFC South,AFC
+Tennessee Titans,TEN,Tennessee Titans,AFC South,AFC
+Denver Broncos,DEN,Denver Broncos,AFC West,AFC
+Kansas City Chiefs,KC,Kansas City Chiefs,AFC West,AFC
+Las Vegas Raiders,LV,Las Vegas Raiders,AFC West,AFC
+Los Angeles Chargers,LAC,Los Angeles Chargers,AFC West,AFC
+Philadelphia Eagles,PHI,Philadelphia Eagles,NFC East,NFC
+Washington Commanders,WAS,Washington Commanders,NFC East,NFC
+Dallas Cowboys,DAL,Dallas Cowboys,NFC East,NFC
+New York Giants,NYG,New York Giants,NFC East,NFC
+Detroit Lions,DET,Detroit Lions,NFC North,NFC
+Minnesota Vikings,MIN,Minnesota Vikings,NFC North,NFC
+Green Bay Packers,GB,Green Bay Packers,NFC North,NFC
+Chicago Bears,CHI,Chicago Bears,NFC North,NFC
+Tampa Bay Buccaneers,TB,Tampa Bay Buccaneers,NFC South,NFC
+Atlanta Falcons,ATL,Atlanta Falcons,NFC South,NFC
+Carolina Panthers,CAR,Carolina Panthers,NFC South,NFC
+New Orleans Saints,NO,New Orleans Saints,NFC South,NFC
+Los Angeles Rams,LAR,Los Angeles Rams,NFC West,NFC
+Seattle Seahawks,SEA,Seattle Seahawks,NFC West,NFC
+Arizona Cardinals,ARI,Arizona Cardinals,NFC West,NFC
+San Francisco 49ers,SF,San Francisco 49ers,NFC West,NFC

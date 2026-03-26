@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Optional
 import pandas as pd
 import streamlit as st
+import urllib.request
+import urllib.error
 
 
 def get_base_dir() -> Path:
@@ -86,6 +88,50 @@ def _normalize_name(name: str) -> str:
     name = re.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv)$", "", name)
     name = re.sub(r"[.\-']", "", name)
     return re.sub(r"\s+", " ", name).strip()
+
+
+@st.cache_data(show_spinner=False, ttl=86400)  # Cache for 24 hours
+def load_depth_charts() -> pd.DataFrame:
+    """Load depth charts from local cache or nflverse GitHub releases.
+
+    Data source: https://github.com/nflverse/nflverse-data
+    Falls back to local CSV if network fetch fails.
+    """
+    base_dir = get_base_dir()
+    local_path = base_dir / "data" / "raw" / "depth_charts.csv"
+
+    # Try local cache first
+    if local_path.exists():
+        try:
+            df = pd.read_csv(local_path)
+            if not df.empty:
+                return df
+        except Exception:
+            pass
+
+    # Try fetching from nflverse GitHub release
+    try:
+        url = "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2025.csv"
+        with urllib.request.urlopen(url, timeout=10) as response:
+            df = pd.read_csv(response)
+            # Save to local cache for offline use
+            df.to_csv(local_path, index=False)
+            return df
+    except (urllib.error.URLError, urllib.error.HTTPError, Exception) as e:
+        st.warning(f"Could not fetch latest depth charts: {e}. Using local cache if available.")
+        if local_path.exists():
+            return pd.read_csv(local_path)
+        return pd.DataFrame()
+
+
+@st.cache_data(show_spinner=False)
+def load_divisions() -> pd.DataFrame:
+    """Load NFL divisions and conference structure."""
+    path = get_base_dir() / "data" / "raw" / "nfl_divisions.csv"
+    if not path.exists():
+        st.warning(f"nfl_divisions.csv not found at {path}.")
+        return pd.DataFrame()
+    return pd.read_csv(path)
 
 
 def add_ranks(df: pd.DataFrame) -> pd.DataFrame:
