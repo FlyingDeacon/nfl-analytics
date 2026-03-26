@@ -179,6 +179,15 @@ EXPERT_MULTIPLIERS = {
     "Matthew Stafford":   1.10,  # Returning for 2026 with LAR; strong recent 2023-2025 performances
 }
 
+# 2026 projected games overrides — ONLY for players with confirmed game-count limitations.
+# Everyone else defaults to NFL_GAMES (17): healthy starters are assumed to play a full season.
+# PPG penalties for injury history are handled separately via EXPERT_MULTIPLIERS.
+# Format: player_name_fragment → projected games in 2026
+PROJ_GAMES_OVERRIDES = {
+    "Rashee Rice":      10,   # NFL suspension; available ~Week 7+ (~10 games projected)
+    "Patrick Mahomes":  14,   # ACL recovery; conservative Week 1 availability uncertain
+}
+
 # ══════════════════════════════════════════════════════════════════════════════
 # RIDGE REGRESSION (pure numpy — no sklearn dependency)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -327,28 +336,16 @@ def build_predictions(weekly_df: pd.DataFrame):
         raw_pred = np.clip(Xlat @ coefs + intercept, 0, None)
 
         # ── Project 2026 games played ────────────────────────────────────────
-        # Blend last two seasons' games to smooth out injury anomalies.
-        # A player who played 8/17 games likely recovers toward ~13 next year.
-        games_lat = lat["games"].values.astype(float)
-        if prev_szn is not None:
-            prev_map = (pos_df[pos_df["season"] == prev_szn]
-                        .drop_duplicates(track_col)
-                        .set_index(track_col)["games"])
-            games_prev = np.array([
-                float(prev_map.loc[pid]) if pid in prev_map.index else DEFAULT_PROJ_GAMES
-                for pid in lat[track_col].values
-            ])
-        else:
-            games_prev = np.full(len(lat), DEFAULT_PROJ_GAMES)
+        # All healthy starters are assumed to play the full 17-game season.
+        # Specific exceptions (suspensions, confirmed carry-over injuries) are
+        # applied post-model via PROJ_GAMES_OVERRIDES.
+        # games_lat is retained to drive the adj_factor: per-game efficiency from
+        # an injury-shortened 2025 still needs scaling to a full 17-game season.
+        games_lat  = lat["games"].values.astype(float)
+        proj_games = np.full(len(lat), float(NFL_GAMES))   # 17 by default
 
-        proj_games = np.clip(
-            0.65 * games_lat + 0.35 * games_prev,
-            a_min=float(min_g),
-            a_max=MAX_PROJ_GAMES,
-        )
-
-        # Damped games-ratio adjustment (don't fully extrapolate injured players)
-        # A player who played 8 games → projected 13: adjustment ≈ +31 % of gap
+        # adj_factor: scale raw_pred (trained on season totals) to 17 games.
+        # Damped at 0.45 so a player who only played 4 games isn't over-extrapolated.
         adj_factor = 1.0 + (proj_games / games_lat.clip(min=1) - 1.0) * 0.45
         pred_pts   = np.clip(raw_pred * adj_factor, 0, None)
 
@@ -473,6 +470,26 @@ def apply_expert_adjustments(df: pd.DataFrame,
 
 
 all_preds = apply_expert_adjustments(all_preds_raw, weekly)
+
+
+def apply_games_overrides(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply confirmed 2026 game-count reductions for suspensions / carry-over injuries.
+
+    All other players have already been projected at NFL_GAMES (17) inside build_predictions.
+    This function only touches players in PROJ_GAMES_OVERRIDES.
+    Predicted points are recalculated as  pred_ppg × new_proj_games  so the per-game
+    efficiency (already adjusted by EXPERT_MULTIPLIERS) is preserved exactly.
+    """
+    out = df.copy()
+    for player_fragment, games in PROJ_GAMES_OVERRIDES.items():
+        mask = out[name_col].str.contains(player_fragment, case=False, na=False)
+        if mask.any():
+            out.loc[mask, "proj_games"]    = float(games)
+            out.loc[mask, "predicted_pts"] = (out.loc[mask, "pred_ppg"] * games).round(1)
+    return out.reset_index(drop=True)
+
+
+all_preds = apply_games_overrides(all_preds)
 
 
 def _assign_vor(df: pd.DataFrame) -> pd.DataFrame:
