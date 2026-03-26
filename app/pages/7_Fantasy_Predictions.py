@@ -185,7 +185,7 @@ EXPERT_MULTIPLIERS = {
     "Bijan Robinson":      1.05,  # ATL workhorse — QB instability doesn't hurt elite RBs the same way
     "George Pickens":      1.10,  # DAL move — Dak Prescott elite passer; Pickens is WR1 with elite QB
     "Dak Prescott":        1.06,  # Pickens arrival gives elite deep threat; DAL offense boosted
-    "Matthew Stafford":    1.12,  # MVP-caliber 2025 LAR; Adams + Nacua + incoming draft WR depth
+    "Matthew Stafford":    1.05,  # MVP-caliber 2025 LAR; Adams + Nacua + incoming draft WR depth
     "Rome Odunze":         0.92,  # Forced into CHI WR1 role after Moore traded; more targets but weaker corps
     "Jalen Coker":         1.15,  # Confirmed CAR WR2; ascending role with Bryce Young improvement
 }
