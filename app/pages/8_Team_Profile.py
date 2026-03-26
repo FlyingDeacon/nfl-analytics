@@ -23,6 +23,18 @@ render_sidebar_nav(current_page="8_Team_Profile")
 if st.button("← Back to Team Ratings", key="back_to_ratings"):
     st.switch_page("pages/1_Team_Ratings.py")
 
+# ── Page header ─────────────────────────────────────────────────────────────
+st.markdown("""
+<div class="nfl-page-header">
+    <div class="icon">🏟️</div>
+    <div>
+        <div class="title">2025 Team Profile</div>
+        <div class="subtitle">Roster · Depth chart · Recent performance</div>
+    </div>
+</div>
+<div class="gold-rule"></div>
+""", unsafe_allow_html=True)
+
 # ── Load data (pass mtime so cache auto-invalidates when files change) ────────
 _base = get_base_dir()
 ratings      = load_ratings(_mtime=_file_mtime(_base / "data/processed/team_ratings.csv"))
