@@ -106,6 +106,21 @@ sel_team = st.sidebar.selectbox(
     index=team_list.index(default_team),
     key="tp_team",
 )
+
+# Inline team picker for direct page filter
+page_sel_team = st.selectbox(
+    "Quick Select Team",
+    team_list,
+    index=team_list.index(sel_team),
+    key="tp_team_page",
+    help="Use this dropdown on the page to switch team profiles without the sidebar.",
+)
+if page_sel_team != sel_team:
+    st.session_state["tp_team"] = page_sel_team
+    st.session_state["profile_team"] = page_sel_team
+    st.experimental_rerun()
+
+sel_team = page_sel_team
 st.session_state["profile_team"] = sel_team
 
 # ── Team metadata ────────────────────────────────────────────────────────────
@@ -193,10 +208,24 @@ ow, ol, ot = calc_record(reg_games, sel_team)
 overall_rec = f"{ow}–{ol}" + (f"–{ot}" if ot else "")
 
 # Division opponents
-div_teams = (
-    teams_df[teams_df["team_division"] == team_div][abbr_col].tolist()
-    if team_div else []
-)
+if team_div:
+    div_teams = teams_df.loc[
+        teams_df["team_division"] == team_div,
+        abbr_col,
+    ].dropna().unique().tolist()
+else:
+    div_teams = []
+
+# Ensure selected team is included and keep unique entries
+if sel_team not in div_teams:
+    div_teams.append(sel_team)
+
+if len(div_teams) > 4:
+    st.warning(
+        f"Division {team_div} has {len(div_teams)} teams in source data; showing first 4 teams only."
+    )
+    div_teams = div_teams[:4]
+
 div_opponents = [t for t in div_teams if t != sel_team]
 
 div_games = reg_games[
