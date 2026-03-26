@@ -328,18 +328,35 @@ def _merge_stats(dc_pos_df):
     """Merge depth chart rows with weekly stats by player name."""
     if _stats.empty:
         return dc_pos_df
-    return dc_pos_df.merge(
+
+    left_key = "player_name" if "player_name" in dc_pos_df.columns else "Player"
+    merged = dc_pos_df.merge(
         _stats.drop(columns=["fantasy_points_ppr"], errors="ignore"),
-        left_on="player_name", right_on="player_display_name", how="left"
-    ).drop(columns=["player_display_name"], errors="ignore")
+        left_on=left_key,
+        right_on="player_display_name",
+        how="left",
+        validate="m:m",
+    )
+
+    # Keep existing depth chart name column as-is (Player or player_name)
+    if left_key != "player_name" and "player_name" in merged.columns:
+        merged = merged.drop(columns=["player_name"], errors="ignore")
+
+    return merged.drop(columns=["player_display_name"], errors="ignore")
 
 
-# Get team's depth chart rows from the CSV
-_dc = depth_charts[
-    (depth_charts["team"] == sel_team)
-].copy() if not depth_charts.empty else pd.DataFrame()
+# Get team's depth chart rows from the CSV (fallback to PFR roster if missing)
+_dc = depth_charts[(depth_charts["team"] == sel_team)].copy() if not depth_charts.empty else pd.DataFrame()
 
-dc_season = int(_dc["season"].mode()[0]) if not _dc.empty and "season" in _dc.columns else sel_season
+if _dc.empty:
+    # PFR team roster page for depth chart (example: Panthers 2025)
+    _dc = load_pfr_depth_chart(sel_team, sel_season)
+
+# preserve season label for caption
+if not _dc.empty and "season" in _dc.columns:
+    dc_season = int(_dc["season"].mode()[0])
+else:
+    dc_season = sel_season
 
 # ══════════════════════════════════════════════════════════════════════════════
 # OFFENSIVE DEPTH CHART
