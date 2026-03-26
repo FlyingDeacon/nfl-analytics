@@ -641,20 +641,40 @@ for c in disp.select_dtypes("float").columns:
     if c != "change_pct":
         disp[c] = disp[c].round(1)
 
+# Add logo URLs for team column if it exists
+teams_df = load_teams()
+column_config_dict = {
+    "2026 Proj":  st.column_config.NumberColumn(format="%.1f"),
+    "VOR":        st.column_config.NumberColumn(format="%.1f",
+                      help="Value Over Replacement — positional scarcity-adjusted score. "
+                           "Accounts for how scarce elite players are at each position."),
+    "Round":      st.column_config.TextColumn(help="Suggested fantasy draft round (10-team PPR)"),
+    "Proj PPG":   st.column_config.NumberColumn(format="%.2f"),
+    "Δ Pts":      st.column_config.NumberColumn(format="%+.1f"),
+    "Δ %":        st.column_config.NumberColumn(format="%+.1f%%"),
+}
+
+if team_col:
+    disp["_logo_url"] = disp[team_col].apply(lambda t: get_logo(t, teams_df) if pd.notna(t) else "")
+    column_config_dict["_logo_url"] = st.column_config.ImageColumn(
+        label="",
+        width="small",
+    )
+
+disp_renamed = disp.rename(columns=rename_map)
+if "_logo_url" in disp.columns:
+    # Reorder to put logo before Team
+    cols = list(disp_renamed.columns)
+    if "_logo_url" in cols:
+        cols.remove("_logo_url")
+        cols.insert(cols.index("Team"), "_logo_url")
+    disp_renamed = disp_renamed[cols]
+
 st.dataframe(
-    disp.rename(columns=rename_map),
+    disp_renamed,
     hide_index=True,
     use_container_width=True,
-    column_config={
-        "2026 Proj":  st.column_config.NumberColumn(format="%.1f"),
-        "VOR":        st.column_config.NumberColumn(format="%.1f",
-                          help="Value Over Replacement — positional scarcity-adjusted score. "
-                               "Accounts for how scarce elite players are at each position."),
-        "Round":      st.column_config.TextColumn(help="Suggested fantasy draft round (10-team PPR)"),
-        "Proj PPG":   st.column_config.NumberColumn(format="%.2f"),
-        "Δ Pts":      st.column_config.NumberColumn(format="%+.1f"),
-        "Δ %":        st.column_config.NumberColumn(format="%+.1f%%"),
-    },
+    column_config=column_config_dict,
 )
 
 st.markdown("---")
@@ -703,21 +723,38 @@ for pos in positions_to_show:
     risers  = risers_df.rename(columns=rise_rename)
     fallers = fallers_df.rename(columns=rise_rename)
 
+    # Add logo URLs for team column
+    rise_col_config = {"Δ Pts": st.column_config.NumberColumn(format="%+.1f"),
+                       "Δ %":   st.column_config.NumberColumn(format="%+.1f%%"),
+                       "Rank":  st.column_config.NumberColumn(format="%d")}
+
+    if "Team" in risers.columns:
+        risers["_logo_url"] = risers["Team"].apply(lambda t: get_logo(t, teams_df) if pd.notna(t) else "")
+        fallers["_logo_url"] = fallers["Team"].apply(lambda t: get_logo(t, teams_df) if pd.notna(t) else "")
+
+        rise_col_config["_logo_url"] = st.column_config.ImageColumn(label="", width="small")
+
+        # Reorder to put logo before Team
+        risers_cols = list(risers.columns)
+        fallers_cols = list(fallers.columns)
+        for cols_list in [risers_cols, fallers_cols]:
+            if "_logo_url" in cols_list:
+                cols_list.remove("_logo_url")
+                cols_list.insert(cols_list.index("Team"), "_logo_url")
+        risers = risers[risers_cols]
+        fallers = fallers[fallers_cols]
+
     st.markdown(f"**{POSITION_LABELS[pos]}**")
     # Tabs give each table full width → no canvas blur that occurs inside narrow st.columns
     tab_r, tab_f = st.tabs(["📈 Risers", "📉 Fallers"])
     with tab_r:
         st.dataframe(risers, hide_index=True,
                      use_container_width=True,
-                     column_config={"Δ Pts": st.column_config.NumberColumn(format="%+.1f"),
-                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%"),
-                                    "Rank":  st.column_config.NumberColumn(format="%d")})
+                     column_config=rise_col_config)
     with tab_f:
         st.dataframe(fallers, hide_index=True,
                      use_container_width=True,
-                     column_config={"Δ Pts": st.column_config.NumberColumn(format="%+.1f"),
-                                    "Δ %":   st.column_config.NumberColumn(format="%+.1f%%"),
-                                    "Rank":  st.column_config.NumberColumn(format="%d")})
+                     column_config=rise_col_config)
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.caption(
