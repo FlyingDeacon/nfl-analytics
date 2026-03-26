@@ -67,12 +67,15 @@ POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
 # Applied as post-model corrections on top of the statistical projection.
 # ══════════════════════════════════════════════════════════════════════════════
 
-# Confirmed 2026 starters who had injury-shortened seasons and fall below the
-# games minimum in the model. We force-inject them using their last qualifying
-# season's per-game rate, then apply any EXPERT_MULTIPLIERS on top.
-# Format: player_name → (player_id, position, 2026_team)
+# Confirmed 2026 starters who fall below the model's games minimum.
+# Format: player_name → (player_id, position, 2026_team, manual_ppg_or_None)
+#   manual_ppg: use when ALL historical seasons are backup-level (no qualifying rate exists).
+#               Set to None to let the model find the last qualifying season automatically.
 FORCE_INCLUDE_STARTERS = {
-    "Kyler Murray": ("00-0035228", "QB", "MIN"),   # 5 games in 2025 (ARI injury); 17 games / 297 pts in 2024
+    "Kyler Murray": ("00-0035228", "QB", "MIN", None),   # 5 games 2025 (ARI injury); uses 2024 full season
+    "Malik Willis":  ("00-0038128", "QB", "MIA", 15.5),  # Never had a qualifying season as starter;
+                                                          # 15.5 PPG = conservative full-time starter estimate
+                                                          # (elite arm + elite mobility; 3yr/$67.5M confirmed)
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
@@ -81,13 +84,13 @@ EXPERT_REMOVE = {
     "Matthew Stafford",  # Likely retired / backup at age 38
     "Rob Gronkowski",    # Officially retired March 2026
     "Michael Penix",     # ACL surgery (Nov 2025); intended ATL starter (~60% Week 1) but removed pending recovery clearance
+    "Tua Tagovailoa",    # ATL backup/placeholder — NOT a 2026 starter; Penix is intended starter
 }
 
 # Team corrections: player name fragment → corrected 2026 team abbreviation
 # Sources: ESPN / NFL.com free agency trackers, March 2026
 EXPERT_TEAM_CORRECTIONS = {
     "Travis Etienne":    "NO",   # Signed with New Orleans Saints (left JAX)
-    "Tua Tagovailoa":    "ATL",  # 1-year deal with Falcons
     "Kyler Murray":      "MIN",  # 1-year deal with Vikings
     "Jaylen Waddle":     "DEN",  # Traded MIA → DEN (pairs with Bo Nix)
     "Michael Pittman":   "PIT",  # Traded IND → PIT
@@ -109,7 +112,6 @@ EXPERT_MULTIPLIERS = {
     "Drake Maye":        0.88,   # Year-2 uncertainty; thin supporting cast
     "Josh Allen":        0.95,   # Mild regression signal; still top-tier
     "Rashee Rice":       0.70,   # Suspension carryover — available ~Week 7+ (~10 games)
-    "Tua Tagovailoa":    0.75,   # ATL placeholder; Penix (ACL) is intended starter — ~40% Tua starts Week 1
     "Mike Evans":        0.80,   # Age 32 + injury (8 games in 2025); high-risk
     "De'Von Achane":     0.90,   # Willis (MIA starter, confirmed) is capable; Achane's volume/receiving role intact
     "Devon Achane":      0.90,   # Alt spelling — same player
@@ -346,38 +348,45 @@ def apply_expert_adjustments(df: pd.DataFrame,
         if "season_type" in reg_w.columns:
             reg_w = reg_w[reg_w["season_type"] == "REG"]
 
-        for player_name, (player_id, pos, team_2026) in FORCE_INCLUDE_STARTERS.items():
+        for player_name, (player_id, pos, team_2026, manual_ppg) in FORCE_INCLUDE_STARTERS.items():
             already_in = out[name_col].str.contains(player_name, case=False, na=False).any()
             if already_in:
                 continue
 
             p_data = reg_w[reg_w[name_col] == player_name].copy()
-            if p_data.empty:
-                continue
-
-            # Find most recent qualifying season
-            p_seas = (p_data.groupby("season")[TARGET_COL]
-                      .agg(games="count", total_pts="sum")
-                      .reset_index())
             min_g = MIN_GAMES_BY_POS.get(pos, 6)
-            qualifying = p_seas[p_seas["games"] >= min_g].sort_values("season", ascending=False)
-            if qualifying.empty:
-                continue
 
-            best = qualifying.iloc[0]
-            ppg = float(best["total_pts"]) / float(best["games"])
-
-            # Project 2026 games: blend best-season games with a recovery discount
-            games_2025 = int(p_seas[p_seas["season"] == PREDICTION_YEAR - 1]["games"].sum()
-                             if (PREDICTION_YEAR - 1) in p_seas["season"].values else 0)
-            proj_g = round(min(MAX_PROJ_GAMES,
-                               max(float(min_g),
-                                   0.65 * float(best["games"]) + 0.35 * DEFAULT_PROJ_GAMES)), 1)
-            proj_pts = round(ppg * proj_g, 1)
-
-            # 2025 actual (partial season) for "last_season_pts" column
-            actual_2025 = float(p_data[p_data["season"] == PREDICTION_YEAR - 1][TARGET_COL].sum())
-            display_games = games_2025 if games_2025 > 0 else float(best["games"])
+            if manual_ppg is not None:
+                # Player has no qualifying historical season (e.g. career backup turned starter).
+                # Use the expert-supplied PPG directly with a full projected-games estimate.
+                ppg      = float(manual_ppg)
+                proj_g   = float(MAX_PROJ_GAMES)   # assume full-season starter
+                proj_pts = round(ppg * proj_g, 1)
+                games_2025 = int(p_data[p_data["season"] == PREDICTION_YEAR - 1][TARGET_COL].count()
+                                 if not p_data.empty else 0)
+                actual_2025 = float(p_data[p_data["season"] == PREDICTION_YEAR - 1][TARGET_COL].sum()
+                                    if not p_data.empty else 0)
+                display_games = games_2025 if games_2025 > 0 else min_g
+            else:
+                if p_data.empty:
+                    continue
+                # Find most recent qualifying season
+                p_seas = (p_data.groupby("season")[TARGET_COL]
+                          .agg(games="count", total_pts="sum")
+                          .reset_index())
+                qualifying = p_seas[p_seas["games"] >= min_g].sort_values("season", ascending=False)
+                if qualifying.empty:
+                    continue
+                best      = qualifying.iloc[0]
+                ppg       = float(best["total_pts"]) / float(best["games"])
+                games_2025 = int(p_seas[p_seas["season"] == PREDICTION_YEAR - 1]["games"].sum()
+                                 if (PREDICTION_YEAR - 1) in p_seas["season"].values else 0)
+                proj_g    = round(min(MAX_PROJ_GAMES,
+                                     max(float(min_g),
+                                         0.65 * float(best["games"]) + 0.35 * DEFAULT_PROJ_GAMES)), 1)
+                proj_pts  = round(ppg * proj_g, 1)
+                actual_2025   = float(p_data[p_data["season"] == PREDICTION_YEAR - 1][TARGET_COL].sum())
+                display_games = games_2025 if games_2025 > 0 else float(best["games"])
 
             new_row: dict = {
                 name_col:      player_name,
