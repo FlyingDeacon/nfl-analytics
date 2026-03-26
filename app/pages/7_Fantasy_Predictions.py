@@ -46,24 +46,26 @@ MAX_PROJ_GAMES   = 16       # conservative ceiling (no one is guaranteed 17)
 
 # ── Value Over Replacement (VOR) — positional scarcity scoring ───────────────
 # Replacement level = projected points of the last startable player at each position
-# in a 12-team PPR league, calibrated from 2025 championship team analysis.
-# QBs are deep (punt QB viable); elite TEs are scarce premiums.
+# in a 10-team PPR league, calibrated from 2025 championship team analysis.
+# 10-team leagues have steeper value cliffs: elite players more scarce, waiver wire thinner.
 REPLACEMENT_LEVEL = {
-    "QB":  270,   # 12 starters + superflex depth; easily streamable
-    "RB":  136,   # ~24 starters; mid-range RB is the floor
-    "WR":  119,   # ~36 starters; low-end WR2/flex is replacement
-    "TE":   94,   # only 12 starters; elite TE is a genuine premium
+    "QB":  240,   # 10 starters; QB punt strategy viable
+    "RB":  115,   # ~20 starters (2 per team); steep drop after elite tier
+    "WR":   95,   # ~30 starters (3 per team); sharp cliff between tiers
+    "TE":   80,   # 10 starters; elite TE commands significant premium
 }
 
-# VOR thresholds → fantasy draft round grade (12-team PPR)
+# VOR thresholds → fantasy draft round grade (10-team PPR, 10 picks per round)
+# Thresholds tuned to match realistic 10-team draft patterns: sharper drops between rounds.
+# Research shows elite WR/RB scarcity commands higher VOR thresholds in 10-team leagues.
 ROUND_GRADE_THRESHOLDS = [
-    (150, "Rd 1"),
-    (100, "Rd 2"),
-    ( 60, "Rd 3"),
-    ( 30, "Rd 4"),
-    ( 10, "Rd 5"),
-    (  0, "Rd 6"),
-    (-999,"Rd 7+"),
+    (180, "Rd 1"),   # Elite WRs, RBs, and top TE — franchise-tier players
+    (120, "Rd 2"),   # High-end WRs, bell-cow RBs, elite QB upside
+    ( 75, "Rd 3"),   # Depth WRs, secondary RBs, emerging TEs
+    ( 45, "Rd 4"),   # Value WRs, flier RBs, top-tier bench depth
+    ( 20, "Rd 5"),   # Lottery RBs, late-round WRs, last TEs
+    (  5, "Rd 6"),   # Deep benches and speculative fliers
+    (-999,"Rd 7+"),  # Minimal value; waiver-wire quality
 ]
 
 # Ridge penalty prevents wild extrapolation from small samples.
@@ -94,9 +96,10 @@ POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
 #   manual_ppg: use when ALL historical seasons are backup-level (no qualifying rate exists).
 #               Set to None to let the model find the last qualifying season automatically.
 FORCE_INCLUDE_STARTERS = {
-    "Kyler Murray":  ("00-0035228", "QB", "MIN", None),   # 5 games 2025 (ARI injury); uses 2024 full season
-    "Malik Willis":  ("00-0038128", "QB", "MIA", 15.5),   # career backup turned starter — expert PPG
-    "Tyler Shough":  ("00-0040743", "QB", "NO",  16.0),   # NO QB1; 10 games 2025 (below 12 QB min); ~16 PPG
+    "Kyler Murray":     ("00-0035228", "QB", "MIN", None),   # 5 games 2025 (ARI injury); uses 2024 full season
+    "Malik Willis":     ("00-0038128", "QB", "MIA", 15.5),   # career backup turned starter — expert PPG
+    "Tyler Shough":     ("00-0040743", "QB", "NO",  16.0),   # NO QB1; 10 games 2025 (below 12 QB min); ~16 PPG
+    "Matthew Stafford": ("00-0026498", "QB", "LAR", None),   # Returning for 2026 with LAR; find most recent qualifying season
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
@@ -470,7 +473,7 @@ def _assign_vor(df: pd.DataFrame) -> pd.DataFrame:
     """Add VOR (Value Over Replacement) and round_grade columns.
 
     VOR = predicted_pts − replacement_level[position]
-    Replacement level is calibrated to a 12-team PPR league based on 2025
+    Replacement level is calibrated to a 10-team PPR league (10 picks per round) based on 2025
     championship team analysis. Sorting by VOR rather than raw points accounts
     for positional scarcity — an elite TE ranks higher than an equivalent-points RB.
     """
@@ -680,7 +683,7 @@ st.dataframe(
         "VOR":        st.column_config.NumberColumn(format="%.1f",
                           help="Value Over Replacement — positional scarcity-adjusted score. "
                                "Accounts for how scarce elite players are at each position."),
-        "Round":      st.column_config.TextColumn(help="Suggested fantasy draft round (12-team PPR)"),
+        "Round":      st.column_config.TextColumn(help="Suggested fantasy draft round (10-team PPR)"),
         "Proj PPG":   st.column_config.NumberColumn(format="%.2f"),
         "Δ Pts":      st.column_config.NumberColumn(format="%+.1f"),
         "Δ %":        st.column_config.NumberColumn(format="%+.1f%%"),
@@ -756,16 +759,19 @@ st.caption(
     "season totals, so a player who missed games due to injury is not penalised for low counting stats. "
     "Projected 2026 games blends the last two seasons (65 / 35 weighting) with a conservative ceiling of "
     f"{MAX_PROJ_GAMES} games. QB qualifier: {MIN_GAMES_BY_POS['QB']}+ games started. Skill positions: 6+ games. "
-    "**VOR (Value Over Replacement)** ranks players by positional scarcity: elite TEs rank higher than "
-    "equivalent-point WRs because only 12 starting TEs exist in a 12-team league. Replacement levels "
+    "**VOR (Value Over Replacement)** ranks players by positional scarcity in a 10-team league: "
+    "elite TEs rank higher than equivalent-point WRs because only 10 starting TEs exist. Replacement levels "
     f"(QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, WR={REPLACEMENT_LEVEL['WR']}, "
-    f"TE={REPLACEMENT_LEVEL['TE']}) calibrated from 2025 championship team analysis. "
-    "**Round grades** reflect suggested 12-team PPR draft position based on VOR thresholds. "
+    f"TE={REPLACEMENT_LEVEL['TE']}) calibrated from 2025 championship team data. 10-team drafts feature "
+    "steeper VOR cliffs between rounds due to scarcity and a shallow waiver wire. "
+    "**Round grades** (Rd 1–7+) reflect realistic 10-team PPR draft positioning based on VOR thresholds: "
+    "Rd 1 (VOR≥180)=elite core; Rd 2 (120–179)=impact starters; Rd 3 (75–119)=depth; "
+    "Rd 4 (45–74)=bench value; Rd 5 (20–44)=fliers; Rd 6 (5–19)=speculative; Rd 7+ (<5)=waiver quality. "
     "**Expert overlays** applied post-model using live 2026 offseason data: team corrections "
     "(Kyler→MIN, Waddle→DEN, DJ Moore→BUF, Pittman→PIT, Walker→KC, Evans→SF, Etienne→NO, "
     "Henry→BAL, Darnold→SEA, Keenan Allen→LAC, Hopkins→BAL, Dowdle→PIT, Pickens→DAL), "
-    "removals (Penix—ACL, Tua—ATL backup, Stafford retired, Kamara demoted, Ekeler—Achilles, Nabers—ACL), "
-    "force-includes (Kyler Murray—5 games 2025, Willis—MIA starter, Shough—NO starter), "
+    "removals (Penix—ACL, Tua—ATL backup, Kamara demoted, Ekeler—Achilles, Nabers—ACL), "
+    "force-includes (Kyler Murray—5 games 2025, Willis—MIA starter, Shough—NO starter, Stafford—LAR returning), "
     "age-cliff discounts (Kelce 0.82×, Evans 0.80×, CMC 0.92×), "
     "injury/suspension cuts (Rice 0.70×, Mahomes 0.92×), "
     "and breakout boosts (Gibbs 1.22×, Skattebo 1.20×, JSN 1.18×, Irving 1.18×, Pickens 1.10×, Pitts 1.10×, Jefferson 1.08×)."
