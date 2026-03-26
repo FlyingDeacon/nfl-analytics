@@ -591,73 +591,6 @@ if len(preds) >= 3:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TRAJECTORY LINE CHART — historical + projected 2026
-# ══════════════════════════════════════════════════════════════════════════════
-
-st.markdown("### Historical Trajectory + 2026 Projection")
-
-default_players = preds.head(5)[name_col].tolist()
-chart_players = st.multiselect(
-    "Select players to chart",
-    options=preds[name_col].tolist(),
-    default=default_players,
-    key=f"pred_chart_{_v}",
-)
-
-if chart_players:
-    fig = go.Figure()
-    for player in chart_players:
-        pr = preds[preds[name_col] == player]
-        if pr.empty:
-            continue
-        pid      = pr.iloc[0][track_col]
-        t_abbr   = pr.iloc[0][team_col] if team_col else ""
-        color    = TEAM_COLORS.get(t_abbr, "#4f46e5")
-        pred_val = float(pr.iloc[0]["predicted_pts"])
-
-        ph = hist_totals[hist_totals[track_col] == pid].sort_values("season")
-        if ph.empty:
-            continue
-        szns = ph["season"].tolist()
-        vals = ph[TARGET_COL].tolist()
-
-        fig.add_trace(go.Scatter(
-            x=szns, y=vals, mode="lines+markers", name=player,
-            line=dict(color=color, width=2.5),
-            marker=dict(size=7, color=color, line=dict(color="#fff", width=1)),
-            hovertemplate=f"<b>{player}</b><br>%{{x}}: %{{y:,.1f}} pts<extra></extra>",
-            legendgroup=player,
-        ))
-        fig.add_trace(go.Scatter(
-            x=[szns[-1], PREDICTION_YEAR], y=[vals[-1], pred_val],
-            mode="lines+markers", showlegend=False, legendgroup=player,
-            line=dict(color=color, width=2.5, dash="dash"),
-            marker=dict(size=10, color=color, symbol="star",
-                        line=dict(color="#fff", width=1.5)),
-            hovertemplate=f"<b>{player}</b><br>2026 Proj: {pred_val:,.1f} pts<extra></extra>",
-        ))
-
-    fig.update_layout(
-        **PLOTLY_LAYOUT,
-        title="Fantasy PPR Points — Historical + 2026 Projection",
-        xaxis_title="Season", yaxis_title="Total Fantasy Points (PPR)",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        hovermode="x unified",
-    )
-    fig.update_xaxes(dtick=1)
-    fig.add_vrect(
-        x0=hist_totals["season"].max() + 0.5, x1=PREDICTION_YEAR + 0.5,
-        fillcolor="#4f46e5", opacity=0.05, layer="below", line_width=0,
-        annotation_text="Projected", annotation_position="top left",
-        annotation_font_color="#888",
-    )
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("Select at least one player to see their trajectory.")
-
-st.markdown("---")
-
-# ══════════════════════════════════════════════════════════════════════════════
 # 2026 BIG BOARD
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -815,3 +748,70 @@ st.caption(
     "injury/suspension cuts (Rice 0.70×, Mahomes 0.92×), "
     "and breakout boosts (Gibbs 1.22×, Skattebo 1.20×, JSN 1.18×, Irving 1.18×, Pickens 1.10×, Pitts 1.10×, Jefferson 1.08×)."
 )
+
+st.markdown("---")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TRAJECTORY LINE CHART — historical + projected 2026
+# ══════════════════════════════════════════════════════════════════════════════
+
+st.markdown("### Historical Trajectory + 2026 Projection")
+
+default_players = preds.head(5)[name_col].tolist()
+chart_players = st.multiselect(
+    "Select players to chart",
+    options=preds[name_col].tolist(),
+    default=default_players,
+    key=f"pred_chart_{_v}",
+)
+
+if chart_players:
+    fig = go.Figure()
+    for player in chart_players:
+        pr = preds[preds[name_col] == player]
+        if pr.empty:
+            continue
+        pid      = pr.iloc[0][track_col]
+        t_abbr   = pr.iloc[0][team_col] if team_col else ""
+        color    = TEAM_COLORS.get(t_abbr, "#4f46e5")
+        pred_val = float(pr.iloc[0]["predicted_pts"])
+
+        ph = hist_totals[hist_totals[track_col] == pid].sort_values("season")
+        if ph.empty:
+            continue
+        szns = ph["season"].tolist()
+        vals = ph[TARGET_COL].tolist()
+
+        fig.add_trace(go.Scatter(
+            x=szns, y=vals, mode="lines+markers", name=player,
+            line=dict(color=color, width=2.5),
+            marker=dict(size=7, color=color, line=dict(color="#fff", width=1)),
+            hovertemplate=f"<b>{player}</b><br>%{{x}}: %{{y:,.1f}} pts<extra></extra>",
+            legendgroup=player,
+        ))
+        fig.add_trace(go.Scatter(
+            x=[szns[-1], PREDICTION_YEAR], y=[vals[-1], pred_val],
+            mode="lines+markers", showlegend=False, legendgroup=player,
+            line=dict(color=color, width=2.5, dash="dash"),
+            marker=dict(size=10, color=color, symbol="star",
+                        line=dict(color="#fff", width=1.5)),
+            hovertemplate=f"<b>{player}</b><br>2026 Proj: {pred_val:,.1f} pts<extra></extra>",
+        ))
+
+    fig.update_layout(
+        **PLOTLY_LAYOUT,
+        title="Fantasy PPR Points — Historical + 2026 Projection",
+        xaxis_title="Season", yaxis_title="Total Fantasy Points (PPR)",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        hovermode="x unified",
+    )
+    fig.update_xaxes(dtick=1)
+    fig.add_vrect(
+        x0=hist_totals["season"].max() + 0.5, x1=PREDICTION_YEAR + 0.5,
+        fillcolor="#4f46e5", opacity=0.05, layer="below", line_width=0,
+        annotation_text="Projected", annotation_position="top left",
+        annotation_font_color="#888",
+    )
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("Select at least one player to see their trajectory.")
