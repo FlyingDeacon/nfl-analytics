@@ -116,7 +116,6 @@ page_sel_team = st.selectbox(
     help="Use this dropdown on the page to switch team profiles without the sidebar.",
 )
 if page_sel_team != sel_team:
-    st.session_state["tp_team"] = page_sel_team
     st.session_state["profile_team"] = page_sel_team
     st.experimental_rerun()
 
