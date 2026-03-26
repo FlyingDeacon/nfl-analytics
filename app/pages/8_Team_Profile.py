@@ -44,35 +44,20 @@ weekly       = load_weekly(_mtime=_file_mtime(_base / "data/raw/weekly.csv"))
 depth_charts = load_depth_charts(_mtime=_file_mtime(_base / "data/raw/depth_charts.csv"))
 divisions_df = load_divisions(_mtime=_file_mtime(_base / "data/raw/nfl_divisions.csv"))
 
-# ── Sidebar: season + single team selector ───────────────────────────────────
+# ── Season and team selection (no sidebar filters) ────────────────────────
 seasons = sorted(ratings["season"].dropna().unique().astype(int), reverse=True)
-sel_season = st.sidebar.selectbox("Season", seasons, key="tp_season")
+sel_season = seasons[0] if seasons else 2025  # Default to most recent season
 
 team_list = sorted(ratings[ratings["season"] == sel_season]["team"].unique().tolist())
 
-# Honour pre-selection passed from Team Ratings (via session_state)
-default_team = st.session_state.get("profile_team", team_list[0])
+# Use pre-selection passed from Team Ratings (via session_state)
+default_team = st.session_state.get("profile_team", team_list[0] if team_list else "")
 if default_team not in team_list:
-    default_team = team_list[0]
+    default_team = team_list[0] if team_list else ""
 
-sel_team = st.sidebar.selectbox(
-    "Select Team",
-    team_list,
-    index=team_list.index(default_team),
-    key="tp_team",
-)
-
-# Inline team picker for direct page filter
-page_sel_team = st.selectbox(
-    "Quick Select Team",
-    team_list,
-    index=team_list.index(sel_team),
-    key="tp_team_page",
-    help="Use this dropdown on the page to switch team profiles without the sidebar.",
-)
-
-# Keep profile team in session state; selection is immediate so no explicit rerun needed.
-sel_team = page_sel_team
+sel_team = default_team
+# Note: sel_team is now determined by session_state or defaults to first team
+# No filters on this page - team is set via session_state from Team Ratings page
 st.session_state["profile_team"] = sel_team
 
 # ── Team metadata ────────────────────────────────────────────────────────────
