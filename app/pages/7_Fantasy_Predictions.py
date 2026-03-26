@@ -103,7 +103,6 @@ FORCE_INCLUDE_STARTERS = {
 EXPERT_REMOVE = {
     "Kirk Cousins",      # Not a projected 2026 starter
     "Rob Gronkowski",    # Officially retired March 2026
-    "Matthew Stafford",  # Retired / not a 2026 starter
     "Michael Penix",     # ACL surgery (Nov 2025); intended ATL starter (~60% Week 1) but removed pending recovery clearance
     "Tua Tagovailoa",    # ATL backup/placeholder — NOT a 2026 starter; Penix is intended starter
     "Alvin Kamara",      # Demoted to NO RB2 behind Travis Etienne; also only 11 games in 2025 (below 6-game floor)
@@ -168,6 +167,7 @@ EXPERT_MULTIPLIERS = {
     "Kyle Pitts":         1.10,  # Ascending TE; health restored; target hog potential returns
     "George Pickens":     1.10,  # DAL move — pairs with Dak Prescott; elite playmaker in system
     "Jalen Coker":        1.15,  # Confirmed CAR WR2; Bryce Young improvement; ascending role
+    "Matthew Stafford":   1.10,  # Returning for 2026 with LAR; strong recent 2023-2025 performances
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
