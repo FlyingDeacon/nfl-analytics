@@ -12,42 +12,82 @@ def get_base_dir() -> Path:
     return Path(__file__).resolve().parent.parent.parent
 
 
+# ── Canonical team abbreviation map ──────────────────────────────────────────
+# Applied at load time in EVERY loader so stale caches can never produce wrong abbrs
+ABBR_MAP = {
+    "LA":  "LAR",   # Los Angeles Rams (old alias)
+    "STL": "LAR",   # St. Louis Rams (relocated)
+    "OAK": "LV",    # Oakland Raiders (relocated)
+    "SD":  "LAC",   # San Diego Chargers (relocated)
+}
+
+# Exactly the 32 active franchises — any other team_abbr in teams.csv is dropped
+ACTIVE_32 = {
+    "ARI","ATL","BAL","BUF","CAR","CHI","CIN","CLE","DAL","DEN",
+    "DET","GB","HOU","IND","JAX","KC","LAC","LAR","LV","MIA",
+    "MIN","NE","NO","NYG","NYJ","PHI","PIT","SEA","SF","TB","TEN","WAS",
+}
+
+
+def _norm_abbr(series: pd.Series) -> pd.Series:
+    """Replace legacy team abbreviations with canonical ones."""
+    return series.map(lambda x: ABBR_MAP.get(str(x).strip(), str(x).strip()) if pd.notna(x) else x)
+
+
+def _file_mtime(path: Path) -> float:
+    """Return file mtime so cache_data re-runs when file changes on disk."""
+    return path.stat().st_mtime if path.exists() else 0.0
+
+
+# ── Loaders ──────────────────────────────────────────────────────────────────
+
 @st.cache_data(show_spinner=False)
-def load_ratings() -> pd.DataFrame:
+def load_ratings(_mtime: float = 0.0) -> pd.DataFrame:
     path = get_base_dir() / "data" / "processed" / "team_ratings.csv"
     if not path.exists():
         st.error(f"team_ratings.csv not found at {path}.")
         st.stop()
-    return pd.read_csv(path)
+    df = pd.read_csv(path)
+    if "team" in df.columns:
+        df["team"] = _norm_abbr(df["team"])
+    return df
 
 
 @st.cache_data(show_spinner=False)
-def load_teams() -> pd.DataFrame:
+def load_teams(_mtime: float = 0.0) -> pd.DataFrame:
     path = get_base_dir() / "data" / "raw" / "teams.csv"
     if not path.exists():
         st.error(f"teams.csv not found at {path}.")
         st.stop()
     df = pd.read_csv(path)
-
-    # Ensure each division contains only one row per active franchise.
-    # teams.csv may include legacy or alias variants (e.g., LA vs LAR). Use team_abbr as canonical key.
+    # Normalise abbreviations
+    if "team_abbr" in df.columns:
+        df["team_abbr"] = _norm_abbr(df["team_abbr"])
+    # Drop relocated/legacy franchises; keep only active 32
+    if "team_abbr" in df.columns:
+        df = df[df["team_abbr"].isin(ACTIVE_32)]
+    # Drop any remaining duplicates (keep last = most recent entry)
     df = df.drop_duplicates(subset=["team_abbr"], keep="last")
     return df
 
 
 @st.cache_data(show_spinner=False)
-def load_schedules() -> pd.DataFrame:
+def load_schedules(_mtime: float = 0.0) -> pd.DataFrame:
     path = get_base_dir() / "data" / "raw" / "schedules.csv"
     if not path.exists():
         st.error(f"schedules.csv not found at {path}.")
         st.stop()
     df = pd.read_csv(path, low_memory=False)
     df.columns = [c.lower().strip() for c in df.columns]
+    # Normalise team abbreviations in every relevant column
+    for col in ("home_team", "away_team", "team", "posteam", "defteam"):
+        if col in df.columns:
+            df[col] = _norm_abbr(df[col])
     return df
 
 
 @st.cache_data(show_spinner=False)
-def load_weekly() -> pd.DataFrame:
+def load_weekly(_mtime: float = 0.0) -> pd.DataFrame:
     path = get_base_dir() / "data" / "raw" / "weekly.csv"
     if not path.exists():
         raw_dir = path.parent
@@ -60,6 +100,9 @@ def load_weekly() -> pd.DataFrame:
         return pd.DataFrame()
     df = pd.read_csv(path, low_memory=False)
     df.columns = [c.lower().strip() for c in df.columns]
+    for col in ("recent_team", "team", "opponent_team"):
+        if col in df.columns:
+            df[col] = _norm_abbr(df[col])
     return df
 
 
@@ -90,8 +133,8 @@ def _normalize_name(name: str) -> str:
     return re.sub(r"\s+", " ", name).strip()
 
 
-@st.cache_data(show_spinner=False, ttl=86400)  # Cache for 24 hours
-def load_depth_charts() -> pd.DataFrame:
+@st.cache_data(show_spinner=False, ttl=86400)  # refresh once per day
+def load_depth_charts(_mtime: float = 0.0) -> pd.DataFrame:
     """Load depth charts from local cache or nflverse GitHub releases.
 
     Data source: https://github.com/nflverse/nflverse-data
@@ -114,7 +157,6 @@ def load_depth_charts() -> pd.DataFrame:
         url = "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2025.csv"
         with urllib.request.urlopen(url, timeout=10) as response:
             df = pd.read_csv(response)
-            # Save to local cache for offline use
             df.to_csv(local_path, index=False)
             return df
     except (urllib.error.URLError, urllib.error.HTTPError, Exception) as e:
@@ -125,8 +167,8 @@ def load_depth_charts() -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_divisions() -> pd.DataFrame:
-    """Load NFL divisions and conference structure."""
+def load_divisions(_mtime: float = 0.0) -> pd.DataFrame:
+    """Load NFL divisions and conference structure (canonical 32-team reference)."""
     path = get_base_dir() / "data" / "raw" / "nfl_divisions.csv"
     if not path.exists():
         st.warning(f"nfl_divisions.csv not found at {path}.")

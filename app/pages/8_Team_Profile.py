@@ -8,7 +8,11 @@ import numpy as np
 import plotly.graph_objects as go
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
-from utils.data_loader import load_ratings, load_teams, load_schedules, load_weekly, get_logo, add_ranks, load_depth_charts, load_divisions
+from utils.data_loader import (
+    load_ratings, load_teams, load_schedules, load_weekly,
+    get_logo, add_ranks, load_depth_charts, load_divisions,
+    get_base_dir, _file_mtime,
+)
 from utils.nav import render_sidebar_nav
 
 st.set_page_config(page_title="Team Profile · NFL", page_icon="🏟️", layout="wide")
@@ -19,12 +23,14 @@ render_sidebar_nav(current_page="8_Team_Profile")
 if st.button("← Back to Team Ratings", key="back_to_ratings"):
     st.switch_page("pages/1_Team_Ratings.py")
 
-# ── Load data ────────────────────────────────────────────────────────────────
-ratings      = load_ratings()
-teams_df     = load_teams()
-schedules    = load_schedules()
-weekly       = load_weekly()
+# ── Load data (pass mtime so cache auto-invalidates when files change) ────────
+_base = get_base_dir()
+ratings      = load_ratings(_mtime=_file_mtime(_base / "data/processed/team_ratings.csv"))
+teams_df     = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
+schedules    = load_schedules(_mtime=_file_mtime(_base / "data/raw/schedules.csv"))
+weekly       = load_weekly(_mtime=_file_mtime(_base / "data/raw/weekly.csv"))
 depth_charts = load_depth_charts()
+divisions_df = load_divisions(_mtime=_file_mtime(_base / "data/raw/nfl_divisions.csv"))
 
 # ── Sidebar: season + single team selector ───────────────────────────────────
 seasons = sorted(ratings["season"].dropna().unique().astype(int), reverse=True)
@@ -141,24 +147,21 @@ def calc_record(df, team):
 ow, ol, ot = calc_record(reg_games, sel_team)
 overall_rec = f"{ow}–{ol}" + (f"–{ot}" if ot else "")
 
-# Division opponents
-if team_div:
-    div_teams = teams_df.loc[
-        teams_df["team_division"] == team_div,
-        abbr_col,
+# Division opponents — use nfl_divisions.csv as the single source of truth
+# (guaranteed to have exactly 4 teams per division with canonical abbreviations)
+if team_div and not divisions_df.empty:
+    div_teams = divisions_df.loc[
+        divisions_df["division"] == team_div, "team_abbr"
     ].dropna().unique().tolist()
 else:
-    div_teams = []
+    # Fallback: pull from teams_df (already normalised in loader)
+    div_teams = teams_df.loc[
+        teams_df["team_division"] == team_div, abbr_col
+    ].dropna().unique().tolist() if team_div else []
 
-# Ensure selected team is included and keep unique entries
+# Safety: make sure selected team is always included
 if sel_team not in div_teams:
     div_teams.append(sel_team)
-
-if len(div_teams) > 4:
-    st.warning(
-        f"Division {team_div} has {len(div_teams)} teams in source data; showing first 4 teams only."
-    )
-    div_teams = div_teams[:4]
 
 div_opponents = [t for t in div_teams if t != sel_team]
 

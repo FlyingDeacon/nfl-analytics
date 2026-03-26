@@ -9,7 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
-from utils.data_loader import load_ratings, load_teams, get_logo, add_ranks
+from utils.data_loader import load_ratings, load_teams, get_logo, add_ranks, get_base_dir, _file_mtime
 from utils.nav import render_sidebar_nav
 
 st.set_page_config(page_title="Team Ratings · NFL", page_icon="📊", layout="wide")
@@ -45,9 +45,10 @@ components.html("""
 </script>
 """, height=0)
 
-# ── Load data ────────────────────────────────────────────────────────────────
-ratings = load_ratings()
-teams   = load_teams()
+# ── Load data (mtime invalidates cache automatically when files update) ───────
+_base   = get_base_dir()
+ratings = load_ratings(_mtime=_file_mtime(_base / "data/processed/team_ratings.csv"))
+teams   = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
 
 # ── Sidebar filters ──────────────────────────────────────────────────────────
 if "tr_v" not in st.session_state:
