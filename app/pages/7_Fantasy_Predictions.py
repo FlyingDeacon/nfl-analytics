@@ -186,6 +186,7 @@ EXPERT_MULTIPLIERS = {
     "George Pickens":      1.10,  # DAL move — Dak Prescott elite passer; Pickens is WR1 with elite QB
     "Josh Allen":          1.12,  # Perennial QB1; DJ Moore arrival + Bills elite offense; top-2 fantasy QB 3 straight years
     "Jaxson Dart":         0.95,  # Rookie starter (13 games as backup→starter); model inflates via adj_factor; modest 2nd-year adjustment
+    "Jacob Brisset":       0.90,  # Career backup (age 33); first true starting opportunity; significant regression risk from limited sample
     "Dak Prescott":        1.06,  # Pickens arrival gives elite deep threat; DAL offense boosted
     "Matthew Stafford":    1.05,  # MVP-caliber 2025 LAR; Adams + Nacua + incoming draft WR depth
     "Rome Odunze":         0.92,  # Forced into CHI WR1 role after Moore traded; more targets but weaker corps
