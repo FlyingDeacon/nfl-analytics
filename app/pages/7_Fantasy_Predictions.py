@@ -139,44 +139,55 @@ EXPERT_TEAM_CORRECTIONS = {
     "Tyler Shough":      "NO",   # Confirmed New Orleans Saints starter 2026
 }
 
-# Point multipliers based on NFL Expert contextual analysis.
-# Values < 1.0 = overvalued by the model; > 1.0 = undervalued.
+# Point multipliers based on NFL Expert full 32-team passing/rushing attack audit.
+# Values < 1.0 = overvalued / bad team context; > 1.0 = undervalued / great team context.
+# Updated March 2026 — all team offensive situations researched.
 EXPERT_MULTIPLIERS = {
-    # ── Overvalued — reduce projections ───────────────────────────────────────
-    "Travis Kelce":       0.82,  # Age cliff (36 in 2026); declining target share
-    "Derrick Henry":      0.90,  # Age regression (32+) but BAL run game boosts floor; carries expected
-    "Patrick Mahomes":    0.92,  # ACL recovery ongoing; uncertainty for Week 1
-    "Puka Nacua":         0.87,  # Injury-prone; disappointing 2024 volume
-    "Trey McBride":       0.90,  # Regression expected after career-year spike
-    "Rashee Rice":        0.70,  # Suspension carryover — available ~Week 7+ (~10 games)
-    "Mike Evans":         0.80,  # Age 32 + injury (8 games in 2025); high-risk
-    "De'Von Achane":      0.90,  # Willis (MIA starter, confirmed) is capable; volume/receiving role intact
-    "Devon Achane":       0.90,  # Alt spelling — same player
-    "Christian McCaffrey":0.92,  # Age 30 concern; volume risk after back-to-back heavy usage
-    # ── Undervalued — boost projections ───────────────────────────────────────
-    "Drake Maye":         1.15,  # 2024→2025 progression (13.63→20.82 PPG); 3rd-year QB momentum
-    "Caleb Williams":     1.12,  # 2024→2025 progression (14.97→18.72 PPG); Bears offense improving
-    "Garrett Wilson":     1.12,  # Elite route runner; improved QB situation
-    "Jaxon Smith-Njigba": 1.18,  # Highest-paid WR in NFL; WR1 fully established
-    "Bucky Irving":       1.18,  # Projected RB1 in Tampa Bay
-    "Cam Skattebo":       1.20,  # High-volume starter; model underweights breakout
-    "C.J. Stroud":        1.10,  # Bounce-back from shoulder injury
-    "Jalen Hurts":        1.08,  # Consistent 20+ PPG since 2020; PHI weapons intact
-    "Lamar Jackson":      1.12,  # Ravens upgraded weapons (Hopkins); historical 21+ PPG
-    "Dak Prescott":       1.06,  # Pickens arrival — elite new weapon; DAL offense boost
-    "Tucker Kraft":       1.15,  # Ascending TE1 in Green Bay; Jordan Love connection
-    "Kyler Murray":       1.05,  # Excellent situation (MIN/Jefferson/Addison/O'Connell)
-    "Kenneth Walker":     1.05,  # Great landing spot — Andy Reid system
-    "Jaylen Waddle":      1.10,  # Better QB stability with Bo Nix in DEN
-    "DJ Moore":           1.10,  # Huge boost — now catching passes from Josh Allen (BUF)
-    "Michael Pittman":    1.08,  # Upgrade from IND; reliable target in PIT offense
-    "Jahmyr Gibbs":       1.22,  # Solo DET RB after David Montgomery traded to HOU; massive volume
-    "Bijan Robinson":     1.05,  # Full-time workhorse ATL — Penix/Tua situation doesn't hurt RB
-    "Justin Jefferson":   1.08,  # Elite talent + Kyler Murray + Kevin O'Connell; top-5 WR upside
-    "Kyle Pitts":         1.10,  # Ascending TE; health restored; target hog potential returns
-    "George Pickens":     1.10,  # DAL move — pairs with Dak Prescott; elite playmaker in system
-    "Jalen Coker":        1.15,  # Confirmed CAR WR2; Bryce Young improvement; ascending role
-    "Matthew Stafford":   1.10,  # Returning for 2026 with LAR; strong recent 2023-2025 performances
+    # ── Overvalued / bad offensive situation ──────────────────────────────────
+    "Travis Kelce":        0.78,  # Age 37 + Mahomes ACL-limited mobility; younger alternatives eating snaps
+    "Patrick Mahomes":     0.88,  # ACL limits mobility; offense shifting run-heavy with K. Walker arrival
+    "Derrick Henry":       0.90,  # Age regression (32+); BAL run game floor helps but TD pace unsustainable
+    "Puka Nacua":          0.87,  # Injury-prone; inconsistent 2024–25 volume
+    "Trey McBride":        0.90,  # Regression expected after career-year spike in 2025
+    "Rashee Rice":         0.70,  # Suspension ~Wk 7 return; effectively 10-game player (see PROJ_GAMES_OVERRIDES)
+    "Mike Evans":          0.82,  # Age 33 (SF) — Purdy boost offsets age concern; keeping slight discount
+    "De'Von Achane":       0.80,  # Dolphins full rebuild; Malik Willis unproven + no elite receivers = low-scoring env
+    "Devon Achane":        0.80,  # Alt spelling — same player
+    "Christian McCaffrey": 0.92,  # Age 30 + back-to-back heavy usage; volume risk but SF offense elite
+    "Garrett Wilson":      0.85,  # NYJ/Geno Smith — one of worst QB situations in NFL; WR1 talent wasted
+    "Caleb Williams":      0.95,  # DJ Moore traded to BUF; CHI WR corps thin; ceiling reduced despite QB talent
+    "Kyle Pitts":          0.87,  # ATL QB instability + franchise tag signals no extension; persistent TE under-usage
+    "CeeDee Lamb":         0.88,  # 2025 shoulder injury (75 rec — career low); Pickens target competition
+    "Drake London":        0.88,  # Pitts + Darnell Mooney competition; ATL QB uncertainty depresses WR value
+    # ── Undervalued / great offensive situation ───────────────────────────────
+    "Ja'Marr Chase":       1.15,  # Elite QB-WR duo; best offensive supporting cast in AFC (Burrow + Brown + Higgins)
+    "Tee Higgins":         1.12,  # Same CIN elite system; 11 TDs in 2025; Burrow forces ball to both weapons
+    "Joe Burrow":          1.10,  # Despite injury history, most complete offense in NFL when healthy
+    "Zay Flowers":         1.10,  # Lamar Jackson elite scrambler + DeAndre Hopkins arrival; elite passing env
+    "Justin Jefferson":    1.08,  # Kyler Murray + O'Connell system designed for elite WRs; top-5 WR upside
+    "Justin Herbert":      1.08,  # Mike McDaniel hired as OC — proven offensive genius; LAC weapons improved
+    "Lamar Jackson":       1.12,  # Ravens upgraded weapons (Hopkins + flowers); historical 21+ PPG average
+    "Jalen Hurts":         1.08,  # Consistent 20+ PPG; new pass-heavy OC; Brown + Smith + Goedert intact
+    "A.J. Brown":          1.05,  # Hurts elite; new pass-heavy OC Mannion; PHI weapons locked in
+    "Amon-Ra St. Brown":   1.05,  # First-team All-Pro 2025; new OC Petzing designed offense around him + Williams
+    "Drake Maye":          1.15,  # 2024→2025 progression (13.63→20.82 PPG); 3rd-year breakout trajectory
+    "DJ Moore":            1.18,  # Josh Allen (elite) + Brady system; Moore thrives with top-5 QB; 1,000+ yds expected
+    "Jaxon Smith-Njigba":  1.12,  # Historic $168.6M contract; Darnold improving; run-heavy scheme slightly caps ceiling
+    "Jaylen Waddle":       1.10,  # Massive upgrade — Dolphins dysfunction → Bo Nix / DEN passing attack
+    "Cam Skattebo":        1.20,  # High-volume starter; model consistently underweights his breakout upside
+    "C.J. Stroud":         1.10,  # Bounce-back from shoulder; HOU OL upgraded (Teller); Nico Collins locked in
+    "Bucky Irving":        1.10,  # RB1 in TB — Evans departed frees volume; slight PPR concern with Gainwell committee
+    "Tucker Kraft":        1.15,  # Ascending TE1 in GB; Jordan Love connection; limited TE competition
+    "Kyler Murray":        1.05,  # MIN/Jefferson/O'Connell excellent fit; mobile QB revives offense
+    "Kenneth Walker":      1.05,  # Andy Reid system maximizes RB value; KC run-game focus with reduced Mahomes load
+    "Michael Pittman":     1.08,  # Reliable target in PIT; upgrade from IND
+    "Jahmyr Gibbs":        1.22,  # Solo DET RB; D. Montgomery traded to HOU; massive volume incoming
+    "Bijan Robinson":      1.05,  # ATL workhorse — QB instability doesn't hurt elite RBs the same way
+    "George Pickens":      1.10,  # DAL move — Dak Prescott elite passer; Pickens is WR1 with elite QB
+    "Dak Prescott":        1.06,  # Pickens arrival gives elite deep threat; DAL offense boosted
+    "Matthew Stafford":    1.12,  # MVP-caliber 2025 LAR; Adams + Nacua + incoming draft WR depth
+    "Rome Odunze":         0.92,  # Forced into CHI WR1 role after Moore traded; more targets but weaker corps
+    "Jalen Coker":         1.15,  # Confirmed CAR WR2; ascending role with Bryce Young improvement
 }
 
 # 2026 projected games overrides — ONLY for players with confirmed game-count limitations.
