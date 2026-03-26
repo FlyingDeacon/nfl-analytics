@@ -266,22 +266,17 @@ for _, grp in raw_df.groupby("win_pct", sort=False):
         tied = grp["team"].tolist()
         sorted_teams.extend(nfl_tiebreak_sort(tied, reg_games, div_teams, conf_teams))
 
-# Rebuild ordered df
-sorted_rows = []
-for t in sorted_teams:
-    row_data = raw_df[raw_df["team"] == t].iloc[0].to_dict()
-    sorted_rows.append(row_data)
-
-# Final overall sort by win_pct so non-tied teams still rank correctly
+# Rebuild dataframe in tiebreaker-resolved order
+sorted_rows = [raw_df[raw_df["team"] == t].iloc[0].to_dict() for t in sorted_teams]
 div_standing_df = pd.DataFrame(sorted_rows)
-div_standing_df = div_standing_df.sort_values(
-    [r for r in sorted_teams],  # preserve tie-break order as secondary key via categorical
-    ascending=False
-).reset_index(drop=True)
 
-# Use categorical ordering to preserve tiebreaker results exactly
-div_standing_df["team"] = pd.Categorical(div_standing_df["team"], categories=sorted_teams, ordered=True)
-div_standing_df = div_standing_df.sort_values(["win_pct", "team"], ascending=[False, True]).reset_index(drop=True)
+# Use Categorical so sort_values respects tiebreaker order within same win_pct
+div_standing_df["team"] = pd.Categorical(
+    div_standing_df["team"], categories=sorted_teams, ordered=True
+)
+div_standing_df = div_standing_df.sort_values(
+    ["win_pct", "team"], ascending=[False, True]
+).reset_index(drop=True)
 div_standing_df.insert(0, "Place", range(1, len(div_standing_df) + 1))
 
 place_row  = div_standing_df[div_standing_df["team"] == sel_team]
