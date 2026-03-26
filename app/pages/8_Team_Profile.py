@@ -60,6 +60,21 @@ sel_team = default_team
 # No filters on this page - team is set via session_state from Team Ratings page
 st.session_state["profile_team"] = sel_team
 
+# ── Team selector ────────────────────────────────────────────────────────────
+sel_col, _ = st.columns([1, 2.5])
+with sel_col:
+    page_sel_team = st.selectbox(
+        "Select Team",
+        team_list,
+        index=team_list.index(sel_team) if sel_team in team_list else 0,
+        key="tp_team_selector",
+        label_visibility="collapsed",
+    )
+    if page_sel_team != sel_team:
+        sel_team = page_sel_team
+        st.session_state["profile_team"] = sel_team
+        st.rerun()
+
 # ── Team metadata ────────────────────────────────────────────────────────────
 abbr_col  = "team_abbr" if "team_abbr" in teams_df.columns else "team"
 team_row  = teams_df[teams_df[abbr_col] == sel_team]
@@ -80,21 +95,6 @@ st.markdown(f"""
 </div>
 <div class="gold-rule"></div>
 """, unsafe_allow_html=True)
-
-# ── Team selector ────────────────────────────────────────────────────────────
-sel_col, _ = st.columns([1, 2.5])
-with sel_col:
-    page_sel_team = st.selectbox(
-        "Select Team",
-        team_list,
-        index=team_list.index(sel_team) if sel_team in team_list else 0,
-        key="tp_team_selector",
-        label_visibility="collapsed",
-    )
-    if page_sel_team != sel_team:
-        sel_team = page_sel_team
-        st.session_state["profile_team"] = sel_team
-        st.rerun()
 
 # ── Team ratings for selected season ─────────────────────────────────────────
 season_ratings = add_ranks(ratings[ratings["season"] == sel_season].copy())
