@@ -106,7 +106,8 @@ EXPERT_MULTIPLIERS = {
     "Patrick Mahomes":   0.92,   # ACL recovery ongoing; uncertainty for Week 1
     "Puka Nacua":        0.87,   # Injury-prone; disappointing 2024 volume
     "Trey McBride":      0.90,   # Regression expected after career-year spike
-    "Drake Maye":        0.88,   # Year-2 uncertainty; thin supporting cast
+    "Drake Maye":        1.10,   # Exceptional rookie season (20.82 PPG); Year-2 growth expected
+    "Caleb Williams":   1.08,   # Strong rookie campaign (18.72 PPG); Bears offense improving
     "Rashee Rice":       0.70,   # Suspension carryover — available ~Week 7+ (~10 games)
     "Mike Evans":        0.80,   # Age 32 + injury (8 games in 2025); high-risk
     "De'Von Achane":     0.90,   # Willis (MIA starter, confirmed) is capable; Achane's volume/receiving role intact
