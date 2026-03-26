@@ -71,6 +71,17 @@ if st.sidebar.button("Reset Filters", key="tr_reset", use_container_width=True):
     st.session_state["tr_v"] = _v + 1
     st.rerun()
 
+# ── Page action buttons ──────────────────────────────────────────────────────
+btn_col1, btn_col2 = st.columns([0.5, 3.5])
+with btn_col1:
+    profile_team_for_button = (
+        selected_team if selected_team != "All Teams"
+        else st.session_state.get("profile_team", sorted(full_df["team"].unique().tolist())[0])
+    )
+    if st.button("🏟️ View Team Profile", key="goto_profile", use_container_width=True):
+        st.session_state["profile_team"] = profile_team_for_button
+        st.switch_page("pages/8_Team_Profile.py")
+
 # ── Apply filters ────────────────────────────────────────────────────────────
 view_df = full_df.copy()
 if selected_team != "All Teams":
@@ -121,32 +132,6 @@ if not full_df.empty:
             """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
-
-# ── Team Profile launcher — always visible ───────────────────────────────────
-with st.container():
-    st.markdown("#### 🏟️ Team Profile")
-    tp_col1, tp_col2 = st.columns([2, 1])
-    with tp_col1:
-        profile_team_options = sorted(full_df["team"].unique().tolist())
-        default_profile = (
-            selected_team if selected_team != "All Teams"
-            else st.session_state.get("profile_team", profile_team_options[0])
-        )
-        if default_profile not in profile_team_options:
-            default_profile = profile_team_options[0]
-        profile_team_pick = st.selectbox(
-            "Select a team to view full profile",
-            profile_team_options,
-            index=profile_team_options.index(default_profile),
-            key="tr_profile_pick",
-            label_visibility="collapsed",
-        )
-    with tp_col2:
-        if st.button("View Team Profile →", key="goto_profile",
-                     use_container_width=True, type="primary"):
-            st.session_state["profile_team"] = profile_team_pick
-            st.switch_page("pages/8_Team_Profile.py")
-
 st.markdown("---")
 
 # ── Table + Bar chart ────────────────────────────────────────────────────────
