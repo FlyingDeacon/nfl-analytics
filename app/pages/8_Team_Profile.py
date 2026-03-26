@@ -115,10 +115,8 @@ page_sel_team = st.selectbox(
     key="tp_team_page",
     help="Use this dropdown on the page to switch team profiles without the sidebar.",
 )
-if page_sel_team != sel_team:
-    st.session_state["profile_team"] = page_sel_team
-    st.experimental_rerun()
 
+# Keep profile team in session state; selection is immediate so no explicit rerun needed.
 sel_team = page_sel_team
 st.session_state["profile_team"] = sel_team
 
