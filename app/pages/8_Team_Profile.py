@@ -29,7 +29,7 @@ ratings      = load_ratings(_mtime=_file_mtime(_base / "data/processed/team_rati
 teams_df     = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
 schedules    = load_schedules(_mtime=_file_mtime(_base / "data/raw/schedules.csv"))
 weekly       = load_weekly(_mtime=_file_mtime(_base / "data/raw/weekly.csv"))
-depth_charts = load_depth_charts()
+depth_charts = load_depth_charts(_mtime=_file_mtime(_base / "data/raw/depth_charts.csv"))
 divisions_df = load_divisions(_mtime=_file_mtime(_base / "data/raw/nfl_divisions.csv"))
 
 # ── Sidebar: season + single team selector ───────────────────────────────────
@@ -350,7 +350,9 @@ st.markdown("---")
 # DEPTH CHART HELPERS
 # ══════════════════════════════════════════════════════════════════════════════
 
-# Build weekly 2025 REG aggregated stats for this team (for merging into depth chart)
+# ── Build detailed stats from weekly for merging into depth chart ─────────────
+# Depth chart already has GP + fantasy_pts from the rebuild.
+# We only need per-stat breakdowns (pass yds, rush yds, targets, etc.) from weekly.
 _wk = weekly.copy() if not weekly.empty else pd.DataFrame()
 if not _wk.empty:
     if "season_type" in _wk.columns:
@@ -358,21 +360,14 @@ if not _wk.empty:
     _wk_team = _wk[
         (_wk["recent_team"] == sel_team) & (_wk["season"] == sel_season)
     ].copy()
-    sum_cols = [
-        "fantasy_points_ppr", "carries", "rushing_yards", "rushing_tds",
+    detail_cols = [
+        "carries", "rushing_yards", "rushing_tds",
         "receptions", "targets", "receiving_yards", "receiving_tds",
         "completions", "attempts", "passing_yards", "passing_tds", "interceptions",
     ]
-    sum_cols = [c for c in sum_cols if c in _wk_team.columns]
-    if not _wk_team.empty and sum_cols:
-        _gp = (
-            _wk_team.groupby("player_display_name", as_index=False)["week"]
-            .count().rename(columns={"week": "GP"})
-        )
-        _agg = _wk_team.groupby("player_display_name", as_index=False)[sum_cols].sum()
-        _stats = _agg.merge(_gp, on="player_display_name", how="left")
-        _stats["PPR Pts"] = _stats["fantasy_points_ppr"].round(1)
-        _stats["PPG"]     = (_stats["fantasy_points_ppr"] / _stats["GP"].clip(lower=1)).round(1)
+    detail_cols = [c for c in detail_cols if c in _wk_team.columns]
+    if not _wk_team.empty and detail_cols:
+        _stats = _wk_team.groupby("player_display_name", as_index=False)[detail_cols].sum()
     else:
         _stats = pd.DataFrame()
 else:
@@ -381,24 +376,32 @@ else:
 
 
 def _merge_stats(dc_pos_df):
-    """Merge depth chart rows with weekly stats by player name."""
-    if _stats.empty:
-        return dc_pos_df
+    """Merge depth chart rows with per-stat breakdowns from weekly.
+    GP, PPR Pts and PPG come from the depth chart rebuild — not re-computed here.
+    """
+    player_col = "Player" if "Player" in dc_pos_df.columns else "player_name"
 
-    left_key = "player_name" if "player_name" in dc_pos_df.columns else "Player"
-    merged = dc_pos_df.merge(
-        _stats.drop(columns=["fantasy_points_ppr"], errors="ignore"),
-        left_on=left_key,
+    # Rename depth chart fantasy_pts → PPR Pts, compute PPG
+    out = dc_pos_df.copy()
+    if "fantasy_pts" in out.columns:
+        out = out.rename(columns={"fantasy_pts": "PPR Pts"})
+    if "GP" in out.columns and "PPR Pts" in out.columns:
+        out["PPG"] = (
+            pd.to_numeric(out["PPR Pts"], errors="coerce") /
+            out["GP"].clip(lower=1)
+        ).round(1)
+
+    if _stats.empty:
+        return out
+
+    merged = out.merge(
+        _stats,
+        left_on=player_col,
         right_on="player_display_name",
         how="left",
-        validate="m:m",
-    )
+    ).drop(columns=["player_display_name"], errors="ignore")
 
-    # Keep existing depth chart name column as-is (Player or player_name)
-    if left_key != "player_name" and "player_name" in merged.columns:
-        merged = merged.drop(columns=["player_name"], errors="ignore")
-
-    return merged.drop(columns=["player_display_name"], errors="ignore")
+    return merged
 
 
 # Get team's depth chart rows from nflverse data
@@ -483,22 +486,16 @@ else:
         cfg  = OFF_STAT_COLS.get(pos, {"cols": ["Player", "GP"], "rename": {}})
         show = [c for c in cfg["cols"] if c in merged.columns]
 
-        # Round floats, fill missing stats with "—"
+        # Round stat columns; keep PPG/PPR Pts as formatted strings
         for fc in merged.select_dtypes("float").columns:
-            if fc == "PPG":
-                merged[fc] = merged[fc].fillna("—")
-            elif fc == "PPR Pts":
-                merged[fc] = merged[fc].fillna("—")
+            if fc in ("PPG", "PPR Pts"):
+                pass  # handled below
             else:
                 merged[fc] = merged[fc].fillna(0).round(0).astype(int, errors="ignore")
-
-        if "PPG"     in merged.columns: merged["PPG"]     = merged["PPG"].fillna("—")
-        if "PPR Pts" in merged.columns: merged["PPR Pts"] = merged["PPR Pts"].fillna("—")
-
-        # If depth chart has its own GP column, prefer it over merged one
-        if "GP_x" in merged.columns:
-            merged["GP"] = merged["GP_x"].fillna(merged.get("GP_y", 0))
-            merged = merged.drop(columns=["GP_x", "GP_y"], errors="ignore")
+        if "PPG"     in merged.columns:
+            merged["PPG"]     = merged["PPG"].apply(lambda x: f"{x:.1f}" if pd.notna(x) and x != "—" else "—")
+        if "PPR Pts" in merged.columns:
+            merged["PPR Pts"] = merged["PPR Pts"].apply(lambda x: f"{float(x):.1f}" if pd.notna(x) and x != "—" else "—")
 
         disp = merged[show].rename(columns=cfg["rename"])
 
