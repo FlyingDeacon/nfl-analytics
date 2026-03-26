@@ -118,6 +118,7 @@ EXPERT_MULTIPLIERS = {
     "Bucky Irving":      1.18,   # Projected RB1 in Tampa Bay
     "Cam Skattebo":      1.20,   # High-volume starter; model underweights him
     "C.J. Stroud":       1.10,   # Bounce-back from shoulder injury
+    "Matthew Stafford":  1.15,   # Strong recent performances (2023-2025); regression expected but not severe
     "Tucker Kraft":      1.15,   # Ascending TE1 in Green Bay
     "Kyler Murray":      1.05,   # Excellent new situation (MIN/Jefferson/Addison)
     "Kenneth Walker":    1.05,   # Great landing spot — Andy Reid system
