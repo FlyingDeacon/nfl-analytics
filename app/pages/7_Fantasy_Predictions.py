@@ -74,7 +74,6 @@ POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
 FORCE_INCLUDE_STARTERS = {
     "Kyler Murray": ("00-0035228", "QB", "MIN", None),   # 5 games 2025 (ARI injury); uses 2024 full season
     "Malik Willis":  ("00-0038128", "QB", "MIA", 15.5), 
-     "Matthew Stafford": ("00-0026498", "QB", "LAR", None),   # 5 games 2025 (ARI injury); uses 2024 full season
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
