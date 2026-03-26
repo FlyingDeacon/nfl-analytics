@@ -80,7 +80,7 @@ EXPERT_REMOVE = {
     "Kirk Cousins",      # Not a projected 2026 starter
     "Matthew Stafford",  # Likely retired / backup at age 38
     "Rob Gronkowski",    # Officially retired March 2026
-    "Michael Penix",     # ACL surgery (Nov 2025) — Week 1 availability uncertain
+    "Michael Penix",     # ACL surgery (Nov 2025); intended ATL starter (~60% Week 1) but removed pending recovery clearance
 }
 
 # Team corrections: player name fragment → corrected 2026 team abbreviation
@@ -92,7 +92,7 @@ EXPERT_TEAM_CORRECTIONS = {
     "Jaylen Waddle":     "DEN",  # Traded MIA → DEN (pairs with Bo Nix)
     "Michael Pittman":   "PIT",  # Traded IND → PIT
     "DJ Moore":          "BUF",  # Traded CHI → BUF (Josh Allen boost)
-    "Malik Willis":      "MIA",  # 3-yr $67.5M deal — new MIA starter replacing Tua
+    "Malik Willis":      "MIA",  # 3-yr $67.5M / $45M guaranteed — CONFIRMED MIA starter; elite arm + mobility, 78% completion, 0 INTs in 3 NFL starts
     "Kenneth Walker":    "KC",   # 3-yr $43M deal — joins Kansas City
     "Mike Evans":        "SF",   # 3-yr $60M deal — joins 49ers
 }
