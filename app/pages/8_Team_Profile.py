@@ -11,6 +11,14 @@ from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
 from utils.data_loader import load_ratings, load_teams, load_schedules, load_weekly, get_logo, add_ranks
 from utils.nav import render_sidebar_nav
 
+# ── Load depth charts CSV ─────────────────────────────────────────────────────
+@st.cache_data
+def load_depth_charts():
+    p = Path(__file__).resolve().parent.parent.parent / "data" / "raw" / "depth_charts.csv"
+    if p.exists():
+        return pd.read_csv(p)
+    return pd.DataFrame()
+
 st.set_page_config(page_title="Team Profile · NFL", page_icon="🏟️", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
 render_sidebar_nav(current_page="8_Team_Profile")
@@ -20,10 +28,11 @@ if st.button("← Back to Team Ratings", key="back_to_ratings"):
     st.switch_page("pages/1_Team_Ratings.py")
 
 # ── Load data ────────────────────────────────────────────────────────────────
-ratings   = load_ratings()
-teams_df  = load_teams()
-schedules = load_schedules()
-weekly    = load_weekly()
+ratings      = load_ratings()
+teams_df     = load_teams()
+schedules    = load_schedules()
+weekly       = load_weekly()
+depth_charts = load_depth_charts()
 
 # ── Sidebar: season + single team selector ───────────────────────────────────
 seasons = sorted(ratings["season"].dropna().unique().astype(int), reverse=True)
@@ -227,129 +236,174 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown("---")
 
 # ══════════════════════════════════════════════════════════════════════════════
+# DEPTH CHART HELPERS
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Build weekly 2025 REG aggregated stats for this team (for merging into depth chart)
+_wk = weekly.copy() if not weekly.empty else pd.DataFrame()
+if not _wk.empty:
+    if "season_type" in _wk.columns:
+        _wk = _wk[_wk["season_type"] == "REG"]
+    _wk_team = _wk[
+        (_wk["recent_team"] == sel_team) & (_wk["season"] == sel_season)
+    ].copy()
+    sum_cols = [
+        "fantasy_points_ppr", "carries", "rushing_yards", "rushing_tds",
+        "receptions", "targets", "receiving_yards", "receiving_tds",
+        "completions", "attempts", "passing_yards", "passing_tds", "interceptions",
+    ]
+    sum_cols = [c for c in sum_cols if c in _wk_team.columns]
+    if not _wk_team.empty and sum_cols:
+        _gp = (
+            _wk_team.groupby("player_display_name", as_index=False)["week"]
+            .count().rename(columns={"week": "GP"})
+        )
+        _agg = _wk_team.groupby("player_display_name", as_index=False)[sum_cols].sum()
+        _stats = _agg.merge(_gp, on="player_display_name", how="left")
+        _stats["PPR Pts"] = _stats["fantasy_points_ppr"].round(1)
+        _stats["PPG"]     = (_stats["fantasy_points_ppr"] / _stats["GP"].clip(lower=1)).round(1)
+    else:
+        _stats = pd.DataFrame()
+else:
+    _wk_team = pd.DataFrame()
+    _stats   = pd.DataFrame()
+
+
+def _merge_stats(dc_pos_df):
+    """Merge depth chart rows with weekly stats by player name."""
+    if _stats.empty:
+        return dc_pos_df
+    return dc_pos_df.merge(
+        _stats.drop(columns=["fantasy_points_ppr"], errors="ignore"),
+        left_on="player_name", right_on="player_display_name", how="left"
+    ).drop(columns=["player_display_name"], errors="ignore")
+
+
+# Get team's depth chart rows from the CSV
+_dc = depth_charts[
+    (depth_charts["team"] == sel_team)
+].copy() if not depth_charts.empty else pd.DataFrame()
+
+dc_season = int(_dc["season"].mode()[0]) if not _dc.empty and "season" in _dc.columns else sel_season
+
+# ══════════════════════════════════════════════════════════════════════════════
 # OFFENSIVE DEPTH CHART
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 🏈 Offensive Depth Chart")
-st.caption(f"Season totals · {sel_season} regular season · sorted by PPR fantasy points")
+st.caption(
+    f"Projected 2026 roster depth · "
+    f"2025 season stats shown where available (REG season)"
+)
 
-if weekly.empty:
-    st.warning("Weekly player data not loaded.")
+OFF_POS_GROUPS = [
+    ("QB",  "Quarterbacks"),
+    ("RB",  "Running Backs"),
+    ("FB",  "Fullbacks"),
+    ("WR",  "Wide Receivers"),
+    ("TE",  "Tight Ends"),
+]
+
+OFF_STAT_COLS = {
+    "QB": {
+        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
+                   "completions", "attempts", "passing_yards", "passing_tds",
+                   "interceptions", "carries", "rushing_yards", "rushing_tds"],
+        "rename": {
+            "completions": "CMP", "attempts": "ATT",
+            "passing_yards": "Pass Yds", "passing_tds": "Pass TD",
+            "interceptions": "INT", "carries": "Rush Att",
+            "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
+        },
+    },
+    "RB": {
+        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
+                   "carries", "rushing_yards", "rushing_tds",
+                   "receptions", "targets", "receiving_yards", "receiving_tds"],
+        "rename": {
+            "carries": "Car", "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
+            "receptions": "Rec", "targets": "Tgt",
+            "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
+        },
+    },
+    "FB": {
+        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
+                   "carries", "rushing_yards", "receptions", "receiving_yards"],
+        "rename": {
+            "carries": "Car", "rushing_yards": "Rush Yds",
+            "receptions": "Rec", "receiving_yards": "Rec Yds",
+        },
+    },
+    "WR": {
+        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
+                   "targets", "receptions", "receiving_yards", "receiving_tds",
+                   "carries", "rushing_yards"],
+        "rename": {
+            "targets": "Tgt", "receptions": "Rec",
+            "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
+            "carries": "Rush Att", "rushing_yards": "Rush Yds",
+        },
+    },
+    "TE": {
+        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
+                   "targets", "receptions", "receiving_yards", "receiving_tds"],
+        "rename": {
+            "targets": "Tgt", "receptions": "Rec",
+            "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
+        },
+    },
+}
+
+if _dc.empty:
+    # Fallback: use weekly data only, sorted by PPR pts
+    st.info("Depth chart data not available — showing 2025 season stats.")
+    if not _wk_team.empty:
+        _fb = _wk_team[_wk_team["position"].isin(["QB","RB","FB","WR","TE"])].copy()
+        if not _stats.empty:
+            _fb = _stats.copy()
+        st.dataframe(_fb, hide_index=True, use_container_width=True)
 else:
-    off_data = weekly[
-        (weekly["recent_team"] == sel_team) &
-        (weekly["season"] == sel_season) &
-        (weekly.get("season_type", pd.Series("REG", index=weekly.index)) == "REG") &
-        (weekly["position"].isin(["QB", "RB", "WR", "TE", "FB"]))
-    ].copy()
+    dc_off = _dc[_dc["side"] == "offense"].copy()
 
-    if "season_type" in weekly.columns:
-        off_data = off_data[off_data["season_type"] == "REG"]
+    for pos, label in OFF_POS_GROUPS:
+        pos_df = dc_off[dc_off["position"] == pos].sort_values("depth_order").copy()
+        if pos_df.empty:
+            continue
 
-    if off_data.empty:
-        st.info(f"No offensive player data found for {sel_team} in {sel_season}.")
-    else:
-        sum_cols = [
-            "fantasy_points_ppr", "carries", "rushing_yards", "rushing_tds",
-            "receptions", "targets", "receiving_yards", "receiving_tds",
-            "completions", "attempts", "passing_yards", "passing_tds", "interceptions",
-        ]
-        sum_cols = [c for c in sum_cols if c in off_data.columns]
+        # Rename columns before merge
+        pos_df = pos_df.rename(columns={
+            "jersey_number": "#",
+            "player_name":   "Player",
+        })
 
-        # Count games separately then merge
-        gp_df = (
-            off_data.groupby(["player_display_name", "position"], as_index=False)
-            ["week"].count().rename(columns={"week": "GP"})
+        # Merge season stats
+        merged = _merge_stats(pos_df)
+
+        cfg    = OFF_STAT_COLS.get(pos, {"cols": ["#", "Player"], "rename": {}})
+        show   = [c for c in cfg["cols"] if c in merged.columns]
+
+        # Round float stat columns
+        for fc in merged[show].select_dtypes("float").columns:
+            if fc not in ("#", "PPG"):
+                merged[fc] = merged[fc].fillna(0).round(0).astype(int, errors="ignore")
+        if "PPG" in merged.columns:
+            merged["PPG"] = merged["PPG"].fillna("—")
+        if "PPR Pts" in merged.columns:
+            merged["PPR Pts"] = merged["PPR Pts"].fillna("—")
+
+        disp = merged[show].rename(columns=cfg["rename"])
+
+        st.markdown(f"**{label}**")
+        st.dataframe(
+            disp,
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "PPG":     st.column_config.TextColumn("PPG"),
+                "PPR Pts": st.column_config.TextColumn("PPR Pts"),
+                "#":       st.column_config.NumberColumn("#", width="small"),
+            },
         )
-        agg_df = off_data.groupby(
-            ["player_display_name", "position"], as_index=False
-        )[sum_cols].sum()
-        off_agg = agg_df.merge(gp_df, on=["player_display_name", "position"], how="left")
-        off_agg["PPR Pts"] = off_agg["fantasy_points_ppr"].round(1)
-        off_agg["PPG"]     = (off_agg["fantasy_points_ppr"] / off_agg["GP"].clip(lower=1)).round(1)
-
-        pos_order = {"QB": 0, "RB": 1, "FB": 2, "WR": 3, "TE": 4}
-        off_agg["_sort"] = off_agg["position"].map(pos_order).fillna(99)
-        off_agg = off_agg.sort_values(["_sort", "PPR Pts"], ascending=[True, False]).drop(columns=["_sort"]).reset_index(drop=True)
-
-        pos_configs = {
-            "QB": {
-                "label": "Quarterbacks",
-                "cols":  ["player_display_name", "GP", "PPR Pts", "PPG",
-                          "completions", "attempts", "passing_yards", "passing_tds",
-                          "interceptions", "carries", "rushing_yards", "rushing_tds"],
-                "rename": {
-                    "player_display_name": "Player",
-                    "completions": "CMP", "attempts": "ATT",
-                    "passing_yards": "Pass Yds", "passing_tds": "Pass TD",
-                    "interceptions": "INT", "carries": "Rush Att",
-                    "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
-                },
-            },
-            "RB": {
-                "label": "Running Backs",
-                "cols":  ["player_display_name", "GP", "PPR Pts", "PPG",
-                          "carries", "rushing_yards", "rushing_tds",
-                          "receptions", "targets", "receiving_yards", "receiving_tds"],
-                "rename": {
-                    "player_display_name": "Player",
-                    "carries": "Carries", "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
-                    "receptions": "Rec", "targets": "Tgt",
-                    "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
-                },
-            },
-            "FB": {
-                "label": "Fullbacks",
-                "cols":  ["player_display_name", "GP", "PPR Pts", "PPG",
-                          "carries", "rushing_yards", "rushing_tds",
-                          "receptions", "targets", "receiving_yards", "receiving_tds"],
-                "rename": {
-                    "player_display_name": "Player",
-                    "carries": "Carries", "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
-                    "receptions": "Rec", "targets": "Tgt",
-                    "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
-                },
-            },
-            "WR": {
-                "label": "Wide Receivers",
-                "cols":  ["player_display_name", "GP", "PPR Pts", "PPG",
-                          "targets", "receptions", "receiving_yards", "receiving_tds",
-                          "carries", "rushing_yards"],
-                "rename": {
-                    "player_display_name": "Player",
-                    "targets": "Tgt", "receptions": "Rec",
-                    "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
-                    "carries": "Rush Att", "rushing_yards": "Rush Yds",
-                },
-            },
-            "TE": {
-                "label": "Tight Ends",
-                "cols":  ["player_display_name", "GP", "PPR Pts", "PPG",
-                          "targets", "receptions", "receiving_yards", "receiving_tds"],
-                "rename": {
-                    "player_display_name": "Player",
-                    "targets": "Tgt", "receptions": "Rec",
-                    "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
-                },
-            },
-        }
-
-        for pos, cfg in pos_configs.items():
-            pos_df = off_agg[off_agg["position"] == pos].copy()
-            if pos_df.empty:
-                continue
-            st.markdown(f"**{cfg['label']}**")
-            show_cols = [c for c in cfg["cols"] if c in pos_df.columns]
-            # Round float cols
-            for fc in pos_df[show_cols].select_dtypes("float").columns:
-                pos_df[fc] = pos_df[fc].round(0).astype(int, errors="ignore")
-
-            st.dataframe(
-                pos_df[show_cols].rename(columns=cfg["rename"]),
-                hide_index=True,
-                use_container_width=True,
-                column_config={"PPG": st.column_config.NumberColumn(format="%.1f")},
-            )
-            st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -357,58 +411,50 @@ st.markdown("---")
 # DEFENSIVE DEPTH CHART
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 🛡️ Defensive Depth Chart")
+st.caption("Projected 2026 starters and key contributors by unit")
 
-DEF_POSITIONS = {"CB", "S", "SS", "FS", "LB", "ILB", "OLB", "MLB",
-                 "DE", "DT", "NT", "DL", "DB", "EDGE"}
+DEF_POS_GROUPS = [
+    ("Defensive Line", ["DE", "DT", "NT", "DL", "EDGE"]),
+    ("Linebackers",    ["LB", "ILB", "OLB", "MLB"]),
+    ("Defensive Backs",["CB", "S", "SS", "FS", "DB"]),
+]
 
-if not weekly.empty and "position" in weekly.columns:
-    def_data = weekly[
-        (weekly["recent_team"] == sel_team) &
-        (weekly["season"] == sel_season)
-    ].copy()
-    if "season_type" in def_data.columns:
-        def_data = def_data[def_data["season_type"] == "REG"]
-    def_data = def_data[def_data["position"].isin(DEF_POSITIONS)]
+if _dc.empty:
+    st.info("Depth chart data not available for this team.")
+else:
+    dc_def = _dc[_dc["side"] == "defense"].copy()
 
-    if not def_data.empty:
-        # Defensive players may have minimal fantasy stats; just show games + position
-        def_gp = (
-            def_data.groupby(["player_display_name", "position"], as_index=False)
-            ["week"].count().rename(columns={"week": "GP"})
-            .sort_values(["position", "GP"], ascending=[True, False])
-            .reset_index(drop=True)
-        )
-        # Add headshot if available
-        st.caption("Games played by defensive position — individual defensive stats (sacks, tackles, INTs) require an additional data source.")
-
-        def_pos_groups = {
-            "Defensive Line": ["DE", "DT", "NT", "DL", "EDGE"],
-            "Linebackers":    ["LB", "ILB", "OLB", "MLB"],
-            "Defensive Backs":["CB", "S", "SS", "FS", "DB"],
-        }
-        for group_label, positions in def_pos_groups.items():
-            g_df = def_gp[def_gp["position"].isin(positions)].copy()
+    if dc_def.empty:
+        st.info("No defensive depth chart data available.")
+    else:
+        for group_label, positions in DEF_POS_GROUPS:
+            g_df = dc_def[dc_def["position"].isin(positions)].sort_values(
+                ["position", "depth_order"]
+            ).copy()
             if g_df.empty:
                 continue
+            disp = g_df[["jersey_number", "player_name", "position", "depth_order"]].rename(columns={
+                "jersey_number": "#",
+                "player_name":   "Player",
+                "position":      "Pos",
+                "depth_order":   "Depth",
+            })
             st.markdown(f"**{group_label}**")
             st.dataframe(
-                g_df.rename(columns={"player_display_name": "Player", "position": "Pos"}),
+                disp,
                 hide_index=True,
                 use_container_width=True,
+                column_config={
+                    "#":     st.column_config.NumberColumn("#", width="small"),
+                    "Depth": st.column_config.NumberColumn("Depth", width="small"),
+                },
             )
             st.markdown("<br>", unsafe_allow_html=True)
-    else:
-        st.info(
-            "Individual defensive player stats (tackles, sacks, INTs) are not included "
-            "in the current data source. This section will be expanded in a future update "
-            "once defensive game-log data is added."
-        )
-else:
-    st.info("Weekly data not available.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.caption(
-    f"**Data source** — Season ratings from processed team stats · "
+    f"**Data sources** — Season ratings from processed team stats · "
     f"Records calculated from {sel_season} regular season schedule · "
-    "Offensive depth chart from weekly player game logs."
+    "Depth chart based on projected 2026 rosters · "
+    "Season stats from 2025 regular season game logs."
 )

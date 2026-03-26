@@ -76,7 +76,17 @@ if selected_team != "All Teams":
     view_df = view_df[view_df["team"] == selected_team]
 
 view_df = view_df.sort_values(sort_metric, ascending=ascending).reset_index(drop=True)
+# ── Quick action in Team Ratings — links to Team Profile page ───────────────
+profile_team_options = sorted(full_df["team"].unique().tolist()) if not full_df.empty else []
+profile_team_default = (
+    selected_team if selected_team != "All Teams"
+    else st.session_state.get("profile_team", profile_team_options[0] if profile_team_options else "")
+)
 
+if profile_team_options:
+    if st.button("🏟️ Open Team Profile", key="goto_profile_quick", use_container_width=True, type="primary"):
+        st.session_state["profile_team"] = profile_team_default
+        st.switch_page("pages/8_Team_Profile.py")
 # ── Snapshot cards ───────────────────────────────────────────────────────────
 st.markdown("### Snapshot")
 
@@ -121,13 +131,30 @@ if not full_df.empty:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Team Profile button (shown when a specific team is selected) ─────────────
-if selected_team != "All Teams":
-    st.session_state["profile_team"] = selected_team
-    if st.button(f"🏟️ View Full Team Profile — {selected_team} →",
-                 key="goto_profile", use_container_width=False,
-                 type="primary"):
-        st.switch_page("pages/8_Team_Profile.py")
+# ── Team Profile launcher — always visible ───────────────────────────────────
+with st.container():
+    st.markdown("#### 🏟️ Team Profile")
+    tp_col1, tp_col2 = st.columns([2, 1])
+    with tp_col1:
+        profile_team_options = sorted(full_df["team"].unique().tolist())
+        default_profile = (
+            selected_team if selected_team != "All Teams"
+            else st.session_state.get("profile_team", profile_team_options[0])
+        )
+        if default_profile not in profile_team_options:
+            default_profile = profile_team_options[0]
+        profile_team_pick = st.selectbox(
+            "Select a team to view full profile",
+            profile_team_options,
+            index=profile_team_options.index(default_profile),
+            key="tr_profile_pick",
+            label_visibility="collapsed",
+        )
+    with tp_col2:
+        if st.button("View Team Profile →", key="goto_profile",
+                     use_container_width=True, type="primary"):
+            st.session_state["profile_team"] = profile_team_pick
+            st.switch_page("pages/8_Team_Profile.py")
 
 st.markdown("---")
 

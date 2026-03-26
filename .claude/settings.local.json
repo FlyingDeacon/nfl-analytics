@@ -24,7 +24,27 @@
       "Bash(source .venv/bin/activate)",
       "Bash(python3 -c 'import pandas')",
       "Bash(.venv/bin/python3 src/load_preseason_rankings.py)",
-      "Bash(.venv/bin/pip install:*)"
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(curl -sI -L \"https://github.com/nflverse/nflverse-data/releases/download/player_stats/player_stats_2024.parquet\")",
+      "Bash(curl -sI -L \"https://github.com/nflverse/nflverse-data/releases/download/player_stats/player_stats_2025.parquet\")",
+      "Bash(curl -sI -L \"https://github.com/nflverse/nflverse-data/releases/download/player_stats/player_stats_2023.parquet\")",
+      "Bash(curl -sI -L \"https://github.com/nflverse/nflverse-data/releases/download/player_stats/player_stats_2020.parquet\")",
+      "Bash(curl -s \"https://api.github.com/repos/nflverse/nflverse-data/releases\")",
+      "Bash(curl -s \"https://api.github.com/repos/nflverse/nflverse-data/releases/tags/player_stats\")",
+      "Bash(curl -sI -L \"https://github.com/nflverse/nflverse-data/releases/download/schedules/schedules.csv\")",
+      "Bash(.venv/bin/python -c \":*)",
+      "Bash(git push:*)",
+      "Bash(.venv/bin/python -c \"import pandas as pd; df=pd.read_csv\\(''data/raw/weekly.csv'', low_memory=False\\); print\\(''Seasons:'', sorted\\(df[''season''].unique\\(\\)\\)\\); print\\(''Shape:'', df.shape\\)\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:api.github.com)",
+      "WebSearch",
+      "WebFetch(domain:opengameart.org)",
+      "Read(//tmp/**)",
+      "Bash(base64 -i \"Screenshot 2026-03-24 at 10.42.07 PM.png\" -o /tmp/unicorn_b64.txt)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3:*)"
     ]
   }
 }
