@@ -128,7 +128,7 @@ reg_games["home_score"] = pd.to_numeric(reg_games.get("home_score", pd.Series(dt
 reg_games["away_score"] = pd.to_numeric(reg_games.get("away_score", pd.Series(dtype=float)), errors="coerce")
 
 def calc_record(df, team):
-    """Return (W, L, T) for a team from a games dataframe."""
+    """Return (W, L, T, PF, PA) for a team from a games dataframe."""
     home = df[df["home_team"] == team][["home_score", "away_score"]].rename(
         columns={"home_score": "pf", "away_score": "pa"}
     )
@@ -137,71 +137,157 @@ def calc_record(df, team):
     )
     both = pd.concat([home, away]).dropna()
     if both.empty:
-        return 0, 0, 0
-    w = int((both["pf"] > both["pa"]).sum())
-    l = int((both["pf"] < both["pa"]).sum())
-    t = int((both["pf"] == both["pa"]).sum())
-    return w, l, t
+        return 0, 0, 0, 0, 0
+    w  = int((both["pf"] > both["pa"]).sum())
+    l  = int((both["pf"] < both["pa"]).sum())
+    t  = int((both["pf"] == both["pa"]).sum())
+    pf = int(both["pf"].sum())
+    pa = int(both["pa"].sum())
+    return w, l, t, pf, pa
 
-# Overall record
-ow, ol, ot = calc_record(reg_games, sel_team)
-overall_rec = f"{ow}–{ol}" + (f"–{ot}" if ot else "")
 
-# Division opponents — use nfl_divisions.csv as the single source of truth
-# (guaranteed to have exactly 4 teams per division with canonical abbreviations)
+def win_pct(w, l, t):
+    total = w + l + t
+    return (w + 0.5 * t) / max(total, 1)
+
+
+def _h2h_pct(games_df, team, opponents):
+    """Win % for `team` in games against a specific set of `opponents`."""
+    h2h = games_df[
+        ((games_df["home_team"] == team) & (games_df["away_team"].isin(opponents))) |
+        ((games_df["away_team"] == team) & (games_df["home_team"].isin(opponents)))
+    ]
+    w, l, t, _, _ = calc_record(h2h, team)
+    return win_pct(w, l, t)
+
+
+def _div_pct(games_df, team, div_teams):
+    """Win % for `team` in division games."""
+    opp = [x for x in div_teams if x != team]
+    div_g = games_df[
+        ((games_df["home_team"] == team) & (games_df["away_team"].isin(opp))) |
+        ((games_df["away_team"] == team) & (games_df["home_team"].isin(opp)))
+    ]
+    w, l, t, _, _ = calc_record(div_g, team)
+    return win_pct(w, l, t)
+
+
+def _conf_pct(games_df, team, conf_teams):
+    """Win % for `team` in conference games."""
+    conf_g = games_df[
+        ((games_df["home_team"] == team) & (games_df["away_team"].isin(conf_teams))) |
+        ((games_df["away_team"] == team) & (games_df["home_team"].isin(conf_teams)))
+    ]
+    w, l, t, _, _ = calc_record(conf_g, team)
+    return win_pct(w, l, t)
+
+
+def nfl_tiebreak_sort(teams, games_df, div_teams, conf_teams):
+    """
+    Sort teams using NFL tiebreaker rules (simplified):
+      1. Overall win %
+      2. H2H win % within the tied group
+      3. Division win %
+      4. Conference win %
+      5. Points For (season total)
+    Returns list of teams in correct standing order.
+    """
+    if len(teams) <= 1:
+        return teams
+
+    def sort_key(team):
+        w, l, t, pf, _ = calc_record(games_df, team)
+        overall  = win_pct(w, l, t)
+        h2h      = _h2h_pct(games_df, team, [x for x in teams if x != team])
+        div      = _div_pct(games_df, team, div_teams)
+        conf     = _conf_pct(games_df, team, conf_teams)
+        return (overall, h2h, div, conf, pf)
+
+    return sorted(teams, key=sort_key, reverse=True)
+
+
+# ── Division setup ────────────────────────────────────────────────────────────
+# Use nfl_divisions.csv as authoritative source (canonical 4 teams per division)
 if team_div and not divisions_df.empty:
     div_teams = divisions_df.loc[
         divisions_df["division"] == team_div, "team_abbr"
     ].dropna().unique().tolist()
 else:
-    # Fallback: pull from teams_df (already normalised in loader)
     div_teams = teams_df.loc[
         teams_df["team_division"] == team_div, abbr_col
     ].dropna().unique().tolist() if team_div else []
 
-# Safety: make sure selected team is always included
 if sel_team not in div_teams:
     div_teams.append(sel_team)
 
+# Conference teams (for tiebreaker step 4)
+conf = "AFC" if team_div.startswith("AFC") else "NFC"
+if not divisions_df.empty:
+    conf_teams = divisions_df.loc[
+        divisions_df["conference"] == conf, "team_abbr"
+    ].dropna().unique().tolist()
+else:
+    conf_teams = div_teams  # fallback
+
 div_opponents = [t for t in div_teams if t != sel_team]
 
-div_games = reg_games[
+# ── Records ───────────────────────────────────────────────────────────────────
+ow, ol, ot, _, _ = calc_record(reg_games, sel_team)
+overall_rec = f"{ow}–{ol}" + (f"–{ot}" if ot else "")
+
+div_g = reg_games[
     ((reg_games["home_team"] == sel_team) & (reg_games["away_team"].isin(div_opponents))) |
     ((reg_games["away_team"] == sel_team) & (reg_games["home_team"].isin(div_opponents)))
 ]
-dw, dl, dt = calc_record(div_games, sel_team)
+dw, dl, dt, _, _ = calc_record(div_g, sel_team)
 div_rec = f"{dw}–{dl}" + (f"–{dt}" if dt else "")
 
-# Division standings
+# ── Division standings with NFL tiebreakers ───────────────────────────────────
 div_standing_rows = []
-for t in div_opponents + [sel_team]:
-    tw, tl, tt = calc_record(reg_games, t)
+for t in div_teams:
+    tw, tl, tt, tpf, tpa = calc_record(reg_games, t)
     total_g = tw + tl + tt
     div_standing_rows.append({
         "team": t,
         "W": tw, "L": tl, "T": tt,
-        "win_pct": round((tw + 0.5 * tt) / max(total_g, 1), 3),
+        "win_pct": round(win_pct(tw, tl, tt), 3),
+        "_pf": tpf, "_pa": tpa,
     })
-div_standing_df = (
-    pd.DataFrame(div_standing_rows)
-    .sort_values(["W", "win_pct"], ascending=False)
-    .reset_index(drop=True)
-)
+
+raw_df = pd.DataFrame(div_standing_rows)
+
+# Apply tiebreakers within groups that share the same win %
+sorted_teams = []
+for _, grp in raw_df.groupby("win_pct", sort=False):
+    if len(grp) == 1:
+        sorted_teams.append(grp["team"].iloc[0])
+    else:
+        # Multiple teams tied — apply NFL tiebreaker order
+        tied = grp["team"].tolist()
+        sorted_teams.extend(nfl_tiebreak_sort(tied, reg_games, div_teams, conf_teams))
+
+# Rebuild ordered df
+sorted_rows = []
+for t in sorted_teams:
+    row_data = raw_df[raw_df["team"] == t].iloc[0].to_dict()
+    sorted_rows.append(row_data)
+
+# Final overall sort by win_pct so non-tied teams still rank correctly
+div_standing_df = pd.DataFrame(sorted_rows)
+div_standing_df = div_standing_df.sort_values(
+    [r for r in sorted_teams],  # preserve tie-break order as secondary key via categorical
+    ascending=False
+).reset_index(drop=True)
+
+# Use categorical ordering to preserve tiebreaker results exactly
+div_standing_df["team"] = pd.Categorical(div_standing_df["team"], categories=sorted_teams, ordered=True)
+div_standing_df = div_standing_df.sort_values(["win_pct", "team"], ascending=[False, True]).reset_index(drop=True)
 div_standing_df.insert(0, "Place", range(1, len(div_standing_df) + 1))
 
-place_row = div_standing_df[div_standing_df["team"] == sel_team]
+place_row  = div_standing_df[div_standing_df["team"] == sel_team]
 team_place = int(place_row.iloc[0]["Place"]) if not place_row.empty else 0
 ordinals   = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
 place_str  = ordinals.get(team_place, f"{team_place}th")
-
-# Validate NFC South 2025 champion against PFR expectation (Carolina Panthers)
-if sel_season == 2025 and team_div == "NFC South":
-    pfr_winner = "CAR"
-    div_winner = div_standing_df.sort_values(["Place", "win_pct"], ascending=[True, False]).iloc[0]["team"] if not div_standing_df.empty else None
-    if div_winner == pfr_winner:
-        st.success("NFC South winner check: ✅ matches PFR (Carolina Panthers)")
-    else:
-        st.warning(f"NFC South winner check: ❌ mismatch (app: {div_winner}, PFR: {pfr_winner})")
 
 st.markdown("### 📋 Season Record & Division Standing")
 r1, r2, r3 = st.columns(3)
