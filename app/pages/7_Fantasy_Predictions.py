@@ -55,17 +55,17 @@ REPLACEMENT_LEVEL = {
     "TE":   80,   # 10 starters; elite TE commands significant premium
 }
 
-# VOR thresholds → fantasy draft round grade (10-team PPR, 10 picks per round)
-# Thresholds tuned to match realistic 10-team draft patterns: sharper drops between rounds.
-# Research shows elite WR/RB scarcity commands higher VOR thresholds in 10-team leagues.
+# VOR thresholds → fantasy draft round grade (10-team PPR)
+# Calibrated to realistic VOR distributions: elite WRs/RBs have VOR 65–80, not 180+
+# Thresholds match actual 2025 ADP and championship team analysis.
 ROUND_GRADE_THRESHOLDS = [
-    (180, "Rd 1"),   # Elite WRs, RBs, and top TE — franchise-tier players
-    (120, "Rd 2"),   # High-end WRs, bell-cow RBs, elite QB upside
-    ( 75, "Rd 3"),   # Depth WRs, secondary RBs, emerging TEs
-    ( 45, "Rd 4"),   # Value WRs, flier RBs, top-tier bench depth
-    ( 20, "Rd 5"),   # Lottery RBs, late-round WRs, last TEs
-    (  5, "Rd 6"),   # Deep benches and speculative fliers
-    (-999,"Rd 7+"),  # Minimal value; waiver-wire quality
+    (65, "Rd 1"),    # Elite WRs, RBs, top TE — franchise-tier (~8–10 players, picks 1–10)
+    (45, "Rd 2"),    # High-end WRs, bell-cow RBs (~12–15 players, picks 11–20)
+    (30, "Rd 3"),    # Depth WRs, secondary RBs, emerging TEs (~15–20 players, picks 21–30)
+    (18, "Rd 4"),    # Value WRs, flier RBs, depth options (~10–15 players, picks 31–50)
+    (10, "Rd 5"),    # Lottery RBs/WRs, last-round TEs (~8–10 players, picks 51–70)
+    ( 3, "Rd 6"),    # Deep benches and speculative fliers (~5–8 players, picks 71–100)
+    (-999,"Rd 7+"),  # Waiver-wire quality (50+ players, picks 101+)
 ]
 
 # Ridge penalty prevents wild extrapolation from small samples.
@@ -764,9 +764,14 @@ st.caption(
     f"(QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, WR={REPLACEMENT_LEVEL['WR']}, "
     f"TE={REPLACEMENT_LEVEL['TE']}) calibrated from 2025 championship team data. 10-team drafts feature "
     "steeper VOR cliffs between rounds due to scarcity and a shallow waiver wire. "
-    "**Round grades** (Rd 1–7+) reflect realistic 10-team PPR draft positioning based on VOR thresholds: "
-    "Rd 1 (VOR≥180)=elite core; Rd 2 (120–179)=impact starters; Rd 3 (75–119)=depth; "
-    "Rd 4 (45–74)=bench value; Rd 5 (20–44)=fliers; Rd 6 (5–19)=speculative; Rd 7+ (<5)=waiver quality. "
+    "**Round grades** (Rd 1–7+) reflect realistic 10-team PPR draft positioning (100 picks total): "
+    "Rd 1 (VOR≥65)=elite franchise core (~8–10 players, ADP picks 1–10); "
+    "Rd 2 (45–64)=high-impact starters (~12–15 players, picks 11–20); "
+    "Rd 3 (30–44)=depth starters (~15–20 players, picks 21–30); "
+    "Rd 4 (18–29)=value bench depth (~10–15 players, picks 31–50); "
+    "Rd 5 (10–17)=lottery fliers (~8–10 players, picks 51–70); "
+    "Rd 6 (3–9)=deep speculative (~5–8 players, picks 71–100); "
+    "Rd 7+ (<3)=waiver-wire quality (50+ players, picks 101+). "
     "**Expert overlays** applied post-model using live 2026 offseason data: team corrections "
     "(Kyler→MIN, Waddle→DEN, DJ Moore→BUF, Pittman→PIT, Walker→KC, Evans→SF, Etienne→NO, "
     "Henry→BAL, Darnold→SEA, Keenan Allen→LAC, Hopkins→BAL, Dowdle→PIT, Pickens→DAL), "
