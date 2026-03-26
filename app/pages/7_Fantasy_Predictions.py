@@ -118,6 +118,9 @@ EXPERT_MULTIPLIERS = {
     "Cam Skattebo":      1.20,   # High-volume starter; model underweights him
     "C.J. Stroud":       1.10,   # Bounce-back from shoulder injury
     "Matthew Stafford":  1.15,   # Strong recent performances (2023-2025); regression expected but not severe
+    "Jalen Hurts":       1.08,   # Consistent 20+ PPG since 2020; elite talent in PHI
+    "Lamar Jackson":     1.12,   # Ravens offense upgrade; historical 21+ PPG average
+    "Dak Prescott":      1.06,   # Cowboys offense boost; 20+ PPG career average
     "Tucker Kraft":      1.15,   # Ascending TE1 in Green Bay
     "Kyler Murray":      1.05,   # Excellent new situation (MIN/Jefferson/Addison)
     "Kenneth Walker":    1.05,   # Great landing spot — Andy Reid system
