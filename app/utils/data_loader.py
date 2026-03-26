@@ -25,7 +25,12 @@ def load_teams() -> pd.DataFrame:
     if not path.exists():
         st.error(f"teams.csv not found at {path}.")
         st.stop()
-    return pd.read_csv(path)
+    df = pd.read_csv(path)
+
+    # Ensure each division contains only one row per active franchise.
+    # teams.csv may include legacy or alias variants (e.g., LA vs LAR). Use team_abbr as canonical key.
+    df = df.drop_duplicates(subset=["team_abbr"], keep="last")
+    return df
 
 
 @st.cache_data(show_spinner=False)
