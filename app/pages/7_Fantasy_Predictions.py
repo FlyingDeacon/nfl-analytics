@@ -109,10 +109,10 @@ EXPERT_MULTIPLIERS = {
     "Drake Maye":        0.88,   # Year-2 uncertainty; thin supporting cast
     "Josh Allen":        0.95,   # Mild regression signal; still top-tier
     "Rashee Rice":       0.70,   # Suspension carryover — available ~Week 7+ (~10 games)
-    "Tua Tagovailoa":    0.75,   # Weak situation in ATL; competing with Penix; veteran min
+    "Tua Tagovailoa":    0.75,   # ATL placeholder; Penix (ACL) is intended starter — ~40% Tua starts Week 1
     "Mike Evans":        0.80,   # Age 32 + injury (8 games in 2025); high-risk
-    "De'Von Achane":     0.80,   # QB downgrade (Malik Willis replaces Tua in MIA)
-    "Devon Achane":      0.80,   # Alt spelling — same player
+    "De'Von Achane":     0.90,   # Willis (MIA starter, confirmed) is capable; Achane's volume/receiving role intact
+    "Devon Achane":      0.90,   # Alt spelling — same player
     # ── Undervalued — boost projections ───────────────────────────────────────
     "Garrett Wilson":    1.12,   # Elite route runner; improved QB situation
     "Jaxon Smith-Njigba":1.18,   # Highest-paid WR in NFL; WR1 fully established
