@@ -411,25 +411,21 @@ else:
     dc_season = sel_season
 
 # ══════════════════════════════════════════════════════════════════════════════
-# OFFENSIVE DEPTH CHART
+# OFFENSIVE DEPTH CHART  (sourced from actual 2025 REG game logs)
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 🏈 Offensive Depth Chart")
-st.caption(
-    f"Projected 2026 roster depth · "
-    f"2025 season stats shown where available (REG season)"
-)
+st.caption("2025 regular season · ranked by games played & stats · all 32 teams")
 
 OFF_POS_GROUPS = [
-    ("QB",  "Quarterbacks"),
-    ("RB",  "Running Backs"),
-    ("FB",  "Fullbacks"),
-    ("WR",  "Wide Receivers"),
-    ("TE",  "Tight Ends"),
+    ("QB", "Quarterbacks"),
+    ("RB", "Running Backs"),
+    ("WR", "Wide Receivers"),
+    ("TE", "Tight Ends"),
 ]
 
 OFF_STAT_COLS = {
     "QB": {
-        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
+        "cols":   ["Player", "GP", "PPR Pts", "PPG",
                    "completions", "attempts", "passing_yards", "passing_tds",
                    "interceptions", "carries", "rushing_yards", "rushing_tds"],
         "rename": {
@@ -440,7 +436,7 @@ OFF_STAT_COLS = {
         },
     },
     "RB": {
-        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
+        "cols":   ["Player", "GP", "PPR Pts", "PPG",
                    "carries", "rushing_yards", "rushing_tds",
                    "receptions", "targets", "receiving_yards", "receiving_tds"],
         "rename": {
@@ -449,16 +445,8 @@ OFF_STAT_COLS = {
             "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
         },
     },
-    "FB": {
-        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
-                   "carries", "rushing_yards", "receptions", "receiving_yards"],
-        "rename": {
-            "carries": "Car", "rushing_yards": "Rush Yds",
-            "receptions": "Rec", "receiving_yards": "Rec Yds",
-        },
-    },
     "WR": {
-        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
+        "cols":   ["Player", "GP", "PPR Pts", "PPG",
                    "targets", "receptions", "receiving_yards", "receiving_tds",
                    "carries", "rushing_yards"],
         "rename": {
@@ -468,7 +456,7 @@ OFF_STAT_COLS = {
         },
     },
     "TE": {
-        "cols":   ["#", "Player", "GP", "PPR Pts", "PPG",
+        "cols":   ["Player", "GP", "PPR Pts", "PPG",
                    "targets", "receptions", "receiving_yards", "receiving_tds"],
         "rename": {
             "targets": "Tgt", "receptions": "Rec",
@@ -478,13 +466,7 @@ OFF_STAT_COLS = {
 }
 
 if _dc.empty:
-    # Fallback: use weekly data only, sorted by PPR pts
-    st.info("Depth chart data not available — showing 2025 season stats.")
-    if not _wk_team.empty:
-        _fb = _wk_team[_wk_team["position"].isin(["QB","RB","FB","WR","TE"])].copy()
-        if not _stats.empty:
-            _fb = _stats.copy()
-        st.dataframe(_fb, hide_index=True, use_container_width=True)
+    st.info("Depth chart data not available for this team.")
 else:
     dc_off = _dc[_dc["side"] == "offense"].copy()
 
@@ -493,26 +475,30 @@ else:
         if pos_df.empty:
             continue
 
-        # Rename columns before merge
-        pos_df = pos_df.rename(columns={
-            "jersey_number": "#",
-            "player_name":   "Player",
-        })
+        pos_df = pos_df.rename(columns={"player_name": "Player"})
 
-        # Merge season stats
+        # Merge 2025 season stats from weekly.csv
         merged = _merge_stats(pos_df)
 
-        cfg    = OFF_STAT_COLS.get(pos, {"cols": ["#", "Player"], "rename": {}})
-        show   = [c for c in cfg["cols"] if c in merged.columns]
+        cfg  = OFF_STAT_COLS.get(pos, {"cols": ["Player", "GP"], "rename": {}})
+        show = [c for c in cfg["cols"] if c in merged.columns]
 
-        # Round float stat columns
-        for fc in merged[show].select_dtypes("float").columns:
-            if fc not in ("#", "PPG"):
+        # Round floats, fill missing stats with "—"
+        for fc in merged.select_dtypes("float").columns:
+            if fc == "PPG":
+                merged[fc] = merged[fc].fillna("—")
+            elif fc == "PPR Pts":
+                merged[fc] = merged[fc].fillna("—")
+            else:
                 merged[fc] = merged[fc].fillna(0).round(0).astype(int, errors="ignore")
-        if "PPG" in merged.columns:
-            merged["PPG"] = merged["PPG"].fillna("—")
-        if "PPR Pts" in merged.columns:
-            merged["PPR Pts"] = merged["PPR Pts"].fillna("—")
+
+        if "PPG"     in merged.columns: merged["PPG"]     = merged["PPG"].fillna("—")
+        if "PPR Pts" in merged.columns: merged["PPR Pts"] = merged["PPR Pts"].fillna("—")
+
+        # If depth chart has its own GP column, prefer it over merged one
+        if "GP_x" in merged.columns:
+            merged["GP"] = merged["GP_x"].fillna(merged.get("GP_y", 0))
+            merged = merged.drop(columns=["GP_x", "GP_y"], errors="ignore")
 
         disp = merged[show].rename(columns=cfg["rename"])
 
@@ -524,7 +510,7 @@ else:
             column_config={
                 "PPG":     st.column_config.TextColumn("PPG"),
                 "PPR Pts": st.column_config.TextColumn("PPR Pts"),
-                "#":       st.column_config.NumberColumn("#", width="small"),
+                "GP":      st.column_config.NumberColumn("GP", width="small"),
             },
         )
         st.markdown("<br>", unsafe_allow_html=True)
@@ -532,15 +518,14 @@ else:
 st.markdown("---")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# DEFENSIVE DEPTH CHART
+# DEFENSIVE DEPTH CHART  (sourced from actual 2025 REG game logs)
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 🛡️ Defensive Depth Chart")
-st.caption("Projected 2026 starters and key contributors by unit")
+st.caption("2025 regular season · ranked by games played")
 
 DEF_POS_GROUPS = [
-    ("Defensive Line", ["DE", "DT", "NT", "DL", "EDGE"]),
-    ("Linebackers",    ["LB", "ILB", "OLB", "MLB"]),
-    ("Defensive Backs",["CB", "S", "SS", "FS", "DB"]),
+    ("Defensive Line",  ["DL"]),
+    ("Defensive Backs", ["DB"]),
 ]
 
 if _dc.empty:
@@ -549,29 +534,22 @@ else:
     dc_def = _dc[_dc["side"] == "defense"].copy()
 
     if dc_def.empty:
-        st.info("No defensive depth chart data available.")
+        st.info("No defensive data available for this team.")
     else:
         for group_label, positions in DEF_POS_GROUPS:
-            g_df = dc_def[dc_def["position"].isin(positions)].sort_values(
-                ["position", "depth_order"]
-            ).copy()
+            g_df = dc_def[dc_def["position"].isin(positions)].sort_values("depth_order").copy()
             if g_df.empty:
                 continue
-            disp = g_df[["jersey_number", "player_name", "position", "depth_order"]].rename(columns={
-                "jersey_number": "#",
-                "player_name":   "Player",
-                "position":      "Pos",
-                "depth_order":   "Depth",
-            })
+
+            show_cols = ["player_name", "GP"] if "GP" in g_df.columns else ["player_name"]
+            disp = g_df[show_cols].rename(columns={"player_name": "Player"})
+
             st.markdown(f"**{group_label}**")
             st.dataframe(
                 disp,
                 hide_index=True,
                 use_container_width=True,
-                column_config={
-                    "#":     st.column_config.NumberColumn("#", width="small"),
-                    "Depth": st.column_config.NumberColumn("Depth", width="small"),
-                },
+                column_config={"GP": st.column_config.NumberColumn("GP", width="small")},
             )
             st.markdown("<br>", unsafe_allow_html=True)
 
