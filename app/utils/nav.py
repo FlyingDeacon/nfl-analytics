@@ -27,6 +27,13 @@ def render_sidebar_nav(current_page: str = ""):
 
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
+    # ── Cache clear button ─────────────────────────────────────────────────────
+    if st.sidebar.button("🔄 Refresh Data", key="clear_cache_btn", help="Force reload all data from disk"):
+        st.cache_data.clear()
+        st.rerun()
+
+    st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+
     # ── Mobile bottom nav (rendered via st.markdown — pure HTML, no JS) ───────
     st.markdown("""
     <div class="mobile-nav-bar">

@@ -133,7 +133,7 @@ def _normalize_name(name: str) -> str:
     return re.sub(r"\s+", " ", name).strip()
 
 
-@st.cache_data(show_spinner=False, ttl=86400)  # refresh once per day
+@st.cache_data(show_spinner=False)  # mtime arg handles invalidation
 def load_depth_charts(_mtime: float = 0.0) -> pd.DataFrame:
     """Load depth charts from local cache or nflverse GitHub releases.
 
