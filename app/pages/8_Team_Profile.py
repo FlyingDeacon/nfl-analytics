@@ -254,6 +254,15 @@ team_place = int(place_row.iloc[0]["Place"]) if not place_row.empty else 0
 ordinals   = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
 place_str  = ordinals.get(team_place, f"{team_place}th")
 
+# Validate NFC South 2025 champion against PFR expectation (Carolina Panthers)
+if sel_season == 2025 and team_div == "NFC South":
+    pfr_winner = "CAR"
+    div_winner = div_standing_df.sort_values(["Place", "win_pct"], ascending=[True, False]).iloc[0]["team"] if not div_standing_df.empty else None
+    if div_winner == pfr_winner:
+        st.success("NFC South winner check: ✅ matches PFR (Carolina Panthers)")
+    else:
+        st.warning(f"NFC South winner check: ❌ mismatch (app: {div_winner}, PFR: {pfr_winner})")
+
 st.markdown("### 📋 Season Record & Division Standing")
 r1, r2, r3 = st.columns(3)
 record_cards = [
