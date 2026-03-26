@@ -44,6 +44,28 @@ DEFAULT_PROJ_GAMES = 14.0   # fallback when prior-season data is absent
 MIN_GAMES_BY_POS = {"QB": 12, "RB": 6, "WR": 6, "TE": 6}
 MAX_PROJ_GAMES   = 16       # conservative ceiling (no one is guaranteed 17)
 
+# ── Value Over Replacement (VOR) — positional scarcity scoring ───────────────
+# Replacement level = projected points of the last startable player at each position
+# in a 12-team PPR league, calibrated from 2025 championship team analysis.
+# QBs are deep (punt QB viable); elite TEs are scarce premiums.
+REPLACEMENT_LEVEL = {
+    "QB":  270,   # 12 starters + superflex depth; easily streamable
+    "RB":  136,   # ~24 starters; mid-range RB is the floor
+    "WR":  119,   # ~36 starters; low-end WR2/flex is replacement
+    "TE":   94,   # only 12 starters; elite TE is a genuine premium
+}
+
+# VOR thresholds → fantasy draft round grade (12-team PPR)
+ROUND_GRADE_THRESHOLDS = [
+    (150, "Rd 1"),
+    (100, "Rd 2"),
+    ( 60, "Rd 3"),
+    ( 30, "Rd 4"),
+    ( 10, "Rd 5"),
+    (  0, "Rd 6"),
+    (-999,"Rd 7+"),
+]
+
 # Ridge penalty prevents wild extrapolation from small samples.
 RIDGE_ALPHA = 8.0
 # Per-year recency decay: the 2024→2025 pair is weighted ~35 % higher than 2023→2024.
@@ -72,16 +94,21 @@ POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
 #   manual_ppg: use when ALL historical seasons are backup-level (no qualifying rate exists).
 #               Set to None to let the model find the last qualifying season automatically.
 FORCE_INCLUDE_STARTERS = {
-    "Kyler Murray": ("00-0035228", "QB", "MIN", None),   # 5 games 2025 (ARI injury); uses 2024 full season
-    "Malik Willis":  ("00-0038128", "QB", "MIA", 15.5), 
+    "Kyler Murray":  ("00-0035228", "QB", "MIN", None),   # 5 games 2025 (ARI injury); uses 2024 full season
+    "Malik Willis":  ("00-0038128", "QB", "MIA", 15.5),   # career backup turned starter — expert PPG
+    "Tyler Shough":  ("00-0040743", "QB", "NO",  16.0),   # NO QB1; 10 games 2025 (below 12 QB min); ~16 PPG
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
 EXPERT_REMOVE = {
     "Kirk Cousins",      # Not a projected 2026 starter
     "Rob Gronkowski",    # Officially retired March 2026
+    "Matthew Stafford",  # Retired / not a 2026 starter
     "Michael Penix",     # ACL surgery (Nov 2025); intended ATL starter (~60% Week 1) but removed pending recovery clearance
     "Tua Tagovailoa",    # ATL backup/placeholder — NOT a 2026 starter; Penix is intended starter
+    "Alvin Kamara",      # Demoted to NO RB2 behind Travis Etienne; also only 11 games in 2025 (below 6-game floor)
+    "Austin Ekeler",     # Torn Achilles; out for 2026 season
+    "Malik Nabers",      # ACL in 2025; only 4 games played — below 6-game WR minimum
 }
 
 # Team corrections: player name fragment → corrected 2026 team abbreviation
@@ -92,42 +119,55 @@ EXPERT_TEAM_CORRECTIONS = {
     "Jaylen Waddle":     "DEN",  # Traded MIA → DEN (pairs with Bo Nix)
     "Michael Pittman":   "PIT",  # Traded IND → PIT
     "DJ Moore":          "BUF",  # Traded CHI → BUF (Josh Allen boost)
-    "Malik Willis":      "MIA",  # 3-yr $67.5M / $45M guaranteed — CONFIRMED MIA starter; elite arm + mobility, 78% completion, 0 INTs in 3 NFL starts
+    "Malik Willis":      "MIA",  # 3-yr $67.5M / $45M guaranteed — CONFIRMED MIA starter
     "Kenneth Walker":    "KC",   # 3-yr $43M deal — joins Kansas City
     "Mike Evans":        "SF",   # 3-yr $60M deal — joins 49ers
+    "Derrick Henry":     "BAL",  # Re-signed with Baltimore Ravens
+    "Sam Darnold":       "SEA",  # Signed with Seattle Seahawks
+    "Keenan Allen":      "LAC",  # Returns to the Chargers
+    "DeAndre Hopkins":   "BAL",  # Signed with Baltimore Ravens; pairs with Lamar
+    "Rico Dowdle":       "PIT",  # Signed with Pittsburgh Steelers (was DAL)
+    "George Pickens":    "DAL",  # Traded PIT → DAL; pairs with Dak Prescott
+    "Tyler Shough":      "NO",   # Confirmed New Orleans Saints starter 2026
 }
 
 # Point multipliers based on NFL Expert contextual analysis.
 # Values < 1.0 = overvalued by the model; > 1.0 = undervalued.
 EXPERT_MULTIPLIERS = {
     # ── Overvalued — reduce projections ───────────────────────────────────────
-    "Travis Kelce":      0.82,   # Age cliff (36 in 2026); declining target share
-    "Derrick Henry":     0.85,   # RB age regression (32+); carry accumulation
-    "Patrick Mahomes":   0.92,   # ACL recovery ongoing; uncertainty for Week 1
-    "Puka Nacua":        0.87,   # Injury-prone; disappointing 2024 volume
-    "Trey McBride":      0.90,   # Regression expected after career-year spike
-    "Drake Maye":        1.15,   # 2024-2025 progression (13.63→20.82 PPG); 2026 3rd-year QB with momentum
-    "Caleb Williams":   1.12,   # 2024-2025 progression (14.97→18.72 PPG); Bears offense improving for 2026
-    "Rashee Rice":       0.70,   # Suspension carryover — available ~Week 7+ (~10 games)
-    "Mike Evans":        0.80,   # Age 32 + injury (8 games in 2025); high-risk
-    "De'Von Achane":     0.90,   # Willis (MIA starter, confirmed) is capable; Achane's volume/receiving role intact
-    "Devon Achane":      0.90,   # Alt spelling — same player
+    "Travis Kelce":       0.82,  # Age cliff (36 in 2026); declining target share
+    "Derrick Henry":      0.90,  # Age regression (32+) but BAL run game boosts floor; carries expected
+    "Patrick Mahomes":    0.92,  # ACL recovery ongoing; uncertainty for Week 1
+    "Puka Nacua":         0.87,  # Injury-prone; disappointing 2024 volume
+    "Trey McBride":       0.90,  # Regression expected after career-year spike
+    "Rashee Rice":        0.70,  # Suspension carryover — available ~Week 7+ (~10 games)
+    "Mike Evans":         0.80,  # Age 32 + injury (8 games in 2025); high-risk
+    "De'Von Achane":      0.90,  # Willis (MIA starter, confirmed) is capable; volume/receiving role intact
+    "Devon Achane":       0.90,  # Alt spelling — same player
+    "Christian McCaffrey":0.92,  # Age 30 concern; volume risk after back-to-back heavy usage
     # ── Undervalued — boost projections ───────────────────────────────────────
-    "Garrett Wilson":    1.12,   # Elite route runner; improved QB situation
-    "Jaxon Smith-Njigba":1.18,   # Highest-paid WR in NFL; WR1 fully established
-    "Bucky Irving":      1.18,   # Projected RB1 in Tampa Bay
-    "Cam Skattebo":      1.20,   # High-volume starter; model underweights him
-    "C.J. Stroud":       1.10,   # Bounce-back from shoulder injury
-    "Matthew Stafford":  1.15,   # Strong recent performances (2023-2025); regression expected but not severe
-    "Jalen Hurts":       1.08,   # Consistent 20+ PPG since 2020; elite talent in PHI
-    "Lamar Jackson":     1.12,   # Ravens offense upgrade; historical 21+ PPG average
-    "Dak Prescott":      1.06,   # Cowboys offense boost; 20+ PPG career average
-    "Tucker Kraft":      1.15,   # Ascending TE1 in Green Bay
-    "Kyler Murray":      1.05,   # Excellent new situation (MIN/Jefferson/Addison)
-    "Kenneth Walker":    1.05,   # Great landing spot — Andy Reid system
-    "Jaylen Waddle":     1.10,   # Better QB stability with Bo Nix in DEN
-    "DJ Moore":          1.10,   # Huge boost — now catching passes from Josh Allen
-    "Michael Pittman":   1.08,   # Upgrade from IND; solid target in PIT offense
+    "Drake Maye":         1.15,  # 2024→2025 progression (13.63→20.82 PPG); 3rd-year QB momentum
+    "Caleb Williams":     1.12,  # 2024→2025 progression (14.97→18.72 PPG); Bears offense improving
+    "Garrett Wilson":     1.12,  # Elite route runner; improved QB situation
+    "Jaxon Smith-Njigba": 1.18,  # Highest-paid WR in NFL; WR1 fully established
+    "Bucky Irving":       1.18,  # Projected RB1 in Tampa Bay
+    "Cam Skattebo":       1.20,  # High-volume starter; model underweights breakout
+    "C.J. Stroud":        1.10,  # Bounce-back from shoulder injury
+    "Jalen Hurts":        1.08,  # Consistent 20+ PPG since 2020; PHI weapons intact
+    "Lamar Jackson":      1.12,  # Ravens upgraded weapons (Hopkins); historical 21+ PPG
+    "Dak Prescott":       1.06,  # Pickens arrival — elite new weapon; DAL offense boost
+    "Tucker Kraft":       1.15,  # Ascending TE1 in Green Bay; Jordan Love connection
+    "Kyler Murray":       1.05,  # Excellent situation (MIN/Jefferson/Addison/O'Connell)
+    "Kenneth Walker":     1.05,  # Great landing spot — Andy Reid system
+    "Jaylen Waddle":      1.10,  # Better QB stability with Bo Nix in DEN
+    "DJ Moore":           1.10,  # Huge boost — now catching passes from Josh Allen (BUF)
+    "Michael Pittman":    1.08,  # Upgrade from IND; reliable target in PIT offense
+    "Jahmyr Gibbs":       1.22,  # Solo DET RB after David Montgomery traded to HOU; massive volume
+    "Bijan Robinson":     1.05,  # Full-time workhorse ATL — Penix/Tua situation doesn't hurt RB
+    "Justin Jefferson":   1.08,  # Elite talent + Kyler Murray + Kevin O'Connell; top-5 WR upside
+    "Kyle Pitts":         1.10,  # Ascending TE; health restored; target hog potential returns
+    "George Pickens":     1.10,  # DAL move — pairs with Dak Prescott; elite playmaker in system
+    "Jalen Coker":        1.15,  # Confirmed CAR WR2; Bryce Young improvement; ascending role
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -425,6 +465,32 @@ def apply_expert_adjustments(df: pd.DataFrame,
 
 all_preds = apply_expert_adjustments(all_preds_raw, weekly)
 
+
+def _assign_vor(df: pd.DataFrame) -> pd.DataFrame:
+    """Add VOR (Value Over Replacement) and round_grade columns.
+
+    VOR = predicted_pts − replacement_level[position]
+    Replacement level is calibrated to a 12-team PPR league based on 2025
+    championship team analysis. Sorting by VOR rather than raw points accounts
+    for positional scarcity — an elite TE ranks higher than an equivalent-points RB.
+    """
+    def _grade(v: float) -> str:
+        for threshold, label in ROUND_GRADE_THRESHOLDS:
+            if v >= threshold:
+                return label
+        return "Rd 7+"
+
+    out = df.copy()
+    out["vor"] = out.apply(
+        lambda r: round(float(r["predicted_pts"]) - REPLACEMENT_LEVEL.get(r[pos_col], 0), 1),
+        axis=1,
+    )
+    out["round_grade"] = out["vor"].apply(_grade)
+    return out
+
+
+all_preds = _assign_vor(all_preds)
+
 if all_preds.empty:
     st.error("Not enough historical data to build predictions.")
     st.stop()
@@ -432,7 +498,8 @@ if all_preds.empty:
 # ── Filter by position ───────────────────────────────────────────────────────
 preds = (all_preds[all_preds[pos_col] == sel_pos].copy()
          if sel_pos != "All" else all_preds.copy())
-preds = preds.sort_values("predicted_pts", ascending=False).head(top_n).reset_index(drop=True)
+# Sort by VOR (positional scarcity-adjusted value) rather than raw points
+preds = preds.sort_values("vor", ascending=False).head(top_n).reset_index(drop=True)
 preds.insert(0, "Rank", range(1, len(preds) + 1))
 
 # Delta vs last season
@@ -562,7 +629,7 @@ st.markdown(f"### 📋 2026 Fantasy Big Board {pos_label_str}")
 board_cols = ["Rank", name_col]
 if team_col: board_cols.append(team_col)
 if pos_col:  board_cols.append(pos_col)
-board_cols += ["predicted_pts", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games"]
+board_cols += ["predicted_pts", "vor", "round_grade", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games"]
 
 # Position-specific counting stats
 if sel_pos in ("QB", "All"):
@@ -583,6 +650,8 @@ board_cols = [c for c in board_cols if c in preds.columns]
 rename_map = {
     name_col: "Player",
     "predicted_pts": "2026 Proj",
+    "vor":          "VOR",
+    "round_grade":  "Round",
     "pred_ppg": "Proj PPG",
     "proj_games": "Proj GP",
     "last_season_pts": "2025 Actual",
@@ -608,6 +677,10 @@ st.dataframe(
     use_container_width=True,
     column_config={
         "2026 Proj":  st.column_config.NumberColumn(format="%.1f"),
+        "VOR":        st.column_config.NumberColumn(format="%.1f",
+                          help="Value Over Replacement — positional scarcity-adjusted score. "
+                               "Accounts for how scarce elite players are at each position."),
+        "Round":      st.column_config.TextColumn(help="Suggested fantasy draft round (12-team PPR)"),
         "Proj PPG":   st.column_config.NumberColumn(format="%.2f"),
         "Δ Pts":      st.column_config.NumberColumn(format="%+.1f"),
         "Δ %":        st.column_config.NumberColumn(format="%+.1f%%"),
@@ -625,8 +698,8 @@ st.caption("Ranked by % change within each position — QBs and skill positions 
 
 positions_to_show = [sel_pos] if sel_pos != "All" else list(POSITION_FEATURES.keys())
 
-# Only show risers/fallers for players in the top 200 overall
-top_200_df = all_preds.nlargest(200, "predicted_pts").reset_index(drop=True).copy()
+# Only show risers/fallers for players in the top 200 overall (ranked by VOR)
+top_200_df = all_preds.nlargest(200, "vor").reset_index(drop=True).copy()
 top_200_df.insert(0, "overall_rank", range(1, len(top_200_df) + 1))
 top_200_board = top_200_df[name_col].tolist()
 rank_map = dict(zip(top_200_df[name_col], top_200_df["overall_rank"]))
@@ -682,10 +755,18 @@ st.caption(
     "with exponential recency weighting (recent seasons count more). Features are per-game rates, not "
     "season totals, so a player who missed games due to injury is not penalised for low counting stats. "
     "Projected 2026 games blends the last two seasons (65 / 35 weighting) with a conservative ceiling of "
-    f"{MAX_PROJ_GAMES} games. QB qualifier: {MIN_GAMES_BY_POS['QB']}+ games started. "
-    "Skill positions: 6+ games. "
-    "**Expert overlays** applied post-model using live 2026 offseason data: team corrections (Tua → ATL, Kyler → MIN, "
-    "Waddle → DEN, DJ Moore → BUF, Pittman → PIT, Walker → KC, Evans → SF, Etienne → NO), age-cliff discounts "
-    "(Kelce, Henry, Evans), injury/suspension adjustments (Rice, Mahomes ACL, Penix removed), QB-situation impacts "
-    "(Achane −, Willis −, Murray +, Moore +, Waddle +), and breakout boosts (Skattebo, Irving, JSN, Tucker Kraft)."
+    f"{MAX_PROJ_GAMES} games. QB qualifier: {MIN_GAMES_BY_POS['QB']}+ games started. Skill positions: 6+ games. "
+    "**VOR (Value Over Replacement)** ranks players by positional scarcity: elite TEs rank higher than "
+    "equivalent-point WRs because only 12 starting TEs exist in a 12-team league. Replacement levels "
+    f"(QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, WR={REPLACEMENT_LEVEL['WR']}, "
+    f"TE={REPLACEMENT_LEVEL['TE']}) calibrated from 2025 championship team analysis. "
+    "**Round grades** reflect suggested 12-team PPR draft position based on VOR thresholds. "
+    "**Expert overlays** applied post-model using live 2026 offseason data: team corrections "
+    "(Kyler→MIN, Waddle→DEN, DJ Moore→BUF, Pittman→PIT, Walker→KC, Evans→SF, Etienne→NO, "
+    "Henry→BAL, Darnold→SEA, Keenan Allen→LAC, Hopkins→BAL, Dowdle→PIT, Pickens→DAL), "
+    "removals (Penix—ACL, Tua—ATL backup, Stafford retired, Kamara demoted, Ekeler—Achilles, Nabers—ACL), "
+    "force-includes (Kyler Murray—5 games 2025, Willis—MIA starter, Shough—NO starter), "
+    "age-cliff discounts (Kelce 0.82×, Evans 0.80×, CMC 0.92×), "
+    "injury/suspension cuts (Rice 0.70×, Mahomes 0.92×), "
+    "and breakout boosts (Gibbs 1.22×, Skattebo 1.20×, JSN 1.18×, Irving 1.18×, Pickens 1.10×, Pitts 1.10×, Jefferson 1.08×)."
 )
