@@ -120,6 +120,15 @@ if not full_df.empty:
             """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+
+# ── Team Profile button (shown when a specific team is selected) ─────────────
+if selected_team != "All Teams":
+    st.session_state["profile_team"] = selected_team
+    if st.button(f"🏟️ View Full Team Profile — {selected_team} →",
+                 key="goto_profile", use_container_width=False,
+                 type="primary"):
+        st.switch_page("pages/8_Team_Profile.py")
+
 st.markdown("---")
 
 # ── Table + Bar chart ────────────────────────────────────────────────────────
