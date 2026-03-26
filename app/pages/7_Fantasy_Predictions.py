@@ -73,15 +73,13 @@ POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
 #               Set to None to let the model find the last qualifying season automatically.
 FORCE_INCLUDE_STARTERS = {
     "Kyler Murray": ("00-0035228", "QB", "MIN", None),   # 5 games 2025 (ARI injury); uses 2024 full season
-    "Malik Willis":  ("00-0038128", "QB", "MIA", 15.5),  # Never had a qualifying season as starter;
-                                                          # 15.5 PPG = conservative full-time starter estimate
-                                                          # (elite arm + elite mobility; 3yr/$67.5M confirmed)
+    "Malik Willis":  ("00-0038128", "QB", "MIA", 15.5), 
+     "Matthew Stafford": ("00-0026498", "QB", "LAR", None),   # 5 games 2025 (ARI injury); uses 2024 full season
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
 EXPERT_REMOVE = {
     "Kirk Cousins",      # Not a projected 2026 starter
-    "Matthew Stafford",  # Likely retired / backup at age 38
     "Rob Gronkowski",    # Officially retired March 2026
     "Michael Penix",     # ACL surgery (Nov 2025); intended ATL starter (~60% Week 1) but removed pending recovery clearance
     "Tua Tagovailoa",    # ATL backup/placeholder — NOT a 2026 starter; Penix is intended starter
