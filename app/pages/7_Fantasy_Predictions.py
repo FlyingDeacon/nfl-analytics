@@ -155,7 +155,7 @@ EXPERT_MULTIPLIERS = {
     "Devon Achane":        0.80,  # Alt spelling — same player
     "Christian McCaffrey": 0.92,  # Age 30 + back-to-back heavy usage; volume risk but SF offense elite
     "Garrett Wilson":      0.85,  # NYJ/Geno Smith — one of worst QB situations in NFL; WR1 talent wasted
-    "Caleb Williams":      0.95,  # DJ Moore traded to BUF; CHI WR corps thin; ceiling reduced despite QB talent
+    "Caleb Williams":      1.05,  # Sophomore breakout trajectory; improved CHI offense; elite arm talent
     "Kyle Pitts":          0.87,  # ATL QB instability + franchise tag signals no extension; persistent TE under-usage
     "CeeDee Lamb":         0.88,  # 2025 shoulder injury (75 rec — career low); Pickens target competition
     "Drake London":        0.88,  # Pitts + Darnell Mooney competition; ATL QB uncertainty depresses WR value
