@@ -139,6 +139,40 @@ EXPERT_TEAM_CORRECTIONS = {
     "Tyler Shough":      "NO",   # Confirmed New Orleans Saints starter 2026
 }
 
+# ── NEW HEAD COACH PENALTY ───────────────────────────────────────────────────
+# 10 teams changed head coaches for the 2026 season (source: NFL.com / Yahoo Sports).
+# New systems create uncertainty for all skill-position players regardless of talent.
+# Two-tier penalty based on head-coaching experience level:
+#
+#  -4% (0.96) — Proven HC with prior NFL head-coaching success; lower disruption risk
+#    NYG  John Harbaugh  (BAL 2008-2025; 1 Super Bowl)
+#    ATL  Kevin Stefanski (CLE 2020-2024; 2× NFL Coach of the Year)
+#    PIT  Mike McCarthy  (GB 2006-2018 + DAL 2020-2024; 1 Super Bowl)
+#    TEN  Frank Reich    (IND 2018-2022; playoff experience)
+#
+#  -7% (0.93) — First-time or limited HC experience; highest system uncertainty
+#    BUF  Joe Brady      (promoted from OC; first HC role)
+#    BAL  Jesse Minter   (LAC DC → first HC role)
+#    MIA  Jeff Hafley    (college HC → first NFL HC role)
+#    CLE  Todd Monken    (Ravens OC → first HC role)
+#    LV   Klint Kubiak   (NO/SEA OC → first HC role)
+#    ARI  Mike LaFleur   (LAR OC → first HC role)
+
+NEW_HC_PENALTY = {
+    # Experienced — lower uncertainty
+    "NYG": 0.96,   # John Harbaugh
+    "ATL": 0.96,   # Kevin Stefanski
+    "PIT": 0.96,   # Mike McCarthy
+    "TEN": 0.96,   # Frank Reich
+    # First-time / limited — higher uncertainty
+    "BUF": 0.93,   # Joe Brady
+    "BAL": 0.93,   # Jesse Minter
+    "MIA": 0.93,   # Jeff Hafley
+    "CLE": 0.93,   # Todd Monken
+    "LV":  0.93,   # Klint Kubiak
+    "ARI": 0.93,   # Mike LaFleur
+}
+
 # ── TEAM OFFENSIVE TIER MULTIPLIERS ──────────────────────────────────────────
 # Derived from actual 2025 NFL regular-season data (weekly.csv).
 # All 32 teams split evenly into thirds: top 10 / mid 10 / bot 12.
@@ -493,6 +527,13 @@ def apply_expert_adjustments(df: pd.DataFrame,
         mults = out.apply(_tier_mult, axis=1)
         out["predicted_pts"] = (out["predicted_pts"] * mults).round(1)
         out["pred_ppg"]      = (out["pred_ppg"]      * mults).round(2)
+
+    # 6. New head coach penalty — applied to ALL positions on affected teams
+    #    Stacked on top of offensive tier multipliers (both apply independently)
+    if team_col:
+        hc_mults = out[team_col].map(lambda t: NEW_HC_PENALTY.get(t, 1.0))
+        out["predicted_pts"] = (out["predicted_pts"] * hc_mults).round(1)
+        out["pred_ppg"]      = (out["pred_ppg"]      * hc_mults).round(2)
 
     return out.reset_index(drop=True)
 
