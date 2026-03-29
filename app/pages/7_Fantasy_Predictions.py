@@ -183,27 +183,30 @@ NEW_HC_PENALTY = {
 # Mid tier ( 0%): league-average; no adjustment
 # Bot tier (-7%): poor environment caps upside despite individual talent
 
-# Passing offense tier — applied to QB, WR, TE
-# Ranked by composite: pass yds/gm + (pass TD/gm × 20). Source: 2025 weekly.csv
+# Passing offense tier — applied to WR and TE ONLY (QBs are exempt — see _tier_mult).
+# Ranked by WR+TE combined fantasy PPG per team. This captures the actual receiver
+# environment (target volume, QB accuracy, scheme) rather than raw passing yardage,
+# which is skewed by mobile QBs (e.g. Josh Allen's rushing means BUF passes less).
+# Source: 2025 weekly.csv — WR+TE fantasy_points_ppr per game per team.
 PASSING_OFFENSE_TIERS = {
     # ── Top tier (1.08) — ranks 1-10 ─────────────────────────────────────────
-    "LAR": 1.08,  # 276.9 ypg / 2.71 TD/g — #1 passing offense
-    "DET": 1.08,  # 268.5 ypg / 2.00 TD/g
-    "SF":  1.08,  # 239.9 ypg / 1.83 TD/g
-    "ARI": 1.08,  # 240.4 ypg / 1.61 TD/g
-    "DEN": 1.08,  # 231.2 ypg / 1.47 TD/g
-    "DAL": 1.08,  # 225.5 ypg / 1.48 TD/g
-    "NE":  1.08,  # 223.0 ypg / 1.55 TD/g
-    "JAX": 1.08,  # 211.9 ypg / 1.53 TD/g
-    "CHI": 1.08,  # 209.9 ypg / 1.42 TD/g
-    "TB":  1.08,  # 208.6 ypg / 1.44 TD/g
+    "DET": 1.08,  # 11.36 WR+TE PPG — #1 receiver environment
+    "LAR": 1.08,  # 10.34
+    "ARI": 1.08,  #  9.94
+    "DAL": 1.08,  #  9.91
+    "SEA": 1.08,  #  9.56
+    "NO":  1.08,  #  9.10
+    "PHI": 1.08,  #  9.10
+    "CIN": 1.08,  #  9.09
+    "IND": 1.08,  #  9.08
+    "CHI": 1.08,  #  8.91
     # ── Mid tier (1.00) — ranks 11-20 ────────────────────────────────────────
-    "IND": 1.00,  "SEA": 1.00,  "BUF": 1.00,  "CIN": 1.00,  "LAC": 1.00,
-    "PHI": 1.00,  "HOU": 1.00,  "KC":  1.00,  "PIT": 1.00,  "ATL": 1.00,
+    "NYG": 1.00,  "TB":  1.00,  "ATL": 1.00,  "NE":  1.00,  "KC":  1.00,
+    "SF":  1.00,  "HOU": 1.00,  "LAC": 1.00,  "JAX": 1.00,  "MIN": 1.00,
     # ── Bot tier (0.93) — ranks 21-32 ────────────────────────────────────────
-    "GB":  0.93,  "NYG": 0.93,  "CAR": 0.93,  "MIA": 0.93,  "TEN": 0.93,
-    "BAL": 0.93,  "WAS": 0.93,  "CLE": 0.93,  "LV":  0.93,  "MIN": 0.93,
-    "NYJ": 0.93,  "NO":  0.93,
+    "BAL": 0.93,  "DEN": 0.93,  "LV":  0.93,  "WAS": 0.93,  "MIA": 0.93,
+    "GB":  0.93,  "BUF": 0.93,  "PIT": 0.93,  "CAR": 0.93,  "NYJ": 0.93,
+    "CLE": 0.93,  "TEN": 0.93,
 }
 
 # Rushing offense tier — applied to RB only
@@ -511,19 +514,23 @@ def apply_expert_adjustments(df: pd.DataFrame,
 
     # 5. Team offensive tier multipliers (position-aware, based on 2025 data)
     #    Applied AFTER team corrections so trades/FA moves use the correct 2026 team.
-    #    QB + WR + TE  → PASSING_OFFENSE_TIERS
-    #    RB            → RUSHING_OFFENSE_TIERS
+    #    WR + TE  → PASSING_OFFENSE_TIERS  (receiver environment / target volume)
+    #    QB       → exempt (1.0) — QB skill IS what drives team passing stats;
+    #               applying a team passing tier to QBs is circular and incorrectly
+    #               penalises elite mobile QBs (e.g. Josh Allen) whose team passing
+    #               yardage ranks low because they contribute heavily via rushing.
+    #    RB       → RUSHING_OFFENSE_TIERS
     if team_col and pos_col:
-        passing_pos = {"QB", "WR", "TE"}
+        recv_pos  = {"WR", "TE"}
         rushing_pos = {"RB"}
         def _tier_mult(row):
             team = row.get(team_col, "")
             pos  = row.get(pos_col, "")
-            if pos in passing_pos:
+            if pos in recv_pos:
                 return PASSING_OFFENSE_TIERS.get(team, 1.0)
             elif pos in rushing_pos:
                 return RUSHING_OFFENSE_TIERS.get(team, 1.0)
-            return 1.0
+            return 1.0  # QB and all other positions: no team passing tier
         mults = out.apply(_tier_mult, axis=1)
         out["predicted_pts"] = (out["predicted_pts"] * mults).round(1)
         out["pred_ppg"]      = (out["pred_ppg"]      * mults).round(2)
