@@ -75,7 +75,10 @@ ROUND_GRADE_THRESHOLDS = [
 ]
 
 # Ridge penalty prevents wild extrapolation from small samples.
-RIDGE_ALPHA = 8.0
+# 4.0 balances regularisation vs. tracking elite consistent performers:
+# alpha=8 over-shrinks stars like Allen (15% below true level) while barely
+# affecting mediocre QBs — the asymmetry creates systematic ranking errors.
+RIDGE_ALPHA = 4.0
 # Per-year recency decay: the 2024→2025 pair is weighted ~35 % higher than 2023→2024.
 DECAY = 0.35
 
@@ -399,7 +402,13 @@ def build_predictions(weekly_df: pd.DataFrame):
 
         # adj_factor: scale raw_pred (trained on season totals) to 17 games.
         # Damped at 0.45 so a player who only played 4 games isn't over-extrapolated.
-        adj_factor = 1.0 + (proj_games / games_lat.clip(min=1) - 1.0) * 0.45
+        # Capped at 1.10 so partial-season starters (e.g. 13-game QBs) can't be
+        # inflated by more than 10% — otherwise a 13-game QB gets a 13.8% boost vs
+        # a 16-game elite QB's 2.8%, creating a structural bias against full-season stars.
+        adj_factor = np.clip(
+            1.0 + (proj_games / games_lat.clip(min=1) - 1.0) * 0.45,
+            a_min=None, a_max=1.10
+        )
         pred_pts   = np.clip(raw_pred * adj_factor, 0, None)
 
         lat = lat.copy()
