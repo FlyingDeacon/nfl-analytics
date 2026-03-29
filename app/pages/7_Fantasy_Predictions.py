@@ -81,6 +81,12 @@ ROUND_GRADE_THRESHOLDS = [
 RIDGE_ALPHA = 4.0
 # Per-year recency decay: the 2024→2025 pair is weighted ~35 % higher than 2023→2024.
 DECAY = 0.35
+# Prior-year PPG blend weight. Published research shows prior-year fantasy PPG
+# explains ~45-50% of the variance in the following year — making it the single
+# strongest predictor. The ridge model captures multi-year trends and component
+# stats (the other ~55%). Blending both gives a 2-model ensemble that mirrors
+# how professional projection systems (4for4, PFF, FantasyPros) are built.
+PPG_BLEND_WEIGHT = 0.45  # 45% prior-year PPG, 55% ridge model
 
 # Per-game features only — normalises out "played more games = more counting stats".
 # game_rate (games/17) is always appended and captures injury-proneness / role depth.
@@ -409,7 +415,17 @@ def build_predictions(weekly_df: pd.DataFrame):
             1.0 + (proj_games / games_lat.clip(min=1) - 1.0) * 0.45,
             a_min=None, a_max=1.10
         )
-        pred_pts   = np.clip(raw_pred * adj_factor, 0, None)
+        model_pts = np.clip(raw_pred * adj_factor, 0, None)
+
+        # ── Prior-year PPG baseline (45% weight) ─────────────────────────────
+        # Anchor projections to last season's actual per-game output scaled
+        # to a full 17-game season. This prevents the ridge model from
+        # regressing elite consistent performers (Allen, Mahomes, Kelce) too
+        # far toward the positional mean while still using multi-year trends.
+        prior_ppg = lat[f"{TARGET_COL}_pg"].fillna(0).values
+        ppg_baseline = np.clip(prior_ppg * proj_games, 0, None)
+        pred_pts = (model_pts * (1.0 - PPG_BLEND_WEIGHT)
+                    + ppg_baseline * PPG_BLEND_WEIGHT)
 
         lat = lat.copy()
         lat["predicted_pts"] = pred_pts.round(1)
