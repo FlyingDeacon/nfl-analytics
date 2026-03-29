@@ -139,63 +139,65 @@ EXPERT_TEAM_CORRECTIONS = {
     "Tyler Shough":      "NO",   # Confirmed New Orleans Saints starter 2026
 }
 
-# Point multipliers based on NFL Expert full 32-team passing/rushing attack audit.
-# Values < 1.0 = overvalued / bad team context; > 1.0 = undervalued / great team context.
-# Updated March 2026 — all team offensive situations researched.
-EXPERT_MULTIPLIERS = {
-    # ── Overvalued / bad offensive situation ──────────────────────────────────
-    "Travis Kelce":        0.78,  # Age 37 + Mahomes ACL-limited mobility; younger alternatives eating snaps
-    "Patrick Mahomes":     0.88,  # ACL limits mobility; offense shifting run-heavy with K. Walker arrival
-    "Derrick Henry":       0.90,  # Age regression (32+); BAL run game floor helps but TD pace unsustainable
-    "Puka Nacua":          0.87,  # Injury-prone; inconsistent 2024–25 volume
-    "Trey McBride":        0.90,  # Regression expected after career-year spike in 2025
-    "Rashee Rice":         0.70,  # Suspension ~Wk 7 return; effectively 10-game player (see PROJ_GAMES_OVERRIDES)
-    "Mike Evans":          0.82,  # Age 33 (SF) — Purdy boost offsets age concern; keeping slight discount
-    "De'Von Achane":       0.80,  # Dolphins full rebuild; Malik Willis unproven + no elite receivers = low-scoring env
-    "Devon Achane":        0.80,  # Alt spelling — same player
-    "Christian McCaffrey": 0.92,  # Age 30 + back-to-back heavy usage; volume risk but SF offense elite
-    "Garrett Wilson":      0.85,  # NYJ/Geno Smith — one of worst QB situations in NFL; WR1 talent wasted
-    "Caleb Williams":      1.05,  # Sophomore breakout trajectory; improved CHI offense; elite arm talent
-    "Kyle Pitts":          0.87,  # ATL QB instability + franchise tag signals no extension; persistent TE under-usage
-    "CeeDee Lamb":         0.88,  # 2025 shoulder injury (75 rec — career low); Pickens target competition
-    "Drake London":        0.88,  # Pitts + Darnell Mooney competition; ATL QB uncertainty depresses WR value
-    # ── Undervalued / great offensive situation ───────────────────────────────
-    "Ja'Marr Chase":       1.15,  # Elite QB-WR duo; best offensive supporting cast in AFC (Burrow + Brown + Higgins)
-    "Tee Higgins":         1.12,  # Same CIN elite system; 11 TDs in 2025; Burrow forces ball to both weapons
-    "Joe Burrow":          1.10,  # Despite injury history, most complete offense in NFL when healthy
-    "Zay Flowers":         1.10,  # Lamar Jackson elite scrambler + DeAndre Hopkins arrival; elite passing env
-    "Justin Jefferson":    1.08,  # Kyler Murray + O'Connell system designed for elite WRs; top-5 WR upside
-    "Justin Herbert":      1.08,  # Mike McDaniel hired as OC — proven offensive genius; LAC weapons improved
-    "Lamar Jackson":       1.12,  # Ravens upgraded weapons (Hopkins + flowers); historical 21+ PPG average
-    "Jalen Hurts":         1.08,  # Consistent 20+ PPG; new pass-heavy OC; Brown + Smith + Goedert intact
-    "A.J. Brown":          1.05,  # Hurts elite; new pass-heavy OC Mannion; PHI weapons locked in
-    "Amon-Ra St. Brown":   1.05,  # First-team All-Pro 2025; new OC Petzing designed offense around him + Williams
-    "Drake Maye":          1.15,  # 2024→2025 progression (13.63→20.82 PPG); 3rd-year breakout trajectory
-    "DJ Moore":            1.18,  # Josh Allen (elite) + Brady system; Moore thrives with top-5 QB; 1,000+ yds expected
-    "Jaxon Smith-Njigba":  1.12,  # Historic $168.6M contract; Darnold improving; run-heavy scheme slightly caps ceiling
-    "Jaylen Waddle":       1.10,  # Massive upgrade — Dolphins dysfunction → Bo Nix / DEN passing attack
-    "Cam Skattebo":        1.20,  # High-volume starter; model consistently underweights his breakout upside
-    "C.J. Stroud":         1.10,  # Bounce-back from shoulder; HOU OL upgraded (Teller); Nico Collins locked in
-    "Bucky Irving":        1.10,  # RB1 in TB — Evans departed frees volume; slight PPR concern with Gainwell committee
-    "Tucker Kraft":        1.15,  # Ascending TE1 in GB; Jordan Love connection; limited TE competition
-    "Kyler Murray":        1.05,  # MIN/Jefferson/O'Connell excellent fit; mobile QB revives offense
-    "Kenneth Walker":      1.05,  # Andy Reid system maximizes RB value; KC run-game focus with reduced Mahomes load
-    "Michael Pittman":     1.08,  # Reliable target in PIT; upgrade from IND
-    "Jahmyr Gibbs":        1.22,  # Solo DET RB; D. Montgomery traded to HOU; massive volume incoming
-    "Bijan Robinson":      1.05,  # ATL workhorse — QB instability doesn't hurt elite RBs the same way
-    "George Pickens":      1.10,  # DAL move — Dak Prescott elite passer; Pickens is WR1 with elite QB
-    "Josh Allen":          1.12,  # Perennial QB1; DJ Moore arrival + Bills elite offense; top-2 fantasy QB 3 straight years
-    "Jaxson Dart":         0.95,  # Rookie starter (13 games as backup→starter); model inflates via adj_factor; modest 2nd-year adjustment
-    "Jacoby Brissett":     0.90,  # Career backup (age 33); first true starting opportunity; significant regression risk from limited sample
-    "Dak Prescott":        1.06,  # Pickens arrival gives elite deep threat; DAL offense boosted
-    "Matthew Stafford":    1.05,  # MVP-caliber 2025 LAR; Adams + Nacua + incoming draft WR depth
-    "Rome Odunze":         0.92,  # Forced into CHI WR1 role after Moore traded; more targets but weaker corps
-    "Jalen Coker":         1.15,  # Confirmed CAR WR2; ascending role with Bryce Young improvement
+# ── TEAM OFFENSIVE TIER MULTIPLIERS ──────────────────────────────────────────
+# Derived from actual 2025 NFL regular-season data (weekly.csv).
+# All 32 teams split evenly into thirds: top 10 / mid 10 / bot 12.
+# Research basis: team passing environment explains ~15-20% of QB/WR fantasy
+# variance; rushing environment explains ~15% of RB variance.
+#
+# Top tier (+8%): elite environment lifts all skill-position players
+# Mid tier ( 0%): league-average; no adjustment
+# Bot tier (-7%): poor environment caps upside despite individual talent
+
+# Passing offense tier — applied to QB, WR, TE
+# Ranked by composite: pass yds/gm + (pass TD/gm × 20). Source: 2025 weekly.csv
+PASSING_OFFENSE_TIERS = {
+    # ── Top tier (1.08) — ranks 1-10 ─────────────────────────────────────────
+    "LAR": 1.08,  # 276.9 ypg / 2.71 TD/g — #1 passing offense
+    "DET": 1.08,  # 268.5 ypg / 2.00 TD/g
+    "SF":  1.08,  # 239.9 ypg / 1.83 TD/g
+    "ARI": 1.08,  # 240.4 ypg / 1.61 TD/g
+    "DEN": 1.08,  # 231.2 ypg / 1.47 TD/g
+    "DAL": 1.08,  # 225.5 ypg / 1.48 TD/g
+    "NE":  1.08,  # 223.0 ypg / 1.55 TD/g
+    "JAX": 1.08,  # 211.9 ypg / 1.53 TD/g
+    "CHI": 1.08,  # 209.9 ypg / 1.42 TD/g
+    "TB":  1.08,  # 208.6 ypg / 1.44 TD/g
+    # ── Mid tier (1.00) — ranks 11-20 ────────────────────────────────────────
+    "IND": 1.00,  "SEA": 1.00,  "BUF": 1.00,  "CIN": 1.00,  "LAC": 1.00,
+    "PHI": 1.00,  "HOU": 1.00,  "KC":  1.00,  "PIT": 1.00,  "ATL": 1.00,
+    # ── Bot tier (0.93) — ranks 21-32 ────────────────────────────────────────
+    "GB":  0.93,  "NYG": 0.93,  "CAR": 0.93,  "MIA": 0.93,  "TEN": 0.93,
+    "BAL": 0.93,  "WAS": 0.93,  "CLE": 0.93,  "LV":  0.93,  "MIN": 0.93,
+    "NYJ": 0.93,  "NO":  0.93,
+}
+
+# Rushing offense tier — applied to RB only
+# Ranked by composite: rush yds/gm + (rush TD/gm × 20). Source: 2025 weekly.csv
+RUSHING_OFFENSE_TIERS = {
+    # ── Top tier (1.06) — ranks 1-10 ─────────────────────────────────────────
+    "BUF": 1.06,  # 158.1 ypg / 1.71 TD/g — #1 rushing offense
+    "BAL": 1.06,  # 151.4 ypg / 1.24 TD/g
+    "CHI": 1.06,  # 136.1 ypg / 1.06 TD/g
+    "NYG": 1.06,  # 129.5 ypg / 1.29 TD/g
+    "NE":  1.06,  # 127.4 ypg / 1.29 TD/g
+    "WAS": 1.06,  # 129.4 ypg / 1.12 TD/g
+    "IND": 1.06,  # 114.8 ypg / 1.53 TD/g
+    "ATL": 1.06,  # 125.2 ypg / 1.00 TD/g
+    "DET": 1.06,  # 117.8 ypg / 1.24 TD/g
+    "DAL": 1.06,  # 118.4 ypg / 1.06 TD/g
+    # ── Mid tier (1.00) — ranks 11-20 ────────────────────────────────────────
+    "PHI": 1.00,  "LAR": 1.00,  "SEA": 1.00,  "JAX": 1.00,  "NYJ": 1.00,
+    "DEN": 1.00,  "LAC": 1.00,  "GB":  1.00,  "MIA": 1.00,  "TB":  1.00,
+    # ── Bot tier (0.94) — ranks 21-32 ────────────────────────────────────────
+    "SF":  0.94,  "CAR": 0.94,  "MIN": 0.94,  "KC":  0.94,  "HOU": 0.94,
+    "PIT": 0.94,  "CIN": 0.94,  "NO":  0.94,  "TEN": 0.94,  "ARI": 0.94,
+    "CLE": 0.94,  "LV":  0.94,
 }
 
 # 2026 projected games overrides — ONLY for players with confirmed game-count limitations.
 # Everyone else defaults to NFL_GAMES (17): healthy starters are assumed to play a full season.
-# PPG penalties for injury history are handled separately via EXPERT_MULTIPLIERS.
+# PPG penalties for poor team environments are handled via PASSING/RUSHING_OFFENSE_TIERS.
 # Format: player_name_fragment → projected games in 2026
 PROJ_GAMES_OVERRIDES = {
     "Rashee Rice":      10,   # NFL suspension; available ~Week 7+ (~10 games projected)
@@ -473,12 +475,24 @@ def apply_expert_adjustments(df: pd.DataFrame,
             mask = out[name_col].str.contains(player_fragment, case=False, na=False)
             out.loc[mask, team_col] = new_team
 
-    # 5. Named point multipliers
-    for player_fragment, mult in EXPERT_MULTIPLIERS.items():
-        mask = out[name_col].str.contains(player_fragment, case=False, na=False)
-        if mask.any():
-            out.loc[mask, "predicted_pts"] = (out.loc[mask, "predicted_pts"] * mult).round(1)
-            out.loc[mask, "pred_ppg"]      = (out.loc[mask, "pred_ppg"] * mult).round(2)
+    # 5. Team offensive tier multipliers (position-aware, based on 2025 data)
+    #    Applied AFTER team corrections so trades/FA moves use the correct 2026 team.
+    #    QB + WR + TE  → PASSING_OFFENSE_TIERS
+    #    RB            → RUSHING_OFFENSE_TIERS
+    if team_col and pos_col:
+        passing_pos = {"QB", "WR", "TE"}
+        rushing_pos = {"RB"}
+        def _tier_mult(row):
+            team = row.get(team_col, "")
+            pos  = row.get(pos_col, "")
+            if pos in passing_pos:
+                return PASSING_OFFENSE_TIERS.get(team, 1.0)
+            elif pos in rushing_pos:
+                return RUSHING_OFFENSE_TIERS.get(team, 1.0)
+            return 1.0
+        mults = out.apply(_tier_mult, axis=1)
+        out["predicted_pts"] = (out["predicted_pts"] * mults).round(1)
+        out["pred_ppg"]      = (out["pred_ppg"]      * mults).round(2)
 
     return out.reset_index(drop=True)
 
@@ -492,7 +506,7 @@ def apply_games_overrides(df: pd.DataFrame) -> pd.DataFrame:
     All other players have already been projected at NFL_GAMES (17) inside build_predictions.
     This function only touches players in PROJ_GAMES_OVERRIDES.
     Predicted points are recalculated as  pred_ppg × new_proj_games  so the per-game
-    efficiency (already adjusted by EXPERT_MULTIPLIERS) is preserved exactly.
+    efficiency (already adjusted by team tier multipliers) is preserved exactly.
     """
     out = df.copy()
     for player_fragment, games in PROJ_GAMES_OVERRIDES.items():
