@@ -599,6 +599,7 @@ preds.insert(0, "Rank", range(1, len(preds) + 1))
 
 # Delta vs last season
 preds["last_season_pts"] = preds[TARGET_COL].round(1)
+preds["last_season_ppg"] = (preds["last_season_pts"] / preds["games"].replace(0, np.nan)).round(2).fillna(0.0)
 preds["change"]          = (preds["predicted_pts"] - preds["last_season_pts"]).round(1)
 preds["change_pct"]      = ((preds["change"] / preds["last_season_pts"].replace(0, np.nan)) * 100).round(1)
 
@@ -657,7 +658,7 @@ st.markdown(f"### 📋 2026 Fantasy Big Board {pos_label_str}")
 board_cols = ["Rank", name_col]
 if team_col: board_cols.append(team_col)
 if pos_col:  board_cols.append(pos_col)
-board_cols += ["predicted_pts", "vor", "round_grade", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games"]
+board_cols += ["predicted_pts", "vor", "round_grade", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games", "last_season_ppg"]
 
 # Position-specific counting stats
 if sel_pos in ("QB", "All"):
@@ -683,6 +684,7 @@ rename_map = {
     "pred_ppg": "Proj PPG",
     "proj_games": "Proj GP",
     "last_season_pts": "2025 Actual",
+    "last_season_ppg": "2025 PPG",
     "change": "Δ Pts",
     "change_pct": "Δ %",
     "games": "2025 GP",
@@ -708,6 +710,7 @@ column_config_dict = {
                            "Accounts for how scarce elite players are at each position."),
     "Round":      st.column_config.TextColumn(help="Suggested fantasy draft round (10-team PPR)"),
     "Proj PPG":   st.column_config.NumberColumn(format="%.2f"),
+    "2025 PPG":   st.column_config.NumberColumn(format="%.2f"),
     "Δ Pts":      st.column_config.NumberColumn(format="%+.1f"),
     "Δ %":        st.column_config.NumberColumn(format="%+.1f%%"),
 }
