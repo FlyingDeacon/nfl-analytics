@@ -182,6 +182,204 @@ NEW_HC_PENALTY = {
     "ARI": 0.93,   # Mike LaFleur
 }
 
+# ── PLAYER BIRTH YEARS ───────────────────────────────────────────────────────
+# Used to compute each player's 2026 age for the position-specific age-curve penalty.
+# Format: player_display_name (exact match) → birth year
+# Sources: Pro-Football-Reference, ESPN, Wikipedia player profiles
+# Players not listed fall back to: first_season_in_data - avg_draft_age (22)
+PLAYER_BIRTH_YEARS: dict[str, int] = {
+    # ── Quarterbacks ──────────────────────────────────────────────────────────
+    "Aaron Rodgers":      1983,
+    "Geno Smith":         1990,
+    "Jacoby Brissett":    1992,
+    "Kirk Cousins":       1988,
+    "Matthew Stafford":   1988,
+    "Dak Prescott":       1993,
+    "Jared Goff":         1994,
+    "Baker Mayfield":     1995,
+    "Patrick Mahomes":    1995,
+    "Josh Allen":         1996,
+    "Sam Darnold":        1997,
+    "Daniel Jones":       1997,
+    "Kyler Murray":       1997,
+    "Tua Tagovailoa":     1997,
+    "Jalen Hurts":        1998,
+    "Justin Herbert":     1998,
+    "Justin Fields":      1999,
+    "Tyler Shough":       1999,
+    "Lamar Jackson":      1997,
+    "Jordan Love":        1998,
+    "Will Levis":         2000,
+    "Bo Nix":             2000,
+    "C.J. Stroud":        2001,
+    "Bryce Young":        2001,
+    "Malik Willis":       1999,
+    "Caleb Williams":     2001,
+    "Drake Maye":         2002,
+    "Jaxson Dart":        2002,
+    "Cam Ward":           2002,
+    # ── Running Backs ─────────────────────────────────────────────────────────
+    "Austin Ekeler":       1995,
+    "Aaron Jones":         1994,
+    "Alvin Kamara":        1995,
+    "Nick Chubb":          1995,
+    "Kareem Hunt":         1995,
+    "Joe Mixon":           1996,
+    "Derrick Henry":       1994,
+    "Christian McCaffrey": 1996,
+    "Saquon Barkley":      1997,
+    "Tony Pollard":        1997,
+    "David Montgomery":    1997,
+    "Zack Moss":           1997,
+    "D'Andre Swift":       1999,
+    "Travis Etienne":      1999,
+    "Rhamondre Stevenson": 1998,
+    "Brian Robinson":      1998,
+    "Josh Jacobs":         1998,
+    "Chuba Hubbard":       1999,
+    "Jaylen Warren":       1999,
+    "Isiah Pacheco":       1999,
+    "Rico Dowdle":         1998,
+    "Kenneth Gainwell":    1999,
+    "Bijan Robinson":      2001,
+    "Jonathan Taylor":     1999,
+    "James Cook":          2000,
+    "Javonte Williams":    2000,
+    "Kenneth Walker III":  2000,
+    "Kyren Williams":      2000,
+    "Dameon Pierce":       2000,
+    "Chase Brown":         2001,
+    "Tank Bigsby":         2001,
+    "Breece Hall":         2001,
+    "De'Von Achane":       2002,
+    "Jahmyr Gibbs":        2002,
+    "RJ Harvey":           2002,
+    "TreVeyon Henderson":  2002,
+    "Ashton Jeanty":       2003,
+    # ── Wide Receivers ────────────────────────────────────────────────────────
+    "Davante Adams":          1992,
+    "Keenan Allen":           1992,
+    "Tyler Lockett":          1992,
+    "DeAndre Hopkins":        1992,
+    "Odell Beckham":          1992,
+    "Mike Evans":             1993,
+    "Cooper Kupp":            1993,
+    "Stefon Diggs":           1993,
+    "Calvin Ridley":          1994,
+    "Courtland Sutton":       1995,
+    "Terry McLaurin":         1995,
+    "Tyreek Hill":            1994,
+    "Deebo Samuel Sr.":       1996,
+    "DJ Moore":               1997,
+    "Diontae Johnson":        1996,
+    "Michael Pittman":        1997,
+    "DK Metcalf":             1997,
+    "A.J. Brown":             1997,
+    "Chris Godwin":           1996,
+    "Tee Higgins":            1999,
+    "Justin Jefferson":       1999,
+    "Jaylen Waddle":          1999,
+    "Nico Collins":           1999,
+    "DeVonta Smith":          1998,
+    "Wan'Dale Robinson":      2001,
+    "George Pickens":         2001,
+    "Drake London":           2001,
+    "Jameson Williams":       2001,
+    "Rashee Rice":            2001,
+    "Puka Nacua":             2001,
+    "Michael Wilson":         2001,
+    "Khalil Shakir":          2000,
+    "Ja'Marr Chase":          2000,
+    "CeeDee Lamb":            2000,
+    "Garrett Wilson":         2000,
+    "Zay Flowers":            2000,
+    "Chris Olave":            2000,
+    "Amon-Ra St. Brown":      1999,
+    "Christian Watson":       1999,
+    "Jaxon Smith-Njigba":     2002,
+    "Brian Thomas":           2002,
+    "Emeka Egbuka":           2002,
+    "Tetairoa McMillan":      2003,
+    "Marvin Harrison":        2003,
+    "Malik Nabers":           2003,
+    # ── Tight Ends ────────────────────────────────────────────────────────────
+    "Travis Kelce":        1989,
+    "Taysom Hill":         1990,
+    "Tyler Higbee":        1993,
+    "Gerald Everett":      1993,
+    "George Kittle":       1993,
+    "Hunter Henry":        1994,
+    "Evan Engram":         1994,
+    "Dallas Goedert":      1995,
+    "Mark Andrews":        1995,
+    "David Njoku":         1996,
+    "T.J. Hockenson":      1997,
+    "Pat Freiermuth":      1999,
+    "Cade Otton":          1999,
+    "Cole Kmet":           1999,
+    "Trey McBride":        2000,
+    "Jake Ferguson":       2000,
+    "Chigoziem Okonkwo":   2000,
+    "Kyle Pitts":          2000,
+    "Isaiah Likely":       2001,
+    "Tucker Kraft":        2001,
+    "Sam LaPorta":         2001,
+    "Harold Fannin Jr.":   2002,
+    "Michael Mayer":       2002,
+    "Tyler Warren":        2002,
+    "Brock Bowers":        2003,
+}
+
+
+def _age_factor(pos: str, age: int) -> float:
+    """Position-specific age-curve multiplier for 2026 projections.
+
+    Research basis (Harvard Sports Analysis, 4for4, Rotoviz aging curves):
+    • QB:  Peak 28–32. Gradual decline. Elite QBs can maintain through 35.
+           Cliff at 37+ (arm strength, mobility, recovery).
+    • RB:  Peak 22–25. Fastest decline of any position — physical toll of
+           carries and blitz pickups compounds quickly after age 27.
+    • WR:  Peak 24–27. Moderate decline from 28; routes/separation hold
+           longer than RB athleticism, but cliff arrives at 32+.
+    • TE:  Peak 25–29. Most gradual decline — blocking + receiving split
+           means pure athleticism matters less than QB/RB/WR.
+    """
+    age = int(age)
+    if pos == "QB":
+        if age <= 24: return 1.02
+        if age <= 27: return 1.01
+        if age <= 32: return 1.00   # prime years — no adjustment
+        if age <= 34: return 0.97
+        if age <= 36: return 0.93
+        if age <= 38: return 0.88
+        return 0.82                  # 39+ (Aaron Rodgers tier)
+    elif pos == "RB":
+        if age <= 22: return 1.04   # burst-year potential for rookie backs
+        if age <= 24: return 1.02
+        if age <= 26: return 1.00   # prime years
+        if age <= 27: return 0.97
+        if age <= 28: return 0.93
+        if age <= 29: return 0.88
+        if age <= 30: return 0.82
+        return 0.74                  # 31+ (severe decline expected)
+    elif pos == "WR":
+        if age <= 22: return 1.03
+        if age <= 24: return 1.02
+        if age <= 27: return 1.00   # prime years
+        if age <= 29: return 0.98
+        if age <= 31: return 0.94
+        if age <= 33: return 0.89
+        return 0.82                  # 34+
+    elif pos == "TE":
+        if age <= 23: return 1.02
+        if age <= 25: return 1.01
+        if age <= 29: return 1.00   # prime years
+        if age <= 31: return 0.97
+        if age <= 33: return 0.93
+        return 0.87                  # 34+
+    return 1.0   # unknown position
+
+
 # ── TEAM OFFENSIVE TIER MULTIPLIERS ──────────────────────────────────────────
 # Derived from actual 2025 NFL regular-season data (weekly.csv).
 # All 32 teams split evenly into thirds: top 10 / mid 10 / bot 12.
@@ -566,6 +764,38 @@ def apply_expert_adjustments(df: pd.DataFrame,
         hc_mults = out[team_col].map(lambda t: NEW_HC_PENALTY.get(t, 1.0))
         out["predicted_pts"] = (out["predicted_pts"] * hc_mults).round(1)
         out["pred_ppg"]      = (out["pred_ppg"]      * hc_mults).round(2)
+
+    # 7. Age-curve penalty — position-specific, derived from 2026 player age
+    #    Applied last so all other corrections (team, HC) already reflect true
+    #    2026 context before age multiplies in.
+    #    For players not in PLAYER_BIRTH_YEARS, fallback = first_season - 22
+    #    (average NFL draft age across all skill positions).
+    if pos_col and name_col:
+        _AVG_DRAFT_AGE = {"QB": 22, "RB": 22, "WR": 22, "TE": 22}
+
+        # Build first-season lookup from raw weekly data (fallback)
+        _first_szn: dict = {}
+        if raw_weekly is not None and not raw_weekly.empty:
+            _raw_reg = raw_weekly
+            if "season_type" in raw_weekly.columns:
+                _raw_reg = raw_weekly[raw_weekly["season_type"] == "REG"]
+            _first_szn = _raw_reg.groupby(name_col)["season"].min().to_dict()
+
+        def _player_age_2026(name: str, pos: str) -> int:
+            if name in PLAYER_BIRTH_YEARS:
+                return 2026 - PLAYER_BIRTH_YEARS[name]
+            first = _first_szn.get(name, 2020)
+            return 2026 - (first - _AVG_DRAFT_AGE.get(pos, 22))
+
+        age_mults = out.apply(
+            lambda r: _age_factor(
+                str(r.get(pos_col, "")),
+                _player_age_2026(str(r.get(name_col, "")), str(r.get(pos_col, "")))
+            ),
+            axis=1
+        )
+        out["predicted_pts"] = (out["predicted_pts"] * age_mults).round(1)
+        out["pred_ppg"]      = (out["pred_ppg"]      * age_mults).round(2)
 
     return out.reset_index(drop=True)
 
