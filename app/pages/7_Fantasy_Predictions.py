@@ -88,6 +88,22 @@ DECAY = 0.35
 # how professional projection systems (4for4, PFF, FantasyPros) are built.
 PPG_BLEND_WEIGHT = 0.45  # 45% prior-year PPG, 55% ridge model
 
+# Backtest-calibrated expected-games used ONLY for the PPG baseline component.
+# Projecting 17 games over-estimates because not all starters play a full season.
+# Backtesting 2024→2025 (train 2016-2023 only) found these scales minimise bias:
+#   QB: PPG×15 → bias ≈ −2 pts  (vs +44 at 17 games)  — QBs average 13-15 starts
+#   RB: PPG×15 → bias ≈ +3 pts  (vs +10 at 17 games)  — RBs high injury/rotation rate
+#   WR: PPG×15 → bias reduced   (role-changers & injuries common at 17+)
+#   TE: PPG×16 → slight reduction (TEs more durable than RB/WR)
+# NOTE: proj_games (17) is still used for the model component and the "Proj GP" display.
+# This dict only reduces the PPG anchor; it doesn't cap the final projected total.
+PPG_BASELINE_GAMES: dict[str, int] = {
+    "QB": 15,
+    "RB": 15,
+    "WR": 15,
+    "TE": 16,
+}
+
 # Per-game features only — normalises out "played more games = more counting stats".
 # game_rate (games/17) is always appended and captures injury-proneness / role depth.
 POSITION_FEATURES = {
@@ -616,12 +632,17 @@ def build_predictions(weekly_df: pd.DataFrame):
         model_pts = np.clip(raw_pred * adj_factor, 0, None)
 
         # ── Prior-year PPG baseline (45% weight) ─────────────────────────────
-        # Anchor projections to last season's actual per-game output scaled
-        # to a full 17-game season. This prevents the ridge model from
-        # regressing elite consistent performers (Allen, Mahomes, Kelce) too
-        # far toward the positional mean while still using multi-year trends.
-        prior_ppg = lat[f"{TARGET_COL}_pg"].fillna(0).values
-        ppg_baseline = np.clip(prior_ppg * proj_games, 0, None)
+        # Anchor projections to last season's actual per-game output.
+        # Uses PPG_BASELINE_GAMES (position-specific, < 17) instead of the
+        # full proj_games to correct for systematic over-prediction:
+        # backtesting showed projecting 17 games for the PPG anchor creates
+        # +44-pt QB bias and +10-pt RB bias — because real starters average
+        # 13-16 games due to injuries, bye weeks, and load management.
+        # The model component still projects to 17 games (proj_games);
+        # only the PPG anchor is calibrated to the realistic expected games.
+        prior_ppg      = lat[f"{TARGET_COL}_pg"].fillna(0).values
+        ppg_proj_g     = float(PPG_BASELINE_GAMES.get(pos, NFL_GAMES))
+        ppg_baseline   = np.clip(prior_ppg * ppg_proj_g, 0, None)
         pred_pts = (model_pts * (1.0 - PPG_BLEND_WEIGHT)
                     + ppg_baseline * PPG_BLEND_WEIGHT)
 
