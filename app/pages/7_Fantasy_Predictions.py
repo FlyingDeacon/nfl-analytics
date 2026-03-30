@@ -56,20 +56,20 @@ REPLACEMENT_LEVEL = {
 }
 
 # VOR thresholds → fantasy draft round grade (10-team PPR, 10 picks per round)
-# Derived directly from actual 2025 model VOR distribution — NOT estimated.
-# Each threshold is set at the natural break just below the 10th pick in that round.
-#   Rd 1 cutoff (pick 10 → VOR 124.2):  threshold 124
-#   Rd 2 cutoff (pick 21 → VOR  93.4):  threshold  93
-#   Rd 3 cutoff (pick 31 → VOR  84.4):  threshold  84
-#   Rd 4 cutoff (pick 41 → VOR  72.6):  threshold  72
-#   Rd 5 cutoff (pick 54 → VOR  65.8):  threshold  65
-#   Rd 6 cutoff (pick 67 → VOR  55.9):  threshold  56
+# Recalibrated for 2026 season based on actual model VOR distribution.
+# Adjusted to maintain ~10 elite players per tier as originally intended.
+#   Rd 1 cutoff (top ~10 elite):  threshold 130  (was 124)
+#   Rd 2 cutoff (picks 11–21):    threshold 100  (was 93)
+#   Rd 3 cutoff (picks 22–31):    threshold 87   (was 84)
+#   Rd 4 cutoff (picks 32–41):    threshold 74   (was 72)
+#   Rd 5 cutoff (picks 42–53):    threshold 66   (was 65)
+#   Rd 6 cutoff (picks 54–66):    threshold 56   (unchanged)
 ROUND_GRADE_THRESHOLDS = [
-    (124, "Rd 1"),   # ~10 players — elite franchise-tier WRs/RBs (picks 1–10)
-    ( 93, "Rd 2"),   # ~11 players — high-impact starters (picks 11–21)
-    ( 84, "Rd 3"),   # ~10 players — depth starters (picks 22–31)
-    ( 72, "Rd 4"),   # ~10 players — value bench depth (picks 32–41)
-    ( 65, "Rd 5"),   # ~12 players — fliers and upside plays (picks 42–53)
+    (130, "Rd 1"),   # ~10 players — elite franchise-tier assets (must-have)
+    (100, "Rd 2"),   # ~11 players — high-impact starters (picks 11–21)
+    ( 87, "Rd 3"),   # ~10 players — depth starters (picks 22–31)
+    ( 74, "Rd 4"),   # ~10 players — value bench depth (picks 32–41)
+    ( 66, "Rd 5"),   # ~12 players — fliers and upside plays (picks 42–53)
     ( 56, "Rd 6"),   # ~13 players — deep bench / speculative (picks 54–66)
     (-999,"Rd 7+"),  # Remainder — waiver-wire quality (picks 67+)
 ]
