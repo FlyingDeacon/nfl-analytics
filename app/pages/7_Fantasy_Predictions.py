@@ -691,7 +691,7 @@ def build_predictions(weekly_df: pd.DataFrame):
                 for pid, g in szn_g.items():
                     avg_g_map.setdefault(pid, []).append(float(g))
             lat["injury_risk"] = lat[track_col].map(
-                lambda pid: "🟥" if (
+                lambda pid: "⛑️" if (
                     len(avg_g_map.get(pid, [])) > 0 and
                     sum(avg_g_map.get(pid, [17])) / len(avg_g_map.get(pid, [17])) < 14.5
                 ) else ""
@@ -706,9 +706,9 @@ def build_predictions(weekly_df: pd.DataFrame):
 
     all_preds = pd.concat(predictions_list, ignore_index=True)
 
-    # Historical per-season totals for the trajectory line chart
+    # Historical per-season totals for the trajectory line chart (include games for PPG tooltip)
     hist = (agg.groupby([track_col, name_col, pos_col, "season"], as_index=False)
-               [TARGET_COL].sum())
+               [[TARGET_COL, "games"]].sum())
     if team_col and team_col in agg.columns:
         tl = agg.groupby([track_col, "season"], as_index=False)[team_col].first()
         hist = hist.merge(tl, on=[track_col, "season"], how="left")
@@ -790,6 +790,7 @@ def apply_expert_adjustments(df: pd.DataFrame,
                 "proj_games":  proj_g,
                 "pred_ppg":    round(ppg, 2),
                 "rmse":        0.0,
+                "injury_risk": "⛑️" if pos == "QB" and float(display_games) < 14.5 else "",
             }
             if track_col != name_col:
                 new_row[track_col] = player_id
@@ -1029,6 +1030,9 @@ if team_col: rename_map[team_col] = "Team"
 if pos_col:  rename_map[pos_col]  = "Pos"
 
 disp = preds[board_cols].copy()
+# Ensure injury_risk never shows "None" — blank for non-risk players
+if "injury_risk" in disp.columns:
+    disp["injury_risk"] = disp["injury_risk"].fillna("").replace({None: "", "None": ""})
 for c in disp.select_dtypes("float").columns:
     if c != "change_pct":
         disp[c] = disp[c].round(1)
@@ -1067,6 +1071,18 @@ if "_logo_url" in disp.columns:
         cols.remove("_logo_url")
         cols.insert(cols.index("Team"), "_logo_url")
     disp_renamed = disp_renamed[cols]
+
+st.markdown("""
+<style>
+/* Center the Injury Risk column cells */
+[data-testid="stDataFrame"] td:has(> div > span:first-child:empty) ~ td,
+[data-testid="stDataFrame"] [col-id="Injury Risk"] .ag-cell-value,
+[data-testid="stDataFrame"] .ag-center-cols-container .ag-cell[col-id="Injury Risk"] {
+    text-align: center !important;
+    justify-content: center !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.dataframe(
     disp_renamed,
@@ -1216,21 +1232,34 @@ if chart_players:
             continue
         szns = ph["season"].tolist()
         vals = ph[TARGET_COL].tolist()
+        ppgs = (ph[TARGET_COL] / ph["games"].clip(lower=1)).round(2).tolist()
 
         fig.add_trace(go.Scatter(
             x=szns, y=vals, mode="lines+markers", name=player,
             line=dict(color=color, width=2.5),
             marker=dict(size=7, color=color, line=dict(color="#fff", width=1)),
-            hovertemplate=f"<b>{player}</b><br>%{{x}}: %{{y:,.1f}} pts<extra></extra>",
+            customdata=list(zip(ppgs, ph["games"].tolist())),
+            hovertemplate=(
+                f"<b>{player}</b><br>"
+                "%{x}: %{y:,.1f} pts<br>"
+                "PPG: %{customdata[0]:.2f} · %{customdata[1]:.0f} games"
+                "<extra></extra>"
+            ),
             legendgroup=player,
         ))
+        pred_ppg_val = float(pr.iloc[0]["pred_ppg"])
         fig.add_trace(go.Scatter(
             x=[szns[-1], PREDICTION_YEAR], y=[vals[-1], pred_val],
             mode="lines+markers", showlegend=False, legendgroup=player,
             line=dict(color=color, width=2.5, dash="dash"),
             marker=dict(size=10, color=color, symbol="star",
                         line=dict(color="#fff", width=1.5)),
-            hovertemplate=f"<b>{player}</b><br>2026 Proj: {pred_val:,.1f} pts<extra></extra>",
+            hovertemplate=(
+                f"<b>{player}</b><br>"
+                f"2026 Proj: {pred_val:,.1f} pts<br>"
+                f"Proj PPG: {pred_ppg_val:.2f} · 17 games"
+                "<extra></extra>"
+            ),
         ))
 
     fig.update_layout(
