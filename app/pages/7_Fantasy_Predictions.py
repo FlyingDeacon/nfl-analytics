@@ -691,7 +691,7 @@ def build_predictions(weekly_df: pd.DataFrame):
                 for pid, g in szn_g.items():
                     avg_g_map.setdefault(pid, []).append(float(g))
             lat["injury_risk"] = lat[track_col].map(
-                lambda pid: "⛑️" if (
+                lambda pid: "  ⛑️  " if (
                     len(avg_g_map.get(pid, [])) > 0 and
                     sum(avg_g_map.get(pid, [17])) / len(avg_g_map.get(pid, [17])) < 14.5
                 ) else ""
@@ -790,7 +790,7 @@ def apply_expert_adjustments(df: pd.DataFrame,
                 "proj_games":  proj_g,
                 "pred_ppg":    round(ppg, 2),
                 "rmse":        0.0,
-                "injury_risk": "⛑️" if pos == "QB" and float(display_games) < 14.5 else "",
+                "injury_risk": "  ⛑️  " if pos == "QB" and float(display_games) < 14.5 else "",
             }
             if track_col != name_col:
                 new_row[track_col] = player_id
@@ -1071,18 +1071,6 @@ if "_logo_url" in disp.columns:
         cols.remove("_logo_url")
         cols.insert(cols.index("Team"), "_logo_url")
     disp_renamed = disp_renamed[cols]
-
-st.markdown("""
-<style>
-/* Center the Injury Risk column cells */
-[data-testid="stDataFrame"] td:has(> div > span:first-child:empty) ~ td,
-[data-testid="stDataFrame"] [col-id="Injury Risk"] .ag-cell-value,
-[data-testid="stDataFrame"] .ag-center-cols-container .ag-cell[col-id="Injury Risk"] {
-    text-align: center !important;
-    justify-content: center !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 st.dataframe(
     disp_renamed,
