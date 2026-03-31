@@ -631,26 +631,73 @@ def build_predictions(weekly_df: pd.DataFrame):
         )
         model_pts = np.clip(raw_pred * adj_factor, 0, None)
 
-        # ── Prior-year PPG baseline (45% weight) ─────────────────────────────
-        # Anchor projections to last season's actual per-game output.
-        # Uses PPG_BASELINE_GAMES (position-specific, < 17) instead of the
-        # full proj_games to correct for systematic over-prediction:
-        # backtesting showed projecting 17 games for the PPG anchor creates
-        # +44-pt QB bias and +10-pt RB bias — because real starters average
-        # 13-16 games due to injuries, bye weeks, and load management.
-        # The model component still projects to 17 games (proj_games);
-        # only the PPG anchor is calibrated to the realistic expected games.
-        prior_ppg      = lat[f"{TARGET_COL}_pg"].fillna(0).values
-        ppg_proj_g     = float(PPG_BASELINE_GAMES.get(pos, NFL_GAMES))
-        ppg_baseline   = np.clip(prior_ppg * ppg_proj_g, 0, None)
-        pred_pts = (model_pts * (1.0 - PPG_BLEND_WEIGHT)
-                    + ppg_baseline * PPG_BLEND_WEIGHT)
+        # ── QB-specific: recency-weighted multi-year PPG × 17 games ─────────
+        # QBs are projected on true fantasy value assuming full health (17g).
+        # Injury risk is tracked separately via the injury_risk flag.
+        # Using a 3-year DECAY-weighted average PPG prevents one outlier season
+        # (e.g. Lamar's 25.32 PPG in 2024) from over-driving the projection,
+        # and rewards consistent producers like Allen over volatile ones.
+        if pos == "QB":
+            wtd_ppg = np.zeros(len(lat))
+            wtd_sum = np.zeros(len(lat))
+            for szn in all_seasons:
+                szn_df = pos_df[pos_df["season"] == szn].set_index(track_col)
+                w_szn  = (1.0 + DECAY) ** (szn - all_seasons[0])
+                for idx, row in lat.iterrows():
+                    pid = row[track_col]
+                    if pid in szn_df.index:
+                        ppg_szn = szn_df.loc[pid, f"{TARGET_COL}_pg"] if isinstance(
+                            szn_df.loc[pid], pd.Series) else szn_df.loc[pid].iloc[-1][f"{TARGET_COL}_pg"]
+                        if ppg_szn and ppg_szn > 0:
+                            lat_idx = lat.index.get_loc(idx)
+                            wtd_ppg[lat_idx] += float(ppg_szn) * w_szn
+                            wtd_sum[lat_idx] += w_szn
+            wtd_sum = np.where(wtd_sum == 0, 1.0, wtd_sum)
+            qb_weighted_ppg = wtd_ppg / wtd_sum
+            # Fall back to prior-year PPG for QBs with no historical data
+            fallback_ppg = lat[f"{TARGET_COL}_pg"].fillna(0).values
+            qb_weighted_ppg = np.where(qb_weighted_ppg > 0, qb_weighted_ppg, fallback_ppg)
+            pred_pts = np.clip(qb_weighted_ppg * float(NFL_GAMES), 0, None)
+        else:
+            # ── Prior-year PPG baseline (45% weight) for RB/WR/TE ────────────
+            # Anchor projections to last season's actual per-game output.
+            # Uses PPG_BASELINE_GAMES (position-specific, < 17) instead of the
+            # full proj_games to correct for systematic over-prediction:
+            # backtesting showed projecting 17 games for the PPG anchor creates
+            # +44-pt QB bias and +10-pt RB bias — because real starters average
+            # 13-16 games due to injuries, bye weeks, and load management.
+            # The model component still projects to 17 games (proj_games);
+            # only the PPG anchor is calibrated to the realistic expected games.
+            prior_ppg      = lat[f"{TARGET_COL}_pg"].fillna(0).values
+            ppg_proj_g     = float(PPG_BASELINE_GAMES.get(pos, NFL_GAMES))
+            ppg_baseline   = np.clip(prior_ppg * ppg_proj_g, 0, None)
+            pred_pts = (model_pts * (1.0 - PPG_BLEND_WEIGHT)
+                        + ppg_baseline * PPG_BLEND_WEIGHT)
 
         lat = lat.copy()
         lat["predicted_pts"] = pred_pts.round(1)
         lat["proj_games"]    = proj_games.round(1)
         lat["pred_ppg"]      = (pred_pts / proj_games.clip(min=1)).round(2)
         lat["rmse"]          = round(rmse, 1)
+
+        # ── Injury risk flag (QBs only) ───────────────────────────────────────
+        # Flag QBs whose 3-year average games < 14.5 as injury risks.
+        # Shown as 🚨 in the big board — projection assumes healthy 17g.
+        if pos == "QB":
+            avg_g_map: dict = {}
+            for szn in all_seasons[-3:]:
+                szn_g = pos_df[pos_df["season"] == szn].set_index(track_col)["games"]
+                for pid, g in szn_g.items():
+                    avg_g_map.setdefault(pid, []).append(float(g))
+            lat["injury_risk"] = lat[track_col].map(
+                lambda pid: "🚨" if (
+                    len(avg_g_map.get(pid, [])) > 0 and
+                    sum(avg_g_map.get(pid, [17])) / len(avg_g_map.get(pid, [17])) < 14.5
+                ) else "✅"
+            )
+        else:
+            lat["injury_risk"] = ""
+
         predictions_list.append(lat)
 
     if not predictions_list:
@@ -941,7 +988,7 @@ st.markdown(f"### 📋 2026 Fantasy Big Board {pos_label_str}")
 board_cols = ["Rank", name_col]
 if team_col: board_cols.append(team_col)
 if pos_col:  board_cols.append(pos_col)
-board_cols += ["predicted_pts", "vor", "round_grade", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games", "last_season_ppg"]
+board_cols += ["injury_risk", "predicted_pts", "vor", "round_grade", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games", "last_season_ppg"]
 
 # Position-specific counting stats
 if sel_pos in ("QB", "All"):
@@ -961,6 +1008,7 @@ board_cols = [c for c in board_cols if c in preds.columns]
 
 rename_map = {
     name_col: "Player",
+    "injury_risk": "Health",
     "predicted_pts": "2026 Proj",
     "vor":          "VOR",
     "round_grade":  "Round",
@@ -987,6 +1035,11 @@ for c in disp.select_dtypes("float").columns:
 # Add logo URLs for team column if it exists
 teams_df = load_teams()
 column_config_dict = {
+    "Health":     st.column_config.TextColumn(
+                      label="Health",
+                      help="✅ = Durable (avg 14.5+ games/yr last 3 seasons) · "
+                           "🚨 = Injury risk (avg < 14.5 games/yr). "
+                           "Projections assume full 17-game season regardless."),
     "2026 Proj":  st.column_config.NumberColumn(format="%.1f"),
     "VOR":        st.column_config.NumberColumn(format="%.1f",
                       help="Value Over Replacement — positional scarcity-adjusted score. "
