@@ -131,6 +131,7 @@ FORCE_INCLUDE_STARTERS = {
     "Malik Willis":     ("00-0038128", "QB", "MIA", 15.5),   # career backup turned starter — expert PPG
     "Tyler Shough":     ("00-0040743", "QB", "NO",  16.0),   # NO QB1; 10 games 2025 (below 12 QB min); ~16 PPG
     "Matthew Stafford": ("00-0026498", "QB", "LAR", None),   # Returning for 2026 with LAR; find most recent qualifying season
+    "Jayden Daniels":   ("00-0039910", "QB", "WAS", None),   # 7 games 2025 (injury); uses 2024 full season (20.93 PPG)
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
@@ -690,10 +691,10 @@ def build_predictions(weekly_df: pd.DataFrame):
                 for pid, g in szn_g.items():
                     avg_g_map.setdefault(pid, []).append(float(g))
             lat["injury_risk"] = lat[track_col].map(
-                lambda pid: "🚨" if (
+                lambda pid: "🟥" if (
                     len(avg_g_map.get(pid, [])) > 0 and
                     sum(avg_g_map.get(pid, [17])) / len(avg_g_map.get(pid, [17])) < 14.5
-                ) else "✅"
+                ) else ""
             )
         else:
             lat["injury_risk"] = ""
@@ -1008,7 +1009,7 @@ board_cols = [c for c in board_cols if c in preds.columns]
 
 rename_map = {
     name_col: "Player",
-    "injury_risk": "Health",
+    "injury_risk": "Injury Risk",
     "predicted_pts": "2026 Proj",
     "vor":          "VOR",
     "round_grade":  "Round",
@@ -1035,10 +1036,10 @@ for c in disp.select_dtypes("float").columns:
 # Add logo URLs for team column if it exists
 teams_df = load_teams()
 column_config_dict = {
-    "Health":     st.column_config.TextColumn(
-                      label="Health",
-                      help="✅ = Durable (avg 14.5+ games/yr last 3 seasons) · "
-                           "🚨 = Injury risk (avg < 14.5 games/yr). "
+    "Injury Risk": st.column_config.TextColumn(
+                      label="Injury Risk",
+                      help="🟥 = Injury risk (avg < 14.5 games/yr over last 3 seasons). "
+                           "Blank = durable starter. "
                            "Projections assume full 17-game season regardless."),
     "2026 Proj":  st.column_config.NumberColumn(format="%.1f"),
     "VOR":        st.column_config.NumberColumn(format="%.1f",
