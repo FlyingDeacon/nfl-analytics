@@ -635,15 +635,25 @@ def build_predictions(weekly_df: pd.DataFrame):
         # ── QB-specific: recency-weighted multi-year PPG × 17 games ─────────
         # QBs are projected on true fantasy value assuming full health (17g).
         # Injury risk is tracked separately via the injury_risk flag.
-        # Using a 3-year DECAY-weighted average PPG prevents one outlier season
-        # (e.g. Lamar's 25.32 PPG in 2024) from over-driving the projection,
-        # and rewards consistent producers like Allen over volatile ones.
+        # Weights: most recent season 65%, previous year 25%, two years ago 10%.
+        # Research shows the most recent season explains ~65% of next-year QB
+        # variance — this weighting is more responsive than DECAY=0.35 (44%).
         if pos == "QB":
+            # Explicit season weights: [oldest, middle, most-recent] → [10%, 25%, 65%]
+            _szn_sorted = sorted(all_seasons)
+            _n = len(_szn_sorted)
+            _explicit_w = {0: 0.10, 1: 0.25, 2: 0.65}   # by recency rank (0=oldest)
+            # Map each season to its weight based on recency rank from the end
+            _szn_weight = {
+                s: _explicit_w.get(_n - 1 - i, 0.10)
+                for i, s in enumerate(reversed(_szn_sorted))
+            }
+
             wtd_ppg = np.zeros(len(lat))
             wtd_sum = np.zeros(len(lat))
             for szn in all_seasons:
                 szn_df = pos_df[pos_df["season"] == szn].set_index(track_col)
-                w_szn  = (1.0 + DECAY) ** (szn - all_seasons[0])
+                w_szn  = _szn_weight.get(szn, 0.10)
                 for idx, row in lat.iterrows():
                     pid = row[track_col]
                     if pid in szn_df.index:
@@ -691,7 +701,7 @@ def build_predictions(weekly_df: pd.DataFrame):
                 for pid, g in szn_g.items():
                     avg_g_map.setdefault(pid, []).append(float(g))
             lat["injury_risk"] = lat[track_col].map(
-                lambda pid: "    ⛑️  " if (
+                lambda pid: "Yes" if (
                     len(avg_g_map.get(pid, [])) > 0 and
                     sum(avg_g_map.get(pid, [17])) / len(avg_g_map.get(pid, [17])) < 14.5
                 ) else ""
@@ -809,7 +819,7 @@ def apply_expert_adjustments(df: pd.DataFrame,
                 "proj_games":  proj_g,
                 "pred_ppg":    round(ppg, 2),
                 "rmse":        0.0,
-                "injury_risk": "⛑️" if pos == "QB" and float(display_games) < 14.5 else "",
+                "injury_risk": "Yes" if pos == "QB" and float(display_games) < 14.5 else "",
             }
             if track_col != name_col:
                 new_row[track_col] = player_id
@@ -1062,7 +1072,7 @@ column_config_dict = {
     "Injury Risk": st.column_config.TextColumn(
                       label="Injury Risk",
                       width="small",
-                      help="⛑️ = Injury risk (avg < 14.5 games/yr over last 3 seasons). "
+                      help="Yes = Injury risk (avg < 14.5 games/yr over last 3 seasons). "
                            "Blank = durable starter. "
                            "Projections assume full 17-game season regardless."),
     "2026 Proj":  st.column_config.NumberColumn(format="%.1f"),
@@ -1092,18 +1102,6 @@ if "_logo_url" in disp.columns:
         cols.insert(cols.index("Team"), "_logo_url")
     disp_renamed = disp_renamed[cols]
 
-st.markdown("""
-<style>
-[data-testid="stDataFrame"] [col-id="Injury Risk"] div,
-[data-testid="stDataFrame"] .ag-cell[col-id="Injury Risk"],
-[data-testid="stDataFrame"] .ag-cell[col-id="Injury Risk"] .ag-cell-value {
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 st.dataframe(
     disp_renamed,
