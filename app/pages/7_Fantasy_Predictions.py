@@ -1117,7 +1117,7 @@ column_config_dict = {
 if team_col:
     disp["_logo_url"] = disp[team_col].apply(lambda t: get_logo(t, teams_df) if pd.notna(t) else "")
     column_config_dict["_logo_url"] = st.column_config.ImageColumn(
-        label="",
+        label="Team Abb",
         width="small",
     )
 
