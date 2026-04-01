@@ -639,14 +639,15 @@ def build_predictions(weekly_df: pd.DataFrame):
         # Research shows the most recent season explains ~65% of next-year QB
         # variance — this weighting is more responsive than DECAY=0.35 (44%).
         if pos == "QB":
-            # Explicit season weights: [oldest, middle, most-recent] → [10%, 25%, 65%]
-            _szn_sorted = sorted(all_seasons)
+            # Explicit season weights: most-recent=65%, 2nd-most-recent=25%, 3rd=10%
+            # Older seasons are excluded (weight 0) — only last 3 seasons matter.
+            _szn_sorted = sorted(all_seasons)   # ascending: oldest first
             _n = len(_szn_sorted)
-            _explicit_w = {0: 0.10, 1: 0.25, 2: 0.65}   # by recency rank (0=oldest)
-            # Map each season to its weight based on recency rank from the end
+            # Build weight map: position from END (0=most recent, 1=prev, 2=two years ago)
+            _recency_w = {0: 0.65, 1: 0.25, 2: 0.10}
             _szn_weight = {
-                s: _explicit_w.get(_n - 1 - i, 0.10)
-                for i, s in enumerate(reversed(_szn_sorted))
+                s: _recency_w.get(_n - 1 - i, 0.0)   # 0.0 for seasons older than 3 years
+                for i, s in enumerate(_szn_sorted)
             }
 
             wtd_ppg = np.zeros(len(lat))
