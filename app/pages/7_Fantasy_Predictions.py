@@ -702,7 +702,7 @@ def build_predictions(weekly_df: pd.DataFrame):
                 for pid, g in szn_g.items():
                     avg_g_map.setdefault(pid, []).append(float(g))
             lat["injury_risk"] = lat[track_col].map(
-                lambda pid: "  Yes  " if (
+                lambda pid: "      Yes      " if (
                     len(avg_g_map.get(pid, [])) > 0 and
                     sum(avg_g_map.get(pid, [17])) / len(avg_g_map.get(pid, [17])) < 14.5
                 ) else ""
@@ -820,7 +820,7 @@ def apply_expert_adjustments(df: pd.DataFrame,
                 "proj_games":  proj_g,
                 "pred_ppg":    round(ppg, 2),
                 "rmse":        0.0,
-                "injury_risk": "  Yes  " if pos == "QB" and float(display_games) < 14.5 else "",
+                "injury_risk": "      Yes      " if pos == "QB" and float(display_games) < 14.5 else "",
             }
             if track_col != name_col:
                 new_row[track_col] = player_id
