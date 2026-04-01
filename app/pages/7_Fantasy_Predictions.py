@@ -1094,9 +1094,17 @@ for c in disp.select_dtypes("float").columns:
     if c != "change_pct":
         disp[c] = disp[c].round(1)
 
+# Center Rank and Team abbreviation values with padding
+if "Rank" in disp.columns:
+    disp["Rank"] = disp["Rank"].apply(lambda x: f"      {int(x)}      ")
+if team_col and team_col in disp.columns:
+    disp[team_col] = disp[team_col].apply(lambda x: f"      {x}      " if pd.notna(x) and x != "" else x)
+
 # Add logo URLs for team column if it exists
 teams_df = load_teams()
 column_config_dict = {
+    "Rank":       st.column_config.TextColumn(label="Rank", width="small"),
+    "Team Abb":   st.column_config.TextColumn(label="Team Abb", width="small"),
     "Injury Risk": st.column_config.TextColumn(
                       label="Injury Risk",
                       width="small",
