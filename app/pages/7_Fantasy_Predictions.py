@@ -1083,7 +1083,7 @@ rename_map = {
     "receptions": "Rec",   "targets": "Tgt",
     "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
 }
-if team_col: rename_map[team_col] = "Team"
+if team_col: rename_map[team_col] = "Team Abb"
 if pos_col:  rename_map[pos_col]  = "Pos"
 
 disp = preds[board_cols].copy()
@@ -1117,7 +1117,7 @@ column_config_dict = {
 if team_col:
     disp["_logo_url"] = disp[team_col].apply(lambda t: get_logo(t, teams_df) if pd.notna(t) else "")
     column_config_dict["_logo_url"] = st.column_config.ImageColumn(
-        label="Team Abb",
+        label="Team",
         width="small",
     )
 
