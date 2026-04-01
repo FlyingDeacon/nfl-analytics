@@ -1127,7 +1127,7 @@ if "_logo_url" in disp.columns:
     cols = list(disp_renamed.columns)
     if "_logo_url" in cols:
         cols.remove("_logo_url")
-        cols.insert(cols.index("Team"), "_logo_url")
+        cols.insert(cols.index("Team Abb"), "_logo_url")
     disp_renamed = disp_renamed[cols]
 
 
