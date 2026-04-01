@@ -145,6 +145,24 @@ EXPERT_REMOVE = {
     "Malik Nabers",      # ACL in 2025; only 4 games played — below 6-game WR minimum
 }
 
+# Injury risk mapping — 2026 season outlook (HIGH/MEDIUM/LOW risk levels)
+# Based on NFL Expert research as of March 2026. Applied to RB/WR/TE players.
+# QBs use historical games-played average; skill positions use this expert lookup.
+INJURY_RISK_MAP = {
+    # HIGH RISK — expected to miss significant 2026 time or have uncertain availability
+    "Brandon Aiyuk":      "Yes",   # ACL/MCL tear; missed entire 2025 season
+    "Tyreek Hill":        "Yes",   # Multi-ligament knee injury (ACL+); franchise released him
+    "Tank Dell":          "Yes",   # Multi-ligament knee injury (ACL/MCL/LCL/meniscus); missed 2025
+    "Christian Watson":   "Yes",   # ACL tear (Jan 2025); expected to miss significant 2026 time
+
+    # MEDIUM RISK — may miss games early season or have recurring issues
+    "Stefon Diggs":       "Yes",   # ACL recovery (2024); age + team transition risk
+    "George Kittle":      "Yes",   # Achilles injury (Jan 2026); age 33; high tear but positive recovery
+    "Sam LaPorta":        "Yes",   # Back surgery (Nov 2024); recurring back injury risk
+    "Brock Bowers":       "Yes",   # PCL injury (Week 1 2025); may miss early 2026
+    "Dalton Kincaid":     "Yes",   # Recurring PCL issues; missed 5 games in 2025
+}
+
 # Team corrections: player name fragment → corrected 2026 team abbreviation
 # Sources: ESPN / NFL.com free agency trackers, March 2026
 EXPERT_TEAM_CORRECTIONS = {
@@ -692,9 +710,10 @@ def build_predictions(weekly_df: pd.DataFrame):
         lat["pred_ppg"]      = (pred_pts / proj_games.clip(min=1)).round(2)
         lat["rmse"]          = round(rmse, 1)
 
-        # ── Injury risk flag (QBs only) ───────────────────────────────────────
-        # Flag QBs whose 3-year average games < 14.5 as injury risks.
-        # Shown as 🚨 in the big board — projection assumes healthy 17g.
+        # ── Injury risk flag ──────────────────────────────────────────────────────
+        # QBs: historical games-played average < 14.5 over last 3 years
+        # RB/WR/TE: expert injury mapping (NFL research as of March 2026)
+        # Projection assumes healthy 17-game season regardless of flag.
         if pos == "QB":
             avg_g_map: dict = {}
             for szn in all_seasons[-3:]:
@@ -708,7 +727,10 @@ def build_predictions(weekly_df: pd.DataFrame):
                 ) else ""
             )
         else:
-            lat["injury_risk"] = ""
+            # RB/WR/TE: check expert injury risk map
+            lat["injury_risk"] = lat[name_col].map(
+                lambda player_name: INJURY_RISK_MAP.get(player_name, "")
+            )
 
         predictions_list.append(lat)
 
@@ -820,7 +842,11 @@ def apply_expert_adjustments(df: pd.DataFrame,
                 "proj_games":  proj_g,
                 "pred_ppg":    round(ppg, 2),
                 "rmse":        0.0,
-                "injury_risk": "      Yes      " if pos == "QB" and float(display_games) < 14.5 else "",
+                "injury_risk": (
+                    ("      Yes      " if float(display_games) < 14.5 else "")
+                    if pos == "QB" else
+                    INJURY_RISK_MAP.get(player_name, "")
+                ),
             }
             if track_col != name_col:
                 new_row[track_col] = player_id
