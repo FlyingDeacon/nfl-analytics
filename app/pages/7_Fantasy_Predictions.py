@@ -691,7 +691,7 @@ def build_predictions(weekly_df: pd.DataFrame):
                 for pid, g in szn_g.items():
                     avg_g_map.setdefault(pid, []).append(float(g))
             lat["injury_risk"] = lat[track_col].map(
-                lambda pid: "  ⛑️  " if (
+                lambda pid: "    ⛑️  " if (
                     len(avg_g_map.get(pid, [])) > 0 and
                     sum(avg_g_map.get(pid, [17])) / len(avg_g_map.get(pid, [17])) < 14.5
                 ) else ""
@@ -762,20 +762,39 @@ def apply_expert_adjustments(df: pd.DataFrame,
             else:
                 if p_data.empty:
                     continue
-                # Find most recent qualifying season
+                # All seasons aggregated (used for weighted PPG and fallback)
                 p_seas = (p_data.groupby("season")[TARGET_COL]
                           .agg(games="count", total_pts="sum")
                           .reset_index())
+                # Need at least one qualifying season to anchor the projection
                 qualifying = p_seas[p_seas["games"] >= min_g].sort_values("season", ascending=False)
                 if qualifying.empty:
                     continue
-                best      = qualifying.iloc[0]
-                ppg       = float(best["total_pts"]) / float(best["games"])
+                best = qualifying.iloc[0]
+
+                # Recency-weighted multi-year PPG — same approach as main QB model.
+                # Include ALL seasons with 5+ games so injury-shortened years
+                # (e.g. Daniels 7g in 2025 at 16.33 PPG) are weighted in properly.
+                # Without this, FORCE_INCLUDE QBs only use their best healthy season
+                # and ignore evidence of decline or volatility.
+                _szn_weights = {s: (1.0 + DECAY) ** i
+                                for i, s in enumerate(sorted(p_seas["season"].unique()))}
+                usable = p_seas[p_seas["games"] >= 5]
+                if not usable.empty:
+                    _wtd = sum(
+                        (float(r["total_pts"]) / float(r["games"])) * _szn_weights.get(int(r["season"]), 1.0)
+                        for _, r in usable.iterrows()
+                    )
+                    _w_sum = sum(_szn_weights.get(int(r["season"]), 1.0) for _, r in usable.iterrows())
+                    ppg = _wtd / _w_sum if _w_sum > 0 else (float(best["total_pts"]) / float(best["games"]))
+                else:
+                    ppg = float(best["total_pts"]) / float(best["games"])
+
                 games_2025 = int(p_seas[p_seas["season"] == PREDICTION_YEAR - 1]["games"].sum()
                                  if (PREDICTION_YEAR - 1) in p_seas["season"].values else 0)
-                proj_g    = round(min(MAX_PROJ_GAMES,
-                                     max(float(min_g),
-                                         0.65 * float(best["games"]) + 0.35 * DEFAULT_PROJ_GAMES)), 1)
+                # Project all force-include starters at full 17 games — they are confirmed
+                # starters; the injury risk flag already communicates the health caveat.
+                proj_g    = float(NFL_GAMES)
                 proj_pts  = round(ppg * proj_g, 1)
                 actual_2025   = float(p_data[p_data["season"] == PREDICTION_YEAR - 1][TARGET_COL].sum())
                 display_games = games_2025 if games_2025 > 0 else float(best["games"])
