@@ -809,7 +809,7 @@ def apply_expert_adjustments(df: pd.DataFrame,
                 "proj_games":  proj_g,
                 "pred_ppg":    round(ppg, 2),
                 "rmse":        0.0,
-                "injury_risk": "  ⛑️  " if pos == "QB" and float(display_games) < 14.5 else "",
+                "injury_risk": "⛑️" if pos == "QB" and float(display_games) < 14.5 else "",
             }
             if track_col != name_col:
                 new_row[track_col] = player_id
@@ -1061,7 +1061,8 @@ teams_df = load_teams()
 column_config_dict = {
     "Injury Risk": st.column_config.TextColumn(
                       label="Injury Risk",
-                      help="🟥 = Injury risk (avg < 14.5 games/yr over last 3 seasons). "
+                      width="small",
+                      help="⛑️ = Injury risk (avg < 14.5 games/yr over last 3 seasons). "
                            "Blank = durable starter. "
                            "Projections assume full 17-game season regardless."),
     "2026 Proj":  st.column_config.NumberColumn(format="%.1f"),
@@ -1090,6 +1091,19 @@ if "_logo_url" in disp.columns:
         cols.remove("_logo_url")
         cols.insert(cols.index("Team"), "_logo_url")
     disp_renamed = disp_renamed[cols]
+
+st.markdown("""
+<style>
+[data-testid="stDataFrame"] [col-id="Injury Risk"] div,
+[data-testid="stDataFrame"] .ag-cell[col-id="Injury Risk"],
+[data-testid="stDataFrame"] .ag-cell[col-id="Injury Risk"] .ag-cell-value {
+    text-align: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.dataframe(
     disp_renamed,
