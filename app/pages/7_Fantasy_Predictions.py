@@ -148,19 +148,20 @@ EXPERT_REMOVE = {
 # Injury risk mapping — 2026 season outlook (HIGH/MEDIUM/LOW risk levels)
 # Based on NFL Expert research as of March 2026. Applied to RB/WR/TE players.
 # QBs use historical games-played average; skill positions use this expert lookup.
+# Values use same padding as QB injury_risk display for consistency.
 INJURY_RISK_MAP = {
     # HIGH RISK — expected to miss significant 2026 time or have uncertain availability
-    "Brandon Aiyuk":      "Yes",   # ACL/MCL tear; missed entire 2025 season
-    "Tyreek Hill":        "Yes",   # Multi-ligament knee injury (ACL+); franchise released him
-    "Tank Dell":          "Yes",   # Multi-ligament knee injury (ACL/MCL/LCL/meniscus); missed 2025
-    "Christian Watson":   "Yes",   # ACL tear (Jan 2025); expected to miss significant 2026 time
+    "Brandon Aiyuk":      "      Yes      ",   # ACL/MCL tear; missed entire 2025 season
+    "Tyreek Hill":        "      Yes      ",   # Multi-ligament knee injury (ACL+); franchise released him
+    "Tank Dell":          "      Yes      ",   # Multi-ligament knee injury (ACL/MCL/LCL/meniscus); missed 2025
+    "Christian Watson":   "      Yes      ",   # ACL tear (Jan 2025); expected to miss significant 2026 time
 
     # MEDIUM RISK — may miss games early season or have recurring issues
-    "Stefon Diggs":       "Yes",   # ACL recovery (2024); age + team transition risk
-    "George Kittle":      "Yes",   # Achilles injury (Jan 2026); age 33; high tear but positive recovery
-    "Sam LaPorta":        "Yes",   # Back surgery (Nov 2024); recurring back injury risk
-    "Brock Bowers":       "Yes",   # PCL injury (Week 1 2025); may miss early 2026
-    "Dalton Kincaid":     "Yes",   # Recurring PCL issues; missed 5 games in 2025
+    "Stefon Diggs":       "      Yes      ",   # ACL recovery (2024); age + team transition risk
+    "George Kittle":      "      Yes      ",   # Achilles injury (Jan 2026); age 33; high tear but positive recovery
+    "Sam LaPorta":        "      Yes      ",   # Back surgery (Nov 2024); recurring back injury risk
+    "Brock Bowers":       "      Yes      ",   # PCL injury (Week 1 2025); may miss early 2026
+    "Dalton Kincaid":     "      Yes      ",   # Recurring PCL issues; missed 5 games in 2025
 }
 
 # Team corrections: player name fragment → corrected 2026 team abbreviation
