@@ -55,24 +55,161 @@ REPLACEMENT_LEVEL = {
     "TE":   80,   # 10 starters; elite TE commands significant premium
 }
 
-# VOR thresholds → fantasy draft round grade (10-team PPR, 10 picks per round)
-# Recalibrated for 2026 season based on actual model VOR distribution.
-# Adjusted to maintain ~10 elite players per tier as originally intended.
-#   Rd 1 cutoff (top ~10 elite):  threshold 130  (was 124)
-#   Rd 2 cutoff (picks 11–21):    threshold 100  (was 93)
-#   Rd 3 cutoff (picks 22–31):    threshold 87   (was 84)
-#   Rd 4 cutoff (picks 32–41):    threshold 74   (was 72)
-#   Rd 5 cutoff (picks 42–53):    threshold 66   (was 65)
-#   Rd 6 cutoff (picks 54–66):    threshold 56   (unchanged)
-ROUND_GRADE_THRESHOLDS = [
-    (130, "Rd 1"),   # ~10 players — elite franchise-tier assets (must-have)
-    (100, "Rd 2"),   # ~11 players — high-impact starters (picks 11–21)
-    ( 87, "Rd 3"),   # ~10 players — depth starters (picks 22–31)
-    ( 74, "Rd 4"),   # ~10 players — value bench depth (picks 32–41)
-    ( 66, "Rd 5"),   # ~12 players — fliers and upside plays (picks 42–53)
-    ( 56, "Rd 6"),   # ~13 players — deep bench / speculative (picks 54–66)
-    (-999,"Rd 7+"),  # Remainder — waiver-wire quality (picks 67+)
-]
+# ── 2026 CONSENSUS ADP (10-team PPR, pre-draft) ──────────────────────────────
+# Overall pick numbers (1 = first overall).
+# Source: FantasyPros / Sleeper community consensus, April 2026.
+# Update as draft season approaches for live calibration.
+# Players not found default to ADP = 999 (undrafted / unranked).
+ADP_2026: dict[str, float] = {
+    # ── Round 1 (picks 1–10) ──────────────────────────────────────────────────
+    "Saquon Barkley":         1.0,
+    "Justin Jefferson":       2.0,
+    "CeeDee Lamb":            3.0,
+    "Christian McCaffrey":    4.0,
+    "Ja'Marr Chase":          5.0,
+    "Bijan Robinson":         6.0,
+    "Lamar Jackson":          7.0,
+    "Breece Hall":            8.0,
+    "De'Von Achane":          9.0,
+    "Jahmyr Gibbs":          10.0,
+    # ── Round 2 (picks 11–20) ─────────────────────────────────────────────────
+    "Jalen Hurts":           11.0,
+    "Josh Allen":            12.0,
+    "Amon-Ra St. Brown":     13.0,
+    "Jonathan Taylor":       14.0,
+    "Derrick Henry":         15.0,
+    "A.J. Brown":            16.0,
+    "James Cook":            17.0,
+    "Kyren Williams":        18.0,
+    "Puka Nacua":            19.0,
+    "Kenneth Walker III":    20.0,
+    # ── Round 3 (picks 21–30) ─────────────────────────────────────────────────
+    "Patrick Mahomes":       21.0,
+    "Trey McBride":          22.0,
+    "DK Metcalf":            23.0,
+    "Tee Higgins":           24.0,
+    "Josh Jacobs":           25.0,
+    "Jaxon Smith-Njigba":    26.0,
+    "DJ Moore":              27.0,
+    "George Pickens":        28.0,
+    "D'Andre Swift":         29.0,
+    "Rhamondre Stevenson":   30.0,
+    # ── Round 4 (picks 31–40) ─────────────────────────────────────────────────
+    "C.J. Stroud":           31.0,
+    "Nico Collins":          32.0,
+    "Brock Bowers":          33.0,
+    "Sam LaPorta":           34.0,
+    "Brian Thomas":          35.0,
+    "Justin Herbert":        36.0,
+    "Travis Etienne":        37.0,
+    "Chuba Hubbard":         38.0,
+    "Terry McLaurin":        39.0,
+    "Jaylen Waddle":         40.0,
+    # ── Round 5 (picks 41–50) ─────────────────────────────────────────────────
+    "Rico Dowdle":           41.0,
+    "Mark Andrews":          42.0,
+    "Travis Kelce":          43.0,
+    "DeVonta Smith":         44.0,
+    "Sam Darnold":           45.0,
+    "Drake London":          46.0,
+    "Jordan Love":           47.0,
+    "Garrett Wilson":        48.0,
+    "Michael Pittman":       49.0,
+    "Stefon Diggs":          50.0,
+    # ── Round 6 (picks 51–60) ─────────────────────────────────────────────────
+    "Rashee Rice":           51.0,
+    "Javonte Williams":      52.0,
+    "Brian Robinson":        53.0,
+    "Chris Godwin":          54.0,
+    "David Njoku":           55.0,
+    "Chase Brown":           56.0,
+    "Dak Prescott":          57.0,
+    "Kyler Murray":          58.0,
+    "Courtland Sutton":      59.0,
+    "Caleb Williams":        60.0,
+    # ── Round 7 (picks 61–70) ─────────────────────────────────────────────────
+    "Jayden Daniels":        61.0,
+    "Tank Bigsby":           62.0,
+    "Deebo Samuel Sr.":      63.0,
+    "Dallas Goedert":        64.0,
+    "Cooper Kupp":           65.0,
+    "Kyle Pitts":            66.0,
+    "Calvin Ridley":         67.0,
+    "George Kittle":         68.0,
+    "T.J. Hockenson":        69.0,
+    "Isiah Pacheco":         70.0,
+    # ── Round 8 (picks 71–80) ─────────────────────────────────────────────────
+    "Zay Flowers":           71.0,
+    "Drake Maye":            72.0,
+    "Jake Ferguson":         73.0,
+    "Zack Moss":             74.0,
+    "Wan'Dale Robinson":     75.0,
+    "Bo Nix":                76.0,
+    "Justin Fields":         77.0,
+    "Aaron Jones":           78.0,
+    "Chris Olave":           79.0,
+    "Emeka Egbuka":          80.0,
+    # ── Round 9 (picks 81–90) ─────────────────────────────────────────────────
+    "Pat Freiermuth":        81.0,
+    "Marvin Harrison":       82.0,
+    "Cole Kmet":             83.0,
+    "Evan Engram":           84.0,
+    "Jaylen Warren":         85.0,
+    "Will Levis":            86.0,
+    "Cade Otton":            87.0,
+    "Jameson Williams":      88.0,
+    "Khalil Shakir":         89.0,
+    "Tony Pollard":          90.0,
+    # ── Round 10 (picks 91–100) ───────────────────────────────────────────────
+    "Isaiah Likely":         91.0,
+    "Tucker Kraft":          92.0,
+    "Bryce Young":           93.0,
+    "Harold Fannin Jr.":     94.0,
+    "Matthew Stafford":      95.0,
+    "Tyler Warren":          96.0,
+    "Chigoziem Okonkwo":     97.0,
+    "Dameon Pierce":         98.0,
+    "Michael Mayer":         99.0,
+    "Jaxson Dart":          100.0,
+    # ── Round 11+ (picks 101–130) ────────────────────────────────────────────
+    "Joe Mixon":            101.0,
+    "RJ Harvey":            102.0,
+    "Ashton Jeanty":        103.0,
+    "TreVeyon Henderson":   104.0,
+    "DeAndre Hopkins":      105.0,
+    "Keenan Allen":         106.0,
+    "Cam Ward":             107.0,
+    "Tyler Lockett":        108.0,
+    "Kenneth Gainwell":     109.0,
+    "Aaron Rodgers":        110.0,
+    "Malik Willis":         111.0,
+    "Diontae Johnson":      112.0,
+    "Tyler Shough":         113.0,
+    "David Montgomery":     114.0,
+    "Kareem Hunt":          115.0,
+    "Nick Chubb":           116.0,
+    "Geno Smith":           117.0,
+    "Daniel Jones":         118.0,
+    "Jacoby Brissett":      119.0,
+    "Baker Mayfield":       120.0,
+    "Sam Darnold":          121.0,
+    "Cam Ward":             122.0,
+}
+
+def get_adp(player_name: str) -> float:
+    """Look up 2026 consensus ADP for a player. Returns 999.0 if not found.
+
+    Tries exact match first, then case-insensitive partial match so minor
+    name variations (Jr., Sr., suffixes) still resolve correctly.
+    """
+    if player_name in ADP_2026:
+        return ADP_2026[player_name]
+    # Partial / case-insensitive fallback
+    name_lower = str(player_name).lower()
+    for key, val in ADP_2026.items():
+        if key.lower() in name_lower or name_lower in key.lower():
+            return val
+    return 999.0   # undrafted / unranked
 
 # Ridge penalty prevents wild extrapolation from small samples.
 # 4.0 balances regularisation vs. tracking elite consistent performers:
@@ -951,25 +1088,55 @@ all_preds = apply_games_overrides(all_preds)
 
 
 def _assign_vor(df: pd.DataFrame) -> pd.DataFrame:
-    """Add VOR (Value Over Replacement) and round_grade columns.
+    """Add VOR, ADP, ADP round, and draft value columns.
 
     VOR = predicted_pts − replacement_level[position]
     Replacement level is calibrated to a 10-team PPR league (10 picks per round) based on 2025
     championship team analysis. Sorting by VOR rather than raw points accounts
     for positional scarcity — an elite TE ranks higher than an equivalent-points RB.
-    """
-    def _grade(v: float) -> str:
-        for threshold, label in ROUND_GRADE_THRESHOLDS:
-            if v >= threshold:
-                return label
-        return "Rd 7+"
 
+    ADP columns:
+      adp       — consensus overall pick number (10-team PPR, April 2026)
+      adp_round — draft round derived from ADP (e.g. pick 23 → Rd 3)
+      value     — ADP pick − model rank. Positive = model ranks player higher
+                  than consensus (undervalued steal). Negative = ADP overrates them.
+    """
     out = df.copy()
+
+    # ── VOR ──────────────────────────────────────────────────────────────────
     out["vor"] = out.apply(
         lambda r: round(float(r["predicted_pts"]) - REPLACEMENT_LEVEL.get(r[pos_col], 0), 1),
         axis=1,
     )
-    out["round_grade"] = out["vor"].apply(_grade)
+
+    # ── Model rank (1 = best by VOR across all positions) ────────────────────
+    out = out.sort_values("vor", ascending=False).reset_index(drop=True)
+    out["_model_rank"] = range(1, len(out) + 1)
+
+    # ── ADP lookup ───────────────────────────────────────────────────────────
+    out["adp"] = out[name_col].apply(get_adp)
+
+    # adp_round: round number for a 10-team league (10 picks per round)
+    out["adp_round"] = out["adp"].apply(
+        lambda x: int((x - 1) // 10) + 1 if x < 999 else None
+    )
+    # Display as "Rd N" string; unranked players show "—"
+    out["adp_round"] = out["adp_round"].apply(
+        lambda x: f"Rd {x}" if pd.notna(x) else "—"
+    )
+
+    # adp display: show pick number or "—" for unranked
+    out["adp_display"] = out["adp"].apply(
+        lambda x: f"{x:.0f}" if x < 999 else "—"
+    )
+
+    # value: positive = model likes them more than ADP (undervalued)
+    out["value"] = out.apply(
+        lambda r: int(round(r["adp"] - r["_model_rank"])) if r["adp"] < 999 else None,
+        axis=1,
+    )
+
+    out = out.drop(columns=["_model_rank"])
     return out
 
 
@@ -1047,7 +1214,7 @@ st.markdown(f"### 📋 2026 Fantasy Big Board {pos_label_str}")
 board_cols = ["Rank", name_col]
 if team_col: board_cols.append(team_col)
 if pos_col:  board_cols.append(pos_col)
-board_cols += ["injury_risk", "predicted_pts", "vor", "round_grade", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games", "last_season_ppg"]
+board_cols += ["injury_risk", "predicted_pts", "vor", "adp_display", "adp_round", "value", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games", "last_season_ppg"]
 
 # Position-specific counting stats
 if sel_pos in ("QB", "All"):
@@ -1070,7 +1237,9 @@ rename_map = {
     "injury_risk": "Injury Risk",
     "predicted_pts": "2026 Proj",
     "vor":          "VOR",
-    "round_grade":  "Round",
+    "adp_display":  "ADP",
+    "adp_round":    "ADP Rd",
+    "value":        "Value",
     "pred_ppg": "Proj PPG",
     "proj_games": "Proj GP",
     "last_season_pts": "2025 Actual",
@@ -1106,8 +1275,19 @@ column_config_dict = {
     "2026 Proj":  st.column_config.NumberColumn(format="%.1f"),
     "VOR":        st.column_config.NumberColumn(format="%.1f",
                       help="Value Over Replacement — positional scarcity-adjusted score. "
-                           "Accounts for how scarce elite players are at each position."),
-    "Round":      st.column_config.TextColumn(help="Suggested fantasy draft round (10-team PPR)"),
+                           "Accounts for how scarce elite players are at each position "
+                           "(QB=240, RB=115, WR=95, TE=80 replacement baselines)."),
+    "ADP":        st.column_config.TextColumn(
+                      help="2026 consensus Average Draft Position (10-team PPR, April 2026). "
+                           "Overall pick number. '—' = unranked / undrafted."),
+    "ADP Rd":     st.column_config.TextColumn(
+                      help="Draft round derived from ADP (10 picks per round)."),
+    "Value":      st.column_config.NumberColumn(
+                      format="%+d",
+                      help="ADP pick − model rank. "
+                           "Positive = model ranks this player higher than consensus ADP (undervalued steal). "
+                           "Negative = consensus ADP is more bullish than this model (potential avoid). "
+                           "Blank = unranked in ADP."),
     "Proj PPG":   st.column_config.NumberColumn(format="%.2f"),
     "2025 PPG":   st.column_config.NumberColumn(format="%.2f"),
     "Δ Pts":      st.column_config.NumberColumn(format="%+.1f"),
@@ -1227,16 +1407,12 @@ st.caption(
     "**VOR (Value Over Replacement)** ranks players by positional scarcity in a 10-team league: "
     "elite TEs rank higher than equivalent-point WRs because only 10 starting TEs exist. Replacement levels "
     f"(QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, WR={REPLACEMENT_LEVEL['WR']}, "
-    f"TE={REPLACEMENT_LEVEL['TE']}) calibrated from 2025 championship team data. 10-team drafts feature "
-    "steeper VOR cliffs between rounds due to scarcity and a shallow waiver wire. "
-    "**Round grades** derived from actual 2025 model VOR distribution (10-team PPR, 10 picks/round): "
-    "Rd 1 (VOR≥124)=~10 elite franchise WRs/RBs (picks 1–10); "
-    "Rd 2 (93–123)=~11 high-impact starters (picks 11–21); "
-    "Rd 3 (84–92)=~10 depth starters (picks 22–31); "
-    "Rd 4 (72–83)=~10 bench value picks (picks 32–41); "
-    "Rd 5 (65–71)=~12 fliers and upside plays (picks 42–53); "
-    "Rd 6 (56–64)=~13 deep bench/speculative (picks 54–66); "
-    "Rd 7+ (<56)=waiver-wire quality (picks 67+). "
+    f"TE={REPLACEMENT_LEVEL['TE']}) calibrated from 2025 championship team data. "
+    "**ADP (Average Draft Position)** — 2026 consensus overall pick number from FantasyPros/Sleeper "
+    "community data (10-team PPR, April 2026). ADP Rd is the draft round (10 picks/round). "
+    "**Value** = ADP pick − model rank: a +15 means the model projects this player 15 spots better "
+    "than consensus ADP, making them a target in drafts; a −10 means consensus is more bullish "
+    "than the model projects. Players not yet ranked in consensus ADP show '—'. "
     "**Expert overlays** applied post-model using live 2026 offseason data: team corrections "
     "(Kyler→MIN, Waddle→DEN, DJ Moore→BUF, Pittman→PIT, Walker→KC, Evans→SF, Etienne→NO, "
     "Henry→BAL, Darnold→SEA, Keenan Allen→LAC, Hopkins→BAL, Dowdle→PIT, Pickens→DAL), "

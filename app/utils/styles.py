@@ -110,6 +110,11 @@ h1,h2,h3,h4 {
     background: var(--surface) !important;
 }
 
+/* Center the Injury Risk column (5th column in the table) */
+[data-testid="stDataFrame"] tbody tr td:nth-child(5) {
+    text-align: center !important;
+}
+
 /* ── Metrics ── */
 [data-testid="stMetric"] {
     background: var(--surface) !important;
