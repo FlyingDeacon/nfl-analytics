@@ -129,23 +129,89 @@ EXPERT_REMOVE = {
     "Malik Nabers",      # ACL in 2025; only 4 games played — below 6-game WR minimum
 }
 
-# Injury risk mapping — 2026 season outlook (HIGH/MEDIUM/LOW risk levels)
-# Based on NFL Expert research as of March 2026. Applied to RB/WR/TE players.
-# QBs use historical games-played average; skill positions use this expert lookup.
-# Values use same padding as QB injury_risk display for consistency.
+# Injury risk mapping — 2026 season outlook
+# Based on NFL Expert research as of March 2026. Applied to ALL positions.
+# QBs: checked in addition to the historical games-played average auto-flag.
+# RB/WR/TE: primary injury risk source.
+# Flag criteria: significant injury in 2024-25 OR documented recurring injury history.
+# "      Yes      " padding is intentional — centers text in the narrow column.
 INJURY_RISK_MAP = {
-    # HIGH RISK — expected to miss significant 2026 time or have uncertain availability
-    "Brandon Aiyuk":      "      Yes      ",   # ACL/MCL tear; missed entire 2025 season
-    "Tyreek Hill":        "      Yes      ",   # Multi-ligament knee injury (ACL+); franchise released him
-    "Tank Dell":          "      Yes      ",   # Multi-ligament knee injury (ACL/MCL/LCL/meniscus); missed 2025
-    "Christian Watson":   "      Yes      ",   # ACL tear (Jan 2025); expected to miss significant 2026 time
 
-    # MEDIUM RISK — may miss games early season or have recurring issues
-    "Stefon Diggs":       "      Yes      ",   # ACL recovery (2024); age + team transition risk
-    "George Kittle":      "      Yes      ",   # Achilles injury (Jan 2026); age 33; high tear but positive recovery
+    # ── QUARTERBACKS ─────────────────────────────────────────────────────────
+    # (auto-flag also triggers if avg games/yr < 14.5 over last 3 seasons)
+    "Patrick Mahomes":    "      Yes      ",   # ACL/knee surgery (2025); proj 14 games 2026; historically durable but confirmed injury concern
+    "Jordan Love":        "      Yes      ",   # Elbow injury (2024); missed 4 games; elbow injuries notorious for QB re-injury risk
+    "C.J. Stroud":        "      Yes      ",   # Burner/nerve injury (2024); missed games; shoulder/nerve recurrence risk
+    "Jalen Hurts":        "      Yes      ",   # Shoulder injuries (2022); missed games (2024); recurring soft-tissue profile
+    "Dak Prescott":       "      Yes      ",   # Achilles tear (2020, missed season); hamstring 2023; chronic injury profile
+
+    # ── RUNNING BACKS ────────────────────────────────────────────────────────
+    # Returning from significant 2024/2025 injury
+    "Isiah Pacheco":      "      Yes      ",   # Fractured fibula (Dec 2024); missed final stretch of season
+    "De'Von Achane":      "      Yes      ",   # Knee/hamstring (multiple 2024); IR stint; limited durability track record
+
+    # Chronic / well-documented injury history
+    "Christian McCaffrey":"      Yes      ",   # Extensive history: ribs (2020), hamstring/ankle/calf (multiple seasons), IR 2025
+    "Breece Hall":        "      Yes      ",   # ACL tear Week 7 (2022 rookie year); fully recovered but carries re-injury risk
+    "Jonathan Taylor":    "      Yes      ",   # Ankle injuries (2023); recurring soft tissue; missed multiple games
+    "Travis Etienne":     "      Yes      ",   # Lisfranc surgery (2021, missed entire rookie season); hip/foot issues 2024
+    "Javonte Williams":   "      Yes      ",   # ACL/LCL/MCL tear Week 4 (2022); high-risk ligament profile
+    "Kyren Williams":     "      Yes      ",   # ACL tear (2022 rookie year); ankle issues 2024; structural re-injury concern
+    "D'Andre Swift":      "      Yes      ",   # Shoulder/hip injuries (2021-2023); missed significant time each year
+    "Josh Jacobs":        "      Yes      ",   # Quad/hamstring soft tissue issues; recurring throughout career
+    "Rhamondre Stevenson":"      Yes      ",   # Ankle injuries (2022, 2024); recurring lower-body issues
+    "Kenneth Walker III": "      Yes      ",   # Hernia surgery (2023); oblique 2024; missed multiple games
+    "Brian Robinson":     "      Yes      ",   # Gunshot wound recovery (2022); shoulder/knee issues since
+    "Jaylen Warren":      "      Yes      ",   # Shoulder (2023); hamstring (2024); limited full-season history
+    "Tony Pollard":       "      Yes      ",   # High ankle sprain (2023 playoffs); hamstring issues with TEN
+    "Joe Mixon":          "      Yes      ",   # Ankle surgery (2023); multiple injury stints throughout career
+    "Nick Chubb":         "      Yes      ",   # Torn ACL/MCL/PCL (2023, full season); ACL re-injury risk remains elevated
+    "Aaron Jones":        "      Yes      ",   # Knee/MCL injuries (2023); recurring soft tissue
+    "Dameon Pierce":      "      Yes      ",   # Hamstring (2023); ankle (2024); limited availability both seasons
+
+    # ── WIDE RECEIVERS ───────────────────────────────────────────────────────
+    # Returning from significant 2024/2025 injury
+    "Brandon Aiyuk":      "      Yes      ",   # ACL/MCL tear (2025); missed entire season
+    "Tank Dell":          "      Yes      ",   # Multi-ligament (ACL/MCL/LCL/meniscus); missed 2025
+    "Christian Watson":   "      Yes      ",   # ACL tear (Jan 2025); significant 2026 miss risk
+    "Puka Nacua":         "      Yes      ",   # Knee injury (2024); missed majority of season
+    "Rashee Rice":        "      Yes      ",   # ACL/MCL tear Week 3 (2024); returning + 10-game NFL suspension
+    "Chris Godwin":       "      Yes      ",   # ACL (2021); ankle dislocation/fracture (Oct 2024); chronic injury profile
+    "Stefon Diggs":       "      Yes      ",   # ACL recovery (2024); age 33; team transition adds uncertainty
+    "Tyreek Hill":        "      Yes      ",   # Multi-ligament knee injury (ACL+); released by MIA
+    "Nico Collins":       "      Yes      ",   # Hamstring tear (2024); missed final 6 games of regular season
+
+    # Chronic / recurring history
+    "Justin Jefferson":   "      Yes      ",   # Hamstring tear (2023); missed 8 games; recurring hamstring risk
+    "CeeDee Lamb":        "      Yes      ",   # Shoulder injury (2024); concussion history; missed games
+    "A.J. Brown":         "      Yes      ",   # Knee injury (2024); missed 3 games; chronic knee concern throughout career
+    "Tee Higgins":        "      Yes      ",   # Hamstring/ribs (2022-2024); missed games every season
+    "Cooper Kupp":        "      Yes      ",   # ACL (2022); ankle/hamstring history (2023-2025); persistent injury profile
+    "Jaylen Waddle":      "      Yes      ",   # Ankle/shoulder (2024); concussion 2023; recurring soft tissue
+    "Calvin Ridley":      "      Yes      ",   # Mental health leave (2021, full season); hamstring/knee issues 2023-2024
+    "Courtland Sutton":   "      Yes      ",   # ACL tear (2020, full season); various soft tissue since
+    "Deebo Samuel Sr.":   "      Yes      ",   # Shoulder surgery (2022); rib fracture/hamstring (2023-2024); chronic injury profile
+    "Chris Olave":        "      Yes      ",   # Concussion protocol (2023, missed 5 games); documented concussion risk
+    "Jameson Williams":   "      Yes      ",   # ACL tear (college 2021); hamstring (2023); recurring injury concern
+    "Wan'Dale Robinson":  "      Yes      ",   # ACL tear (2022 rookie year); limited healthy seasons
+    "Keenan Allen":       "      Yes      ",   # Chronic hamstring injuries throughout career; age 33 elevates risk
+    "DeAndre Hopkins":    "      Yes      ",   # Knee surgery (2023); age 33; transition to BAL adds load uncertainty
+    "Diontae Johnson":    "      Yes      ",   # Recurring hamstring issues (2022-2024); missed games each year
+    "Michael Pittman":    "      Yes      ",   # Various injuries (2025); new team (PIT) adds uncertainty
+
+    # ── TIGHT ENDS ───────────────────────────────────────────────────────────
+    # Returning from significant 2024/2025 injury
+    "George Kittle":      "      Yes      ",   # Achilles injury (Jan 2026); age 33; recovery timeline uncertain
     "Sam LaPorta":        "      Yes      ",   # Back surgery (Nov 2024); recurring back injury risk
     "Brock Bowers":       "      Yes      ",   # PCL injury (Week 1 2025); may miss early 2026
+    "T.J. Hockenson":     "      Yes      ",   # ACL tear (2023); missed entire 2024 season; returning in 2026
+
+    # Chronic / recurring history
     "Dalton Kincaid":     "      Yes      ",   # Recurring PCL issues; missed 5 games in 2025
+    "Mark Andrews":       "      Yes      ",   # Ankle fracture + ligament (2023); missed 5 games; recurring ankle concern
+    "Dallas Goedert":     "      Yes      ",   # Shoulder/hamstring injuries (2022-2024); missed games every year
+    "Kyle Pitts":         "      Yes      ",   # Knee injury (2022); missed 8 games; recurring soft tissue concern
+    "Evan Engram":        "      Yes      ",   # Multiple knee/ankle injuries throughout career (NYG era and beyond)
 }
 
 # Team corrections: player name fragment → corrected 2026 team abbreviation
@@ -696,8 +762,10 @@ def build_predictions(weekly_df: pd.DataFrame):
         lat["rmse"]          = round(rmse, 1)
 
         # ── Injury risk flag ──────────────────────────────────────────────────────
-        # QBs: historical games-played average < 14.5 over last 3 years
-        # RB/WR/TE: expert injury mapping (NFL research as of March 2026)
+        # QBs: flagged if EITHER avg games/yr < 14.5 over last 3 seasons OR listed
+        #      in INJURY_RISK_MAP (covers injury-shortened QBs like Mahomes / Love
+        #      whose multi-year avg doesn't trigger the threshold).
+        # RB/WR/TE: INJURY_RISK_MAP is the sole source (expert research, March 2026).
         # Projection assumes healthy 17-game season regardless of flag.
         if pos == "QB":
             avg_g_map: dict = {}
@@ -705,11 +773,14 @@ def build_predictions(weekly_df: pd.DataFrame):
                 szn_g = pos_df[pos_df["season"] == szn].set_index(track_col)["games"]
                 for pid, g in szn_g.items():
                     avg_g_map.setdefault(pid, []).append(float(g))
-            lat["injury_risk"] = lat[track_col].map(
-                lambda pid: "      Yes      " if (
-                    len(avg_g_map.get(pid, [])) > 0 and
-                    sum(avg_g_map.get(pid, [17])) / len(avg_g_map.get(pid, [17])) < 14.5
-                ) else ""
+            lat["injury_risk"] = lat.apply(
+                lambda r: "      Yes      " if (
+                    (len(avg_g_map.get(r[track_col], [])) > 0 and
+                     sum(avg_g_map.get(r[track_col], [17])) /
+                     len(avg_g_map.get(r[track_col], [17])) < 14.5)
+                    or INJURY_RISK_MAP.get(str(r[name_col]), "") != ""
+                ) else "",
+                axis=1
             )
         else:
             # RB/WR/TE: check expert injury risk map
@@ -1096,9 +1167,10 @@ column_config_dict = {
     "Injury Risk": st.column_config.TextColumn(
                       label="Injury Risk",
                       width="small",
-                      help="Yes = Injury risk (avg < 14.5 games/yr over last 3 seasons). "
-                           "Blank = durable starter. "
-                           "Projections assume full 17-game season regardless."),
+                      help="Yes = Player has a documented injury history or is coming off a significant injury. "
+                           "QBs: flagged if avg games/yr < 14.5 over last 3 seasons OR listed in expert injury map. "
+                           "RB/WR/TE: flagged via expert research (significant injury in 2024-25 or chronic history). "
+                           "Projections assume full 17-game season regardless of flag."),
     "2026 Proj":  st.column_config.NumberColumn(format="%.1f"),
     "VOR":        st.column_config.NumberColumn(format="%.1f",
                       help="Value Over Replacement — positional scarcity-adjusted score. "
