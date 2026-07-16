@@ -47,8 +47,24 @@ DECAY = 0.35
 # Prior-year PPG blend weight (RB/WR/TE only — QB uses its own weighted-PPG path).
 PPG_BLEND_WEIGHT = 0.45
 
-# Backtest-calibrated expected-games used ONLY for the PPG baseline component.
+# Backtest-calibrated expected-games used as the PER-POSITION CENTRE of the
+# player-specific availability model below (a perfectly average-availability
+# player projects at this many games).
 PPG_BASELINE_GAMES: dict[str, int] = {"QB": 15, "RB": 15, "WR": 15, "TE": 16}
+
+# ── Player-specific availability (expected games) ─────────────────────────────
+# Replaces the flat positional games constant with a per-player estimate:
+# recency-weighted recent-season games, regressed toward the positional
+# population mean. Centred on that mean so the aggregate scale (and the
+# backtest-calibrated totals) is preserved — points are only REDISTRIBUTED from
+# fragile players to durable ones, not inflated or deflated in aggregate.
+# SHRINK < 1 because a single injury season is a noisy signal (research: a
+# player who missed time has <50% chance of a clean next season, vs ~62% for a
+# player coming off a full season — real but far from deterministic).
+AVAIL_SHRINK = 0.35                       # conservative damping of one-season availability swings
+AVAIL_GAMES_FLOOR = 10.0                  # projected starters don't fall below ~10 games
+AVAIL_GAMES_CEILING = 17.0                # full season
+AVAIL_RECENCY_WEIGHTS = (0.5, 0.3, 0.2)   # most-recent season weighted highest
 
 
 @dataclass
@@ -66,6 +82,10 @@ class ProjectionConfig:
     ppg_blend_weight: float = PPG_BLEND_WEIGHT
     ppg_baseline_games: dict[str, int] = field(default_factory=lambda: dict(PPG_BASELINE_GAMES))
     nfl_games: int = NFL_GAMES
+    avail_shrink: float = AVAIL_SHRINK
+    avail_floor: float = AVAIL_GAMES_FLOOR
+    avail_ceiling: float = AVAIL_GAMES_CEILING
+    avail_recency_w: tuple[float, ...] = AVAIL_RECENCY_WEIGHTS
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -96,6 +116,41 @@ def _ridge_fit(X: np.ndarray, y: np.ndarray, alpha: float,
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# AVAILABILITY (expected games)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _weighted_durability(games_by_season: dict[int, float],
+                          recency_w: tuple[float, ...]) -> float:
+    """Recency-weighted average games played over a player's most recent seasons.
+
+    Uses ALL of a player's seasons (including sub-starter, injury-shortened ones)
+    so a missed year actually pulls the estimate down. Returns NaN for players
+    with no history (they fall back to the positional baseline).
+    """
+    if not games_by_season:
+        return float("nan")
+    seasons = sorted(games_by_season, reverse=True)[:len(recency_w)]
+    ws  = recency_w[:len(seasons)]
+    num = sum(w * games_by_season[s] for w, s in zip(ws, seasons))
+    den = sum(ws)
+    return num / den if den else float("nan")
+
+
+def _expected_games(durability: float, pop_mean: float, base_games: float,
+                     shrink: float, floor: float, ceiling: float) -> float:
+    """Player-specific expected games, regressed toward the positional mean.
+
+    A player whose availability equals the population mean maps exactly to
+    base_games, so the cohort mean — and thus the backtest-calibrated aggregate
+    scale — is preserved. `shrink` damps how far one season's availability moves
+    a player off that centre; the result is clipped to a sane [floor, ceiling].
+    """
+    if durability is None or not np.isfinite(durability):
+        return float(base_games)
+    return float(np.clip(base_games + shrink * (durability - pop_mean), floor, ceiling))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # PREDICTION ENGINE
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -121,6 +176,10 @@ def build_predictions_core(weekly_df: pd.DataFrame, config: ProjectionConfig,
     ppg_blend_weight    = config.ppg_blend_weight
     ppg_baseline_games  = config.ppg_baseline_games
     ridge_alpha         = config.ridge_alpha
+    avail_shrink        = config.avail_shrink
+    avail_floor         = config.avail_floor
+    avail_ceiling       = config.avail_ceiling
+    avail_recency_w     = config.avail_recency_w
 
     # ── Regular season only ──────────────────────────────────────────────────
     reg = weekly_df.copy()
@@ -252,10 +311,33 @@ def build_predictions_core(weekly_df: pd.DataFrame, config: ProjectionConfig,
             pred_pts = (model_pts * (1.0 - ppg_blend_weight)
                         + ppg_baseline * ppg_blend_weight)
 
+        # ── Player-specific availability (expected games) ────────────────────
+        # pred_pts above is a full-season-equivalent total built on the flat
+        # positional games centre (base_g). Back out the implied per-game rate,
+        # then re-scale by each player's OWN expected games so durable players
+        # rise and fragile ones fall — without changing the cohort's aggregate
+        # scale (expected games is centred on the positional population mean).
+        base_g = float(ppg_baseline_games.get(pos, nfl_games))
+        active_ppg = pred_pts / base_g if base_g > 0 else pred_pts
+
+        games_by_pid: dict = {}
+        pos_all = agg[agg[pos_col] == pos]
+        for pid, szn, g in zip(pos_all[track_col], pos_all["season"], pos_all["games"]):
+            games_by_pid.setdefault(pid, {})[int(szn)] = float(g)
+        durab = {pid: _weighted_durability(h, avail_recency_w)
+                 for pid, h in games_by_pid.items()}
+        lat_durab = np.array([durab.get(pid, np.nan) for pid in lat[track_col]], dtype=float)
+        pop_mean = float(np.nanmean(lat_durab)) if np.isfinite(lat_durab).any() else base_g
+        exp_games = np.array([
+            _expected_games(d, pop_mean, base_g, avail_shrink, avail_floor, avail_ceiling)
+            for d in lat_durab
+        ], dtype=float)
+        pred_pts = np.clip(active_ppg * exp_games, 0, None)
+
         lat = lat.copy()
         lat["predicted_pts"] = pred_pts.round(1)
-        lat["proj_games"]    = proj_games.round(1)
-        lat["pred_ppg"]      = (pred_pts / proj_games.clip(min=1)).round(2)
+        lat["proj_games"]    = np.round(exp_games, 1)
+        lat["pred_ppg"]      = np.round(active_ppg, 2)
         lat["rmse"]          = round(rmse, 1)
 
         # ── Auto injury-risk flag (QB only): avg games/yr < 14.5 over last 3 seasons.

@@ -551,13 +551,25 @@ RUSHING_OFFENSE_TIERS = {
     "CLE": 0.94,  "LV":  0.94,
 }
 
-# 2026 projected games overrides — ONLY for players with confirmed game-count limitations.
-# Everyone else defaults to NFL_GAMES (17): healthy starters are assumed to play a full season.
-# PPG penalties for poor team environments are handled via PASSING/RUSHING_OFFENSE_TIERS.
-# Format: player_name_fragment → projected games in 2026
+# 2026 projected-games overrides — curated availability for players whose
+# HISTORICAL games misrepresent their 2026 outlook, so the data-driven expected-
+# games model in model/projection.py can't infer it from prior seasons alone:
+#   • suspensions (games lost for non-injury reasons)
+#   • carry-over injuries that happened LATE (a mostly-full prior season hides a
+#     recovery that bleeds into Week 1), or new offseason injuries
+# Everyone NOT listed here keeps the model's own player-specific expected games.
+# Predicted points are recomputed as pred_ppg × games, so the per-game rate is
+# preserved and only availability changes. Format: name_fragment → 2026 games.
+# Sources: 2026 offseason reporting (CBS/FantasyPros/NBC/4for4, Mar–Jul 2026).
 PROJ_GAMES_OVERRIDES = {
-    "Rashee Rice":      10,   # NFL suspension; available ~Week 7+ (~10 games projected)
-    "Patrick Mahomes":  14,   # ACL recovery; conservative Week 1 availability uncertain
+    # Suspension
+    "Rashee Rice":      10,   # NFL suspension; available ~Week 7+
+    # Carry-over / offseason injuries the prior-season game count understates
+    "Patrick Mahomes":  14,   # ACL recovery; Week 1 availability uncertain
+    "Daniel Jones":     13,   # Torn Achilles Wk14 2025; 6–8mo recovery, Wk1 uncertain (IND)
+    "Kyler Murray":     14,   # Foot cost ~11 games 2025; Wk1 starter but ~14% career miss rate (MIN)
+    "Jayden Daniels":   14,   # 7 games 2025 (knee/hamstring/elbow); aggressive rushing profile (WAS)
+    "Puka Nacua":       15,   # Elite when active but recurring lower-body history (2024 knee, 2025 ankle) (LAR)
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -944,9 +956,10 @@ def apply_expert_adjustments(df: pd.DataFrame,
 
                 games_2025 = int(p_seas[p_seas["season"] == PREDICTION_YEAR - 1]["games"].sum()
                                  if (PREDICTION_YEAR - 1) in p_seas["season"].values else 0)
-                # Project all force-include starters at full 17 games — they are confirmed
-                # starters; the injury risk flag already communicates the health caveat.
-                proj_g    = float(NFL_GAMES)
+                # Conservative default games for confirmed starters; players with a
+                # specific 2026 injury/availability situation (e.g. Kyler Murray,
+                # Jayden Daniels) are refined below via PROJ_GAMES_OVERRIDES.
+                proj_g    = float(MAX_PROJ_GAMES)
                 proj_pts  = round(ppg * proj_g, 1)
                 actual_2025   = float(p_data[p_data["season"] == PREDICTION_YEAR - 1][TARGET_COL].sum())
                 display_games = games_2025 if games_2025 > 0 else float(best["games"])
@@ -1402,8 +1415,11 @@ st.caption(
     "**Methodology** — Position-specific ridge regression trained on 2016–2025 consecutive-season pairs "
     "with exponential recency weighting (recent seasons count more). Features are per-game rates, not "
     "season totals, so a player who missed games due to injury is not penalised for low counting stats. "
-    "Projected 2026 games blends the last two seasons (65 / 35 weighting) with a conservative ceiling of "
-    f"{MAX_PROJ_GAMES} games. QB qualifier: {MIN_GAMES_BY_POS['QB']}+ games started. Skill positions: 6+ games. "
+    "**Availability model** — projected 2026 games are player-specific: a recency-weighted average of each "
+    "player's recent-season games, regressed toward the positional average (durable players project for more "
+    "games, injury-prone players fewer). This is centred on the position mean so it redistributes value without "
+    "inflating the overall scale — points = projected per-game rate × expected games. QB qualifier: "
+    f"{MIN_GAMES_BY_POS['QB']}+ games started. Skill positions: 6+ games. "
     "**VOR (Value Over Replacement)** ranks players by positional scarcity in a 10-team league: "
     "elite TEs rank higher than equivalent-point WRs because only 10 starting TEs exist. Replacement levels "
     f"(QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, WR={REPLACEMENT_LEVEL['WR']}, "
@@ -1421,6 +1437,8 @@ st.caption(
     "force-includes (Kyler Murray—5 games 2025, Willis—MIA starter, Shough—NO starter, Stafford—LAR returning), "
     "age-cliff discounts (Kelce 0.82×, Evans 0.80×, CMC 0.92×), "
     "injury/suspension cuts (Rice 0.70×, Mahomes 0.92×), "
+    "curated availability overrides where prior-season games mislead "
+    "(Kyler Murray 14g, Jayden Daniels 14g, Daniel Jones 13g—Achilles, Puka Nacua 15g, Rice 10g, Mahomes 14g), "
     "and breakout boosts (Gibbs 1.22×, Skattebo 1.20×, JSN 1.18×, Irving 1.18×, Pickens 1.10×, Pitts 1.10×, Jefferson 1.08×). "
     "**Rookies** (marked **R**) — the 2026 draft class has no NFL history, so the regression engine cannot score them. "
     "Instead they are projected from **draft capital** (overall pick), the single most predictive input for rookie fantasy "
