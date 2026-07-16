@@ -194,6 +194,17 @@ _K_PRIORITY  = 500.0  # once it's the kicker's turn, lift it above bench value
                       # realistic VOR gap but stays below _BLOCK
 _BLOCK       = 1e6    # effectively removes a player from consideration
 
+# Positional draft windows distilled from recent (2023-24) championship-roster
+# ADP trends: title teams anchored rounds 1-3 with elite RB/WR, built RB/WR
+# depth through the mid rounds, treated an every-week QB as a round ~5-11 value
+# (unless it was a truly top-tier arm), took a top-3 TE at a mid pick or else
+# waited, and left kickers for the final two rounds. We only *penalize
+# reaching* — taking your first QB or TE well before its window — so a genuinely
+# elite player (huge VOR) can still beat the penalty, but the engine won't burn
+# a premium pick on a replaceable starter at a scarce single-slot position.
+_REACH_ROUND = {"QB": 4, "TE": 3}   # earliest round to prioritize QB1 / TE1
+_REACH_PEN   = 8.0                   # per-round penalty for reaching early
+
 
 def _roster_state(slot: int) -> dict:
     """Snapshot a team's roster construction: what starters remain, flex status,
@@ -216,6 +227,8 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
         bench depth
       • the kicker (a required starter) is held back until it's the last starter
         to fill or the draft is running tight, then surfaced like any other need
+      • positional timing from recent championship rosters: reaching for your
+        first QB/TE before its draft window is penalized (elite VOR can override)
       • when remaining picks equal remaining starter slots, only starter-filling
         players are considered so you never miss a required position
     """
@@ -226,6 +239,7 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
     flex_filled, picks_left = st_["flex_filled"], st_["picks_left"]
     force = picks_left <= st_["starters_left"]
     others_done = all(core[p] == 0 for p in ("QB", "RB", "WR", "TE")) and flex_filled
+    cur_round = rounds - picks_left + 1
 
     def _score(row) -> float:
         pos = row["pos"]
@@ -238,6 +252,11 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
             s += _FLEX_BONUS
         if pos in ("QB", "TE", "K") and c[pos] >= STARTER_TARGET[pos]:
             s -= _STACK_PEN
+        # Winning-strategy timing: don't reach for your first QB/TE too early.
+        if pos in _REACH_ROUND and core_need:
+            early = _REACH_ROUND[pos] - cur_round
+            if early > 0:
+                s -= _REACH_PEN * early
         # Kicker is a required starter: surface it once it's the last starter to
         # fill (skill positions + FLEX all set) or the draft is running tight —
         # the same "fill your starter" logic that promotes QB, just later.
@@ -317,6 +336,96 @@ def _advance_robots() -> None:
             st.session_state.dr_pick_idx = total_picks
             break
         _record_pick(slot, pick)
+
+
+# ── Roster construction + draft grading ──────────────────────────────────────
+_VOR_BY_PLAYER = dict(zip(board["player"], board["vor"]))
+
+
+def _roster_slot_rows(picks_list: list) -> list:
+    """Greedy starter fill (QB/RB×2/WR×2/TE/FLEX/K), remainder to bench (BE)."""
+    remaining = list(picks_list)
+    rows = []
+    for slot_name in STARTER_SLOTS:
+        allowed = FLEX_POS if slot_name == "FLEX" else (slot_name,)
+        take = next((p for p in remaining if p["pos"] in allowed), None)
+        if take:
+            remaining.remove(take)
+            rows.append((slot_name, f'{take["player"]} ({take["pos"]})'))
+        else:
+            rows.append((slot_name, "—"))
+    for p in remaining:
+        rows.append(("BE", f'{p["player"]} ({p["pos"]})'))
+    return rows
+
+
+def _lineup_value(slot: int) -> dict:
+    """Best starting-lineup VOR + bench VOR for a team, plus unfilled starters.
+
+    Fills the required starters with each position's highest-VOR players, then
+    the FLEX with the best remaining RB/WR/TE — the same lineup that decides a
+    real matchup — so a draft is judged on the strength of what it can start.
+    """
+    picks = [p for p in st.session_state.dr_picks if p["team"] == slot]
+    by_pos = {p_: [] for p_ in POSITIONS}
+    for p in picks:
+        by_pos[p["pos"]].append(float(_VOR_BY_PLAYER.get(p["player"], 0.0)))
+    for p_ in by_pos:
+        by_pos[p_].sort(reverse=True)
+
+    used = {p_: 0 for p_ in POSITIONS}
+    starter = 0.0
+    for p_, n in STARTER_TARGET.items():
+        for _ in range(n):
+            if used[p_] < len(by_pos[p_]):
+                starter += by_pos[p_][used[p_]]
+                used[p_] += 1
+    # FLEX: best remaining RB/WR/TE.
+    flex_best, flex_pos = None, None
+    for p_ in FLEX_POS:
+        if used[p_] < len(by_pos[p_]):
+            v = by_pos[p_][used[p_]]
+            if flex_best is None or v > flex_best:
+                flex_best, flex_pos = v, p_
+    if flex_pos is not None:
+        starter += flex_best
+        used[flex_pos] += 1
+
+    bench = sum(v for p_ in POSITIONS for v in by_pos[p_][used[p_]:])
+    missing = sum(max(0, REQ_MIN[p_] - len(by_pos[p_])) for p_ in POSITIONS)
+    return {"starter": starter, "bench": bench, "n": len(picks), "missing": missing}
+
+
+# Letter bands over a team's z-score vs the rest of the league (graded on a
+# curve so grades stay meaningful regardless of scoring format / league size).
+_GRADE_BANDS = [
+    (1.30, "A+"), (1.00, "A"), (0.70, "A-"),
+    (0.40, "B+"), (0.15, "B"), (-0.10, "B-"),
+    (-0.35, "C+"), (-0.60, "C"), (-0.85, "C-"),
+    (-1.10, "D+"), (-1.40, "D"), (-1.70, "D-"),
+]
+
+
+def _league_grades() -> dict:
+    """Grade every team A+..F. Score = best-lineup VOR + a slice of bench depth,
+    minus a heavy penalty per unfilled required starter, then curved by z-score
+    across the league."""
+    lv = {s: _lineup_value(s) for s in range(1, teams + 1)}
+    scores = {s: v["starter"] + 0.15 * v["bench"] - 60.0 * v["missing"]
+              for s, v in lv.items()}
+    vals = np.array(list(scores.values()), dtype=float)
+    mean = float(vals.mean())
+    std = float(vals.std()) or 1.0
+    grades = {}
+    for s, sc in scores.items():
+        z = (sc - mean) / std
+        letter = "F"
+        for thresh, lt in _GRADE_BANDS:
+            if z >= thresh:
+                letter = lt
+                break
+        grades[s] = {"grade": letter, "score": sc, "z": z, "lv": lv[s]}
+    return grades
 
 
 _advance_robots()
@@ -407,22 +516,8 @@ with right:
     st.markdown("#### 🧢 Your Roster")
     my_picks = [p for p in st.session_state.dr_picks if p["team"] == user_slot]
 
-    # Fill starter slots greedily, remainder to bench.
-    remaining = list(my_picks)
-    roster_rows = []
-    for slot_name in STARTER_SLOTS:
-        allowed = FLEX_POS if slot_name == "FLEX" else (slot_name,)
-        take = next((p for p in remaining if p["pos"] in allowed), None)
-        if take:
-            remaining.remove(take)
-            roster_rows.append((slot_name, f'{take["player"]} ({take["pos"]})'))
-        else:
-            roster_rows.append((slot_name, "—"))
-    for p in remaining:
-        roster_rows.append(("BE", f'{p["player"]} ({p["pos"]})'))
-
     st.dataframe(
-        pd.DataFrame(roster_rows, columns=["Slot", "Player"]),
+        pd.DataFrame(_roster_slot_rows(my_picks), columns=["Slot", "Player"]),
         hide_index=True, use_container_width=True, height=340,
     )
 
@@ -441,5 +536,61 @@ with right:
             "Player": f'{p["player"]} ({p["pos"]})',
         } for p in recent])
         st.dataframe(rdf, hide_index=True, use_container_width=True, height=300)
+    else:
+        st.caption("No picks yet.")
+
+# ── Team rosters & draft grades ──────────────────────────────────────────────
+st.markdown("---")
+st.markdown("### 📊 Team Rosters & Draft Grades")
+st.caption(
+    "Grades weigh each team's best startable lineup (VOR) plus a slice of bench "
+    "depth, curved across the league. They're most meaningful once the draft is "
+    "complete."
+)
+
+grades = _league_grades()
+
+# League-wide grade table (best startable roster first).
+gtable = []
+for s in range(1, teams + 1):
+    v = grades[s]["lv"]
+    gtable.append({
+        "Team": f"You (Team {s})" if s == user_slot else f"Team {s}",
+        "Grade": grades[s]["grade"],
+        "Starter VOR": round(v["starter"], 1),
+        "Bench VOR": round(v["bench"], 1),
+        "Players": v["n"],
+    })
+gdf = pd.DataFrame(gtable).sort_values("Starter VOR", ascending=False)
+st.dataframe(gdf, hide_index=True, use_container_width=True)
+
+# Per-team inspector.
+sel = st.selectbox(
+    "Inspect a team's picks", list(range(1, teams + 1)),
+    index=user_slot - 1,
+    format_func=lambda s: f"You (Team {s})" if s == user_slot else f"Team {s}",
+    key="ds_team_view",
+)
+sel_picks = [p for p in st.session_state.dr_picks if p["team"] == sel]
+who = "You" if sel == user_slot else f"Team {sel}"
+st.markdown(f"**{who} — Draft Grade: {grades[sel]['grade']}**")
+
+vcol1, vcol2 = st.columns(2)
+with vcol1:
+    st.caption("Starting lineup")
+    st.dataframe(
+        pd.DataFrame(_roster_slot_rows(sel_picks), columns=["Slot", "Player"]),
+        hide_index=True, use_container_width=True,
+    )
+with vcol2:
+    st.caption("Picks in order")
+    if sel_picks:
+        st.dataframe(
+            pd.DataFrame([{
+                "Rd": p["round"], "Pk": p["overall"],
+                "Player": f'{p["player"]} ({p["pos"]})',
+            } for p in sel_picks]),
+            hide_index=True, use_container_width=True,
+        )
     else:
         st.caption("No picks yet.")
