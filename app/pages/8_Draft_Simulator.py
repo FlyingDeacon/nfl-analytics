@@ -80,8 +80,10 @@ def _load_board(path: str, mtime: float) -> pd.DataFrame:
 POSITIONS = ("QB", "RB", "WR", "TE", "K")
 POS_CAPS = {"QB": 2, "RB": 8, "WR": 8, "TE": 3, "K": 2}  # max per roster
 REQ_MIN = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "K": 1}   # starters that must be filled
+STARTER_TARGET = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "K": 1}  # weekly starters (+1 FLEX)
 STARTER_SLOTS = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "K"]
 FLEX_POS = ("RB", "WR", "TE")
+FLEX_TOTAL = STARTER_TARGET["RB"] + STARTER_TARGET["WR"] + STARTER_TARGET["TE"] + 1  # 6
 
 settings_locked = st.session_state.get("dr_started", False)
 
@@ -180,26 +182,78 @@ def _is_must_fill(slot: int) -> bool:
     return picks_left <= unmet
 
 
-def _suggest_pick(pool: pd.DataFrame, needed: list, must: bool) -> dict | None:
-    """NFL-style value-based recommendation: highest VOR on the board, but tilt
-    toward a needed position when its best player is close in value, and force a
-    needed position when the roster requires it."""
-    if pool.empty:
+# Suggestion-engine weights (in VOR points). Tuned so a full starting lineup
+# (QB/RB×2/WR×2/TE/FLEX/K) gets built at sensible times: RB/WR early, a QB and
+# TE mid-draft, FLEX/bench with best value, and the kicker in the final rounds.
+_NEED_BONUS  = 30.0   # lift for a player who fills an open STARTING slot
+_FLEX_BONUS  = 14.0   # lift for filling the FLEX once core RB/WR/TE are set
+_STACK_PEN   = 45.0   # push down QB2 / TE2 / K2 taken before you need depth
+_BLOCK       = 1e6    # effectively removes a player from consideration
+
+
+def _roster_state(slot: int) -> dict:
+    """Snapshot a team's roster construction: what starters remain, flex status,
+    and how many picks are left."""
+    c = _pos_counts(slot)
+    core = {p: max(0, STARTER_TARGET[p] - c[p]) for p in POSITIONS}
+    flex_filled = (c["RB"] + c["WR"] + c["TE"]) >= FLEX_TOTAL
+    starters_left = sum(core.values()) + (0 if flex_filled else 1)
+    picks_left = rounds - len(_team_roster(slot))
+    return {"c": c, "core": core, "flex_filled": flex_filled,
+            "starters_left": starters_left, "picks_left": picks_left}
+
+
+def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
+    """Roster-aware value-based recommendation.
+
+    Scores every available player as VOR plus roster-construction adjustments:
+      • bonus for filling an open starting slot (or the FLEX once core is set)
+      • penalty for stacking single-slot positions (QB2/TE2/K2) before you need
+        bench depth
+      • kickers are held back until the final rounds (or once everything else is
+        set), matching how real drafts treat them
+      • when remaining picks equal remaining starter slots, only starter-filling
+        players are considered so you never miss a required position
+    """
+    if avail.empty:
         return None
-    by_vor = pool.sort_values("vor", ascending=False)
-    best = by_vor.iloc[0]
-    if must and needed:
-        return {"player": best["player"], "pos": best["pos"],
-                "reason": f"fills your open {best['pos']} slot (best value you can still draft)"}
-    if needed:
-        need_pool = by_vor[by_vor["pos"].isin(needed)]
-        if not need_pool.empty:
-            nb = need_pool.iloc[0]
-            if float(best["vor"]) - float(nb["vor"]) <= 15:
-                return {"player": nb["player"], "pos": nb["pos"],
-                        "reason": f"strong value at {nb['pos']}, a position you still need to start"}
-    return {"player": best["player"], "pos": best["pos"],
-            "reason": "best overall value remaining (VOR)"}
+    st_ = _roster_state(slot)
+    c, core = st_["c"], st_["core"]
+    flex_filled, picks_left = st_["flex_filled"], st_["picks_left"]
+    force = picks_left <= st_["starters_left"]
+    others_done = all(core[p] == 0 for p in ("QB", "RB", "WR", "TE")) and flex_filled
+
+    def _score(row) -> float:
+        pos = row["pos"]
+        s = float(row["vor"])
+        core_need = core[pos] > 0
+        flex_ok = (not core_need) and (pos in FLEX_POS) and (not flex_filled)
+        if core_need:
+            s += _NEED_BONUS
+        elif flex_ok:
+            s += _FLEX_BONUS
+        if pos in ("QB", "TE", "K") and c[pos] >= STARTER_TARGET[pos]:
+            s -= _STACK_PEN
+        if pos == "K" and not (others_done or picks_left <= 2):
+            s -= _BLOCK               # don't draft a kicker early
+        if force and not core_need:
+            s -= _BLOCK               # must fill a required starter now
+        return s
+
+    scored = avail.assign(_score=avail.apply(_score, axis=1))
+    scored = scored.sort_values(["_score", "vor"], ascending=[False, False])
+    best = scored.iloc[0]
+    pos = best["pos"]
+
+    if force and core[pos] > 0:
+        reason = f"required — you must fill {pos} to ice a legal starting lineup"
+    elif core[pos] > 0:
+        reason = f"best value at {pos}, an open starting spot on your roster"
+    elif pos in FLEX_POS and not flex_filled:
+        reason = f"fills your FLEX with the best remaining {pos} value"
+    else:
+        reason = "best value available for your bench (VOR)"
+    return {"player": best["player"], "pos": pos, "reason": reason}
 
 
 def _robot_pick(slot: int) -> dict | None:
@@ -304,14 +358,15 @@ with left:
                     "Only those positions are selectable so you finish with a full lineup."
                 )
 
+        # Suggestion is computed over the full legal pool (roster-aware).
+        sug = _suggest_pick(user_slot, pool)
+        if sug is not None:
+            st.info(f"💡 **Suggested pick:** {sug['player']} ({sug['pos']}) — {sug['reason']}")
+
         # Apply the position filter, but never let it push outside the legal pool.
         pool_view = pool if pos_filter == "All" else pool[pool["pos"] == pos_filter]
         if pool_view.empty:
             pool_view = pool
-
-        sug = _suggest_pick(pool_view, needed, must)
-        if sug is not None:
-            st.info(f"💡 **Suggested pick:** {sug['player']} ({sug['pos']}) — {sug['reason']}")
 
         pick_opts = pool_view["player"].tolist()
         if pick_opts:
@@ -320,9 +375,13 @@ with left:
                 for _, r in pool_view.iterrows()
             }
             default_idx = pick_opts.index(sug["player"]) if sug and sug["player"] in pick_opts else 0
+            # Pick-scoped keys so a stale selection can never carry across picks
+            # (which previously let a non-required player slip through the guard).
             choice = fcol2.selectbox("Make your pick", pick_opts, index=default_idx,
-                                     format_func=lambda p: labels.get(p, p), key="ds_user_choice")
-            if st.button(f"✅ Draft {choice}", type="primary", use_container_width=True, key="ds_draft_btn"):
+                                     format_func=lambda p: labels.get(p, p),
+                                     key=f"ds_user_choice_{pick_idx}")
+            if st.button(f"✅ Draft {choice}", type="primary", use_container_width=True,
+                         key=f"ds_draft_btn_{pick_idx}"):
                 row = pool_view[pool_view["player"] == choice].iloc[0].to_dict()
                 _record_pick(user_slot, row)
                 _advance_robots()
