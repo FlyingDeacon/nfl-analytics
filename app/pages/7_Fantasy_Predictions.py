@@ -76,21 +76,24 @@ REPLACEMENT_LEVEL = {
     "RB":  185,   # ~RB24 average (2 starters + flex in a 10-team league)
     "WR":  185,   # ~WR30 average (3 starters + flex)
     "TE":  170,   # ~TE10 average; elite TEs (Kelce-tier) still command a premium
+    "K":   220,   # deliberately inflated (well above any kicker projection) so
+                  # kicker VOR is strongly negative and they sort into the final
+                  # rounds — mirrors real drafts where kickers go last
 }
 
 # Per-scoring-format replacement levels. Half-PPR averages standard + PPR.
 # Standard PPR (no per-reception bonus) drops WR/TE replacement floors materially.
 SCORING_REPLACEMENT_LEVELS = {
-    "PPR":      {"QB": 290, "RB": 185, "WR": 185, "TE": 170},
-    "Half PPR": {"QB": 290, "RB": 175, "WR": 150, "TE": 140},
-    "Standard": {"QB": 290, "RB": 160, "WR": 115, "TE": 105},
+    "PPR":      {"QB": 290, "RB": 185, "WR": 185, "TE": 170, "K": 220},
+    "Half PPR": {"QB": 290, "RB": 175, "WR": 150, "TE": 140, "K": 220},
+    "Standard": {"QB": 290, "RB": 160, "WR": 115, "TE": 105, "K": 220},
 }
 
 # LEAGUE SIZE — used to derive round grades from model rank (picks per round = league size)
 LEAGUE_SIZE = 10
 
 POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
-                   "WR": "Wide Receivers",  "TE": "Tight Ends"}
+                   "WR": "Wide Receivers",  "TE": "Tight Ends", "K": "Kickers"}
 
 # ══════════════════════════════════════════════════════════════════════════════
 # NFL EXPERT ADJUSTMENTS — 2026 roster intelligence
@@ -597,6 +600,11 @@ PROJ_GAMES_OVERRIDES = {
 
 ROOKIE_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "rookies_2026.csv"
 
+# Kickers can't be projected by the statistical engine — nflverse weekly stats
+# don't include FG/XP scoring, so kicker fantasy_points are ~0. Instead they're
+# injected from a curated, editable projection file (points ≈ scoring-independent).
+KICKER_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "kickers_2026.csv"
+
 # ESPN 2026 positional rankings (Mike Clay PPR). Displayed on the big board next
 # to the model's own overall rank so users can compare the model vs consensus.
 # Matched to board players by normalized name so suffix / punctuation differences
@@ -709,7 +717,7 @@ sel_scoring = st.sidebar.radio(
     help="Switches the projection target and recalibrates VOR replacement levels."
 )
 
-sel_pos = st.sidebar.selectbox("Position", ["All"] + list(POSITION_FEATURES.keys()),
+sel_pos = st.sidebar.selectbox("Position", ["All"] + list(POSITION_FEATURES.keys()) + ["K"],
                                key=f"pred_pos_{_v}")
 top_n = st.sidebar.slider("Big Board Size", 10, 200, 100, key=f"pred_top_{_v}")
 
@@ -1090,6 +1098,53 @@ def apply_games_overrides(df: pd.DataFrame) -> pd.DataFrame:
 
 
 all_preds = apply_games_overrides(all_preds)
+
+
+@st.cache_data(show_spinner=False)
+def build_kicker_predictions() -> pd.DataFrame:
+    """Curated 2026 kicker projections from data/raw/kickers_2026.csv.
+
+    Kicker scoring is essentially format-independent, so a single projection is
+    used for PPR/Half/Standard. Rows match the board schema so they flow through
+    VOR and round-grade assignment exactly like every other player. They are
+    injected AFTER the expert/age/games overlays (none of which apply to kickers).
+    """
+    if not KICKER_CSV.exists():
+        return pd.DataFrame()
+    kk = pd.read_csv(KICKER_CSV)
+    if kk.empty:
+        return pd.DataFrame()
+
+    rows = []
+    for _, r in kk.iterrows():
+        pred = round(float(r["proj_pts"]), 1)
+        row = {
+            name_col:        str(r["player"]),
+            pos_col:         "K",
+            "season":        PREDICTION_YEAR - 1,
+            "games":         0,
+            TARGET_COL:      0.0,
+            "predicted_pts": pred,
+            "proj_games":    float(MAX_PROJ_GAMES),
+            "pred_ppg":      round(pred / MAX_PROJ_GAMES, 2),
+            "rmse":          0.0,
+            "injury_risk":   "",
+            "is_rookie":     False,
+        }
+        if track_col != name_col:
+            row[track_col] = f"K-{r['player']}"
+        if team_col:
+            row[team_col] = str(r["team"])
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+# Inject kickers just before VOR so they rank by the same scarcity logic. Their
+# replacement level (REPLACEMENT_LEVEL["K"]) is inflated above every kicker
+# projection, so kicker VOR is strongly negative and they land in the final rounds.
+_kicker_preds = build_kicker_predictions()
+if not _kicker_preds.empty:
+    all_preds = pd.concat([all_preds, _kicker_preds], ignore_index=True)
 
 
 def _assign_vor(df: pd.DataFrame) -> pd.DataFrame:

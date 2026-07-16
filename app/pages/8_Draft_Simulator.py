@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import subprocess
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -31,22 +32,43 @@ st.markdown("""
 <div class="gold-rule"></div>
 """, unsafe_allow_html=True)
 
-# ── Load persisted big boards ────────────────────────────────────────────────
-BIG_BOARD_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "derived"
+# ── Big board loading (built on demand) ──────────────────────────────────────
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+BIG_BOARD_DIR = ROOT_DIR / "data" / "derived"
+BUILD_SCRIPT = ROOT_DIR / "scripts" / "build_big_boards.py"
+SCORING_FORMATS = ["PPR", "Half PPR", "Standard"]
+
+
+def _board_path(scoring: str) -> Path:
+    return BIG_BOARD_DIR / f"big_board_{scoring.replace(' ', '_')}.parquet"
+
+
+def _build_board(scoring: str) -> bool:
+    """Generate the big board parquet headlessly (same pipeline as the
+    Predictions page). Returns True on success."""
+    try:
+        subprocess.run(
+            [sys.executable, str(BUILD_SCRIPT), "--scoring", scoring],
+            cwd=str(ROOT_DIR), check=True, capture_output=True, timeout=300,
+        )
+    except Exception:
+        return False
+    return _board_path(scoring).exists()
+
+
+def _ensure_board(scoring: str) -> Path | None:
+    """Return the parquet path, building it first if it does not exist yet."""
+    path = _board_path(scoring)
+    if path.exists():
+        return path
+    with st.spinner(f"Building your {scoring} big board (first run only)…"):
+        ok = _build_board(scoring)
+    return path if ok else None
 
 
 @st.cache_data(show_spinner=False)
-def _available_boards() -> dict:
-    """Return {scoring_label -> parquet path} for every persisted big board."""
-    out: dict = {}
-    for p in sorted(BIG_BOARD_DIR.glob("big_board_*.parquet")):
-        label = p.stem.replace("big_board_", "").replace("_", " ")
-        out[label] = str(p)
-    return out
-
-
-@st.cache_data(show_spinner=False)
-def _load_board(path: str) -> pd.DataFrame:
+def _load_board(path: str, mtime: float) -> pd.DataFrame:
+    # mtime is part of the cache key so a rebuilt board invalidates the cache.
     df = pd.read_parquet(path)
     # VOR-sorted board = the user's big board order.
     df = df.sort_values("vor", ascending=False).reset_index(drop=True)
@@ -54,31 +76,18 @@ def _load_board(path: str) -> pd.DataFrame:
     return df
 
 
-boards = _available_boards()
-if not boards:
-    st.warning(
-        "No big board found yet. Open **🔮 2026 Fantasy Predictions** first — "
-        "visiting that page saves the board the simulator drafts from."
-    )
-    if st.button("Go to Fantasy Predictions", key="ds_goto_pred"):
-        st.switch_page("pages/7_Fantasy_Predictions.py")
-    st.stop()
-
 # ── Draft settings ───────────────────────────────────────────────────────────
-POSITIONS = ("QB", "RB", "WR", "TE")
-POS_CAPS = {"QB": 2, "RB": 8, "WR": 8, "TE": 3}          # max per roster
-REQ_MIN = {"QB": 1, "RB": 2, "WR": 2, "TE": 1}           # starters that must be filled
-STARTER_SLOTS = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX"]
+POSITIONS = ("QB", "RB", "WR", "TE", "K")
+POS_CAPS = {"QB": 2, "RB": 8, "WR": 8, "TE": 3, "K": 2}  # max per roster
+REQ_MIN = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "K": 1}   # starters that must be filled
+STARTER_SLOTS = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "K"]
 FLEX_POS = ("RB", "WR", "TE")
 
 settings_locked = st.session_state.get("dr_started", False)
 
 with st.expander("⚙️ Draft Settings", expanded=not settings_locked):
     c1, c2, c3 = st.columns(3)
-    scoring_opts = list(boards.keys())
-    default_scoring = "PPR" if "PPR" in scoring_opts else scoring_opts[0]
-    scoring = c1.selectbox("Scoring", scoring_opts,
-                           index=scoring_opts.index(default_scoring),
+    scoring = c1.selectbox("Scoring", SCORING_FORMATS, index=0,
                            disabled=settings_locked, key="ds_scoring")
     teams = c2.selectbox("Teams", [8, 10, 12, 14], index=2,
                          disabled=settings_locked, key="ds_teams")
@@ -107,7 +116,14 @@ def _snake_order(teams: int, rounds: int, snake: bool) -> list:
 cstart, creset = st.columns([1, 1])
 if not settings_locked:
     if cstart.button("🚀 Start Draft", type="primary", use_container_width=True, key="ds_start"):
-        board = _load_board(boards[scoring])
+        path = _ensure_board(scoring)
+        if path is None:
+            st.error(
+                "Couldn't build the big board. Open **🔮 2026 Fantasy Predictions** "
+                "once to generate it, then come back."
+            )
+            st.stop()
+        board = _load_board(str(path), path.stat().st_mtime)
         st.session_state.dr_started = True
         st.session_state.dr_scoring = scoring
         st.session_state.dr_teams = teams
@@ -143,14 +159,54 @@ def _team_roster(slot: int) -> list:
     return [p["pos"] for p in st.session_state.dr_picks if p["team"] == slot]
 
 
+def _pos_counts(slot: int) -> dict:
+    roster = _team_roster(slot)
+    return {p: roster.count(p) for p in POSITIONS}
+
+
+def _needed_positions(slot: int) -> list:
+    """Required starter positions this team has not yet filled."""
+    counts = _pos_counts(slot)
+    return [p for p in POSITIONS if counts[p] < REQ_MIN[p]]
+
+
+def _is_must_fill(slot: int) -> bool:
+    """True when remaining picks are exactly enough to fill the required
+    starters — so the team must draft a needed position now or it can never
+    ice a legal lineup."""
+    counts = _pos_counts(slot)
+    picks_left = rounds - len(_team_roster(slot))
+    unmet = sum(max(0, REQ_MIN[p] - counts[p]) for p in POSITIONS)
+    return picks_left <= unmet
+
+
+def _suggest_pick(pool: pd.DataFrame, needed: list, must: bool) -> dict | None:
+    """NFL-style value-based recommendation: highest VOR on the board, but tilt
+    toward a needed position when its best player is close in value, and force a
+    needed position when the roster requires it."""
+    if pool.empty:
+        return None
+    by_vor = pool.sort_values("vor", ascending=False)
+    best = by_vor.iloc[0]
+    if must and needed:
+        return {"player": best["player"], "pos": best["pos"],
+                "reason": f"fills your open {best['pos']} slot (best value you can still draft)"}
+    if needed:
+        need_pool = by_vor[by_vor["pos"].isin(needed)]
+        if not need_pool.empty:
+            nb = need_pool.iloc[0]
+            if float(best["vor"]) - float(nb["vor"]) <= 15:
+                return {"player": nb["player"], "pos": nb["pos"],
+                        "reason": f"strong value at {nb['pos']}, a position you still need to start"}
+    return {"player": best["player"], "pos": best["pos"],
+            "reason": "best overall value remaining (VOR)"}
+
+
 def _robot_pick(slot: int) -> dict | None:
     """Best available for a robot: ESPN overall (asc, NaN last), tiebreak VOR.
-    Respects positional caps and a must-fill-starters guard late in the draft."""
-    roster = _team_roster(slot)
-    counts = {p: roster.count(p) for p in POSITIONS}
-    picks_left = rounds - len(roster)
-    unmet = sum(max(0, REQ_MIN[p] - counts[p]) for p in POSITIONS)
-    must_fill = picks_left <= unmet
+    Respects positional caps and a must-fill-starters guard so every robot team
+    finishes with a full, legal lineup (QB/RB/RB/WR/WR/TE/FLEX)."""
+    counts = _pos_counts(slot)
 
     avail = board[~board["player"].isin(drafted.keys())].copy()
     if avail.empty:
@@ -158,8 +214,8 @@ def _robot_pick(slot: int) -> dict | None:
 
     # Enforce position caps.
     avail = avail[avail["pos"].apply(lambda p: counts.get(p, 0) < POS_CAPS.get(p, 99))]
-    if must_fill:
-        needed = [p for p in POSITIONS if counts[p] < REQ_MIN[p]]
+    if _is_must_fill(slot):
+        needed = _needed_positions(slot)
         need_pool = avail[avail["pos"].isin(needed)]
         if not need_pool.empty:
             avail = need_pool
@@ -233,16 +289,41 @@ with left:
     st.dataframe(show, hide_index=True, use_container_width=True, height=430)
 
     if not done and order[pick_idx] == user_slot:
-        pick_opts = view["player"].tolist()
+        counts = _pos_counts(user_slot)
+        needed = _needed_positions(user_slot)
+        must = _is_must_fill(user_slot)
+
+        # Selectable pool = available players you can still roster (respect caps).
+        pool = avail[avail["pos"].apply(lambda p: counts.get(p, 0) < POS_CAPS.get(p, 99))].copy()
+        if must and needed:
+            forced = pool[pool["pos"].isin(needed)]
+            if not forced.empty:
+                pool = forced
+                st.warning(
+                    f"⚠️ Roster requirement — you still need **{', '.join(needed)}**. "
+                    "Only those positions are selectable so you finish with a full lineup."
+                )
+
+        # Apply the position filter, but never let it push outside the legal pool.
+        pool_view = pool if pos_filter == "All" else pool[pool["pos"] == pos_filter]
+        if pool_view.empty:
+            pool_view = pool
+
+        sug = _suggest_pick(pool_view, needed, must)
+        if sug is not None:
+            st.info(f"💡 **Suggested pick:** {sug['player']} ({sug['pos']}) — {sug['reason']}")
+
+        pick_opts = pool_view["player"].tolist()
         if pick_opts:
             labels = {
                 r["player"]: f'#{r["my_rank"]}  {r["player"]} ({r["pos"]}) · VOR {r["vor"]}'
-                for _, r in view.iterrows()
+                for _, r in pool_view.iterrows()
             }
-            choice = fcol2.selectbox("Make your pick", pick_opts,
+            default_idx = pick_opts.index(sug["player"]) if sug and sug["player"] in pick_opts else 0
+            choice = fcol2.selectbox("Make your pick", pick_opts, index=default_idx,
                                      format_func=lambda p: labels.get(p, p), key="ds_user_choice")
             if st.button(f"✅ Draft {choice}", type="primary", use_container_width=True, key="ds_draft_btn"):
-                row = view[view["player"] == choice].iloc[0].to_dict()
+                row = pool_view[pool_view["player"] == choice].iloc[0].to_dict()
                 _record_pick(user_slot, row)
                 _advance_robots()
                 st.rerun()
@@ -270,6 +351,12 @@ with right:
         pd.DataFrame(roster_rows, columns=["Slot", "Player"]),
         hide_index=True, use_container_width=True, height=340,
     )
+
+    _still_need = _needed_positions(user_slot)
+    if _still_need:
+        st.caption(f"⚠️ Still to fill: {', '.join(_still_need)}")
+    else:
+        st.caption("✅ All required starter positions filled.")
 
     st.markdown("#### 🕒 Recent Picks")
     recent = st.session_state.dr_picks[-10:][::-1]
