@@ -561,6 +561,92 @@ PROJ_GAMES_OVERRIDES = {
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
+# ROOKIES — 2026 draft class (draft-capital projection)
+#
+# Rookies have zero NFL history, so the ridge/PPG engine in model/projection.py
+# cannot score them. Research (PlayerProfiler, Dynasty Nerds, PFF) is unanimous
+# that DRAFT CAPITAL is the single most predictive input for rookie-season
+# fantasy production, followed by landing spot (team offensive environment) and
+# depth-chart role. We model each of those explicitly:
+#   1. base points  = f(position, overall draft pick)   ← draft capital
+#   2. × role mult   (depth-chart opportunity)            ← committee / backup
+#   3. × scoring scalar (PPR / Half / Standard)
+#   4. → then the SAME team-offense tier, new-HC, and age-curve overlays that
+#        every veteran gets are applied downstream in apply_expert_adjustments,
+#        which is where the "landing spot" signal enters (a WR on DET's #1
+#        passing offense is boosted; an RB on a bottom rushing offense is cut).
+# Rookie rows are injected into the board before those overlays so they flow
+# through VOR and round-grade assignment exactly like any other player.
+#
+# Source: 2026 NFL Draft results (Rounds 1-6, skill positions) + post-draft
+# dynasty consensus for depth-chart role. Rookie data lives in
+# data/raw/rookies_2026.csv so the class can be edited without touching code.
+# ══════════════════════════════════════════════════════════════════════════════
+
+ROOKIE_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "rookies_2026.csv"
+
+# Depth-chart role → opportunity multiplier and projected games. QBs that sit
+# behind a veteran ("redshirt") accrue almost no fantasy value, hence the steep
+# cut; skill "backup" players still see rotational / injury-fill snaps.
+ROOKIE_ROLE_MULT   = {"starter": 1.00, "committee": 0.78, "backup": 0.45, "redshirt": 0.12}
+ROOKIE_PROJ_GAMES  = {"starter": 16,   "committee": 15,   "backup": 14,   "redshirt": 6}
+
+
+def _rookie_base_ppr(pos: str, pick: int) -> float:
+    """Expected rookie-season PPR points as a function of overall draft pick.
+
+    Tiers are grounded in historical rookie-year averages by draft slot: earlier
+    capital → more guaranteed opportunity → more production. RB/WR curves are the
+    steepest (early picks routinely start); rookie TEs historically produce little
+    regardless of capital (Bowers-tier is the rare exception, not the baseline).
+    """
+    if pos == "RB":
+        if pick <= 5:   return 185.0
+        if pick <= 15:  return 155.0
+        if pick <= 32:  return 130.0
+        if pick <= 50:  return 108.0
+        if pick <= 75:  return 85.0
+        if pick <= 110: return 62.0
+        if pick <= 150: return 42.0
+        return 26.0
+    if pos == "WR":
+        if pick <= 8:   return 150.0
+        if pick <= 20:  return 125.0
+        if pick <= 32:  return 105.0
+        if pick <= 50:  return 80.0
+        if pick <= 75:  return 58.0
+        if pick <= 110: return 42.0
+        if pick <= 150: return 27.0
+        return 15.0
+    if pos == "TE":
+        if pick <= 20:  return 90.0
+        if pick <= 45:  return 62.0
+        if pick <= 75:  return 45.0
+        if pick <= 110: return 30.0
+        return 16.0
+    if pos == "QB":
+        # QB points are ~scoring-format-independent (QBs rarely catch passes).
+        # A benched rookie ("redshirt") is scaled to near-zero by ROOKIE_ROLE_MULT.
+        if pick <= 5:   return 260.0
+        if pick <= 15:  return 235.0
+        if pick <= 40:  return 205.0
+        return 180.0
+    return 0.0
+
+
+def _rookie_scoring_scalar(pos: str, scoring: str) -> float:
+    """Scale reception-driven rookie points for non-PPR formats (QBs unaffected)."""
+    if pos == "QB":
+        return 1.0
+    table = {
+        "PPR":      {"RB": 1.00, "WR": 1.00, "TE": 1.00},
+        "Half PPR": {"RB": 0.93, "WR": 0.90, "TE": 0.88},
+        "Standard": {"RB": 0.86, "WR": 0.78, "TE": 0.75},
+    }
+    return table.get(scoring, table["PPR"]).get(pos, 1.0)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # DATA
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -667,6 +753,72 @@ def build_predictions(weekly_df: pd.DataFrame, target_col: str = "fantasy_points
 
 
 all_preds_raw, hist_totals = build_predictions(weekly, target_col=TARGET_COL)
+
+
+@st.cache_data(show_spinner=False)
+def load_rookies() -> pd.DataFrame:
+    """Load the 2026 rookie draft class from data/raw/rookies_2026.csv."""
+    if not ROOKIE_CSV.exists():
+        return pd.DataFrame()
+    return pd.read_csv(ROOKIE_CSV)
+
+
+@st.cache_data(show_spinner=False)
+def build_rookie_predictions(target_col: str, scoring: str) -> pd.DataFrame:
+    """Draft-capital-based projections for the 2026 rookie class.
+
+    Returns rows in the same shape build_predictions_core emits so they concat
+    cleanly onto the veteran board and flow through every downstream overlay
+    (team tier, new-HC penalty, age curve, VOR, round grade).
+    """
+    rk = load_rookies()
+    if rk.empty:
+        return pd.DataFrame()
+
+    rows = []
+    for _, r in rk.iterrows():
+        pos = str(r["position"]).upper()
+        if pos not in POSITION_FEATURES:
+            continue
+        role = str(r["role"]).lower()
+        base = _rookie_base_ppr(pos, int(r["pick"]))
+        base *= ROOKIE_ROLE_MULT.get(role, 0.45)
+        base *= _rookie_scoring_scalar(pos, scoring)
+        proj_g = ROOKIE_PROJ_GAMES.get(role, 14)
+        pred   = round(base, 1)
+
+        row = {
+            name_col:        r["player"],
+            pos_col:         pos,
+            "season":        PREDICTION_YEAR - 1,
+            "games":         0,                       # no prior NFL season
+            target_col:      0.0,                     # no last-season points
+            "predicted_pts": pred,                    # pre-overlay base (tier/HC/age applied later)
+            "proj_games":    float(proj_g),
+            "pred_ppg":      round(pred / max(proj_g, 1), 2),
+            "rmse":          0.0,
+            "injury_risk":   "",
+            "is_rookie":     True,
+        }
+        if track_col != name_col:
+            row[track_col] = f"ROOKIE-{r['player']}"
+        if team_col:
+            row[team_col] = r["team"]
+        rows.append(row)
+
+    return pd.DataFrame(rows)
+
+
+# Inject rookies BEFORE expert overlays so team-tier / HC / age adjustments and
+# VOR / round grades treat them exactly like veterans. Register their birth years
+# first so _age_factor uses the real rookie age (≈22) instead of the veteran
+# first-season fallback.
+rookie_preds = build_rookie_predictions(TARGET_COL, sel_scoring)
+if not rookie_preds.empty:
+    _rk_meta = load_rookies()
+    for _, _r in _rk_meta.iterrows():
+        PLAYER_BIRTH_YEARS.setdefault(str(_r["player"]), int(_r["birth_year"]))
+    all_preds_raw = pd.concat([all_preds_raw, rookie_preds], ignore_index=True)
 
 
 def apply_expert_adjustments(df: pd.DataFrame,
@@ -931,6 +1083,10 @@ preds["last_season_ppg"] = (preds["last_season_pts"] / preds["games"].replace(0,
 preds["change"]          = (preds["predicted_pts"] - preds["last_season_pts"]).round(1)
 preds["change_pct"]      = ((preds["change"] / preds["last_season_pts"].replace(0, np.nan)) * 100).round(1)
 
+# Rookie indicator for the board ("R" for 2026 draft class, blank otherwise).
+_rookie_col = preds["is_rookie"] if "is_rookie" in preds.columns else pd.Series(False, index=preds.index)
+preds["rookie_tag"] = _rookie_col.fillna(False).map(lambda x: "R" if bool(x) else "")
+
 if preds.empty:
     st.info("No predictions available for the selected position.")
     st.stop()
@@ -983,7 +1139,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 st.markdown(f"### 📋 2026 Fantasy Big Board {pos_label_str}")
 
-board_cols = ["Rank", name_col]
+board_cols = ["Rank", name_col, "rookie_tag"]
 if team_col: board_cols.append(team_col)
 if pos_col:  board_cols.append(pos_col)
 board_cols += ["injury_risk", "predicted_pts", "vor", "round_grade", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games", "last_season_ppg"]
@@ -1006,6 +1162,7 @@ board_cols = [c for c in board_cols if c in preds.columns]
 
 rename_map = {
     name_col: "Player",
+    "rookie_tag": "Rk",
     "injury_risk": "Injury Risk",
     "predicted_pts": "2026 Proj",
     "vor":          "VOR",
@@ -1036,6 +1193,12 @@ for c in disp.select_dtypes("float").columns:
 # Add logo URLs for team column if it exists
 teams_df = load_teams()
 column_config_dict = {
+    "Rk": st.column_config.TextColumn(
+                      label="Rk", width="small",
+                      help="R = 2026 rookie. Rookies have no NFL history, so they are "
+                           "projected from draft capital (overall pick) × depth-chart role, "
+                           "then run through the same team-offense, new-HC, and age-curve "
+                           "overlays as veterans."),
     "Injury Risk": st.column_config.TextColumn(
                       label="Injury Risk",
                       width="small",
@@ -1190,7 +1353,13 @@ st.caption(
     "force-includes (Kyler Murray—5 games 2025, Willis—MIA starter, Shough—NO starter, Stafford—LAR returning), "
     "age-cliff discounts (Kelce 0.82×, Evans 0.80×, CMC 0.92×), "
     "injury/suspension cuts (Rice 0.70×, Mahomes 0.92×), "
-    "and breakout boosts (Gibbs 1.22×, Skattebo 1.20×, JSN 1.18×, Irving 1.18×, Pickens 1.10×, Pitts 1.10×, Jefferson 1.08×)."
+    "and breakout boosts (Gibbs 1.22×, Skattebo 1.20×, JSN 1.18×, Irving 1.18×, Pickens 1.10×, Pitts 1.10×, Jefferson 1.08×). "
+    "**Rookies** (marked **R**) — the 2026 draft class has no NFL history, so the regression engine cannot score them. "
+    "Instead they are projected from **draft capital** (overall pick), the single most predictive input for rookie fantasy "
+    "production per PlayerProfiler / Dynasty Nerds / PFF research, scaled by depth-chart role (starter / committee / backup / "
+    "redshirt). Those base projections then run through the identical team-offense tier, new-HC, and age-curve overlays as "
+    "veterans, so landing spot is fully reflected before VOR and round grades are assigned. Draft class lives in "
+    "`data/raw/rookies_2026.csv`."
 )
 
 st.markdown("---")
