@@ -63,6 +63,22 @@ SCORING_TARGET_COLS = {
 # never drift apart on the projection engine's own constants.
 MAX_PROJ_GAMES = 16       # conservative ceiling (no one is guaranteed 17) — force-include-only
 
+# ── Sanity guards on the final per-game rate ────────────────────────────────
+# Two conservative corrections applied AFTER every contextual multiplier, using
+# each player's real game log:
+#   • Peak cap: never project a player above 105% of their best qualifying
+#     season PPG — stops boosts from stacking a player past their own ceiling
+#     (e.g. George Pickens projected above his career-best 2025).
+#   • Low-sample regression: shrink players with few career games toward a
+#     typical established starter at their position, so a hot 8-game stretch
+#     (e.g. Cam Skattebo) can't drive a top ranking. The anchor is the median
+#     of established players projected above replacement level (a real starter,
+#     not a replacement scrub), and the pull is Weight = games / (games + K).
+PEAK_CAP_MULT      = 1.05  # cap projected PPG at 105% of best real season
+PEAK_MIN_GAMES     = 6     # a season needs ≥ this many games to count as a peak
+REGRESS_MIN_GAMES  = 24    # players with fewer career games get shrunk to baseline
+REGRESS_K          = 10    # pseudo-games of positional baseline in the shrink
+
 # ── Value Over Replacement (VOR) — positional scarcity scoring ───────────────
 # Replacement level = projected points of the LAST startable player at each
 # position in a 10-team PPR league (i.e. the worst starter on opening day).
@@ -1073,6 +1089,56 @@ def apply_expert_adjustments(df: pd.DataFrame,
         ).astype(float)
         out["predicted_pts"] = (out["predicted_pts"] * player_mults).round(1)
         out["pred_ppg"]      = (out["pred_ppg"]      * player_mults).round(2)
+
+    # 9. Sanity guards on the final per-game rate — applied last, over each
+    #    player's real game history: cap at their own ceiling, then regress
+    #    tiny samples toward the position's established median. See constants.
+    if (name_col and raw_weekly is not None and not raw_weekly.empty
+            and "season" in raw_weekly.columns):
+        _reg = raw_weekly
+        if "season_type" in raw_weekly.columns:
+            _reg = raw_weekly[raw_weekly["season_type"] == "REG"]
+        _tc = TARGET_COL if TARGET_COL in _reg.columns else "fantasy_points_ppr"
+        _szn = (_reg.groupby([name_col, "season"])[_tc]
+                    .agg(g="size", pts="sum").reset_index())
+        _szn["ppg"] = _szn["pts"] / _szn["g"].clip(lower=1)
+        career_g = _szn.groupby(name_col)["g"].sum().to_dict()
+        peak_ppg = (_szn[_szn["g"] >= PEAK_MIN_GAMES]
+                    .groupby(name_col)["ppg"].max().to_dict())
+
+        # (a) Cap each player with real history at 105% of their best season.
+        def _cap_ppg(row):
+            pk = peak_ppg.get(str(row[name_col]))
+            ppg = float(row["pred_ppg"])
+            return min(ppg, pk * PEAK_CAP_MULT) if pk is not None else ppg
+        out["pred_ppg"] = out.apply(_cap_ppg, axis=1).round(2)
+
+        # (b) Regress low-sample players toward a typical established starter at
+        #     their position: the median PPG of players with enough career games
+        #     who project above replacement level (excludes the deep-bench tail).
+        if pos_col:
+            _cg = out[name_col].map(lambda n: career_g.get(str(n), 0))
+            _est = out[_cg >= REGRESS_MIN_GAMES]
+            base = {}
+            for _pos, _grp in _est.groupby(pos_col):
+                _thr = REPLACEMENT_LEVEL.get(_pos, 0) / MAX_PROJ_GAMES
+                _starters = _grp.loc[_grp["pred_ppg"] >= _thr, "pred_ppg"]
+                base[_pos] = float(_starters.median() if not _starters.empty
+                                   else _grp["pred_ppg"].median())
+
+            def _regress_ppg(row):
+                cg = career_g.get(str(row[name_col]), 0)
+                ppg = float(row["pred_ppg"])
+                if cg <= 0 or cg >= REGRESS_MIN_GAMES:
+                    return ppg  # no history here (rookies/curated) or established
+                b = base.get(row.get(pos_col, ""), ppg)
+                w = cg / (cg + REGRESS_K)
+                return w * ppg + (1 - w) * b
+            out["pred_ppg"] = out.apply(_regress_ppg, axis=1).round(2)
+
+        # Keep season totals consistent with the adjusted per-game rate.
+        if "proj_games" in out.columns:
+            out["predicted_pts"] = (out["pred_ppg"] * out["proj_games"]).round(1)
 
     return out.reset_index(drop=True)
 
