@@ -777,13 +777,40 @@ def load_rookies() -> pd.DataFrame:
     return pd.read_csv(ROOKIE_CSV)
 
 
+# Interleave ESPN's positional ranks into a single overall draft order. ESPN's
+# published overall cheat sheet is essentially this same interleave by draft
+# value; these per-position value curves reproduce a standard 1-QB PPR cadence
+# (RB/WR run together at the top, first TE lands early Rd 2, first QB early Rd 3).
+_ESPN_VALUE_BASE  = {"RB": 100.0, "WR": 100.0, "TE": 92.5, "QB": 85.0}
+_ESPN_VALUE_SLOPE = {"RB": 1.30,  "WR": 1.15,  "TE": 2.50, "QB": 1.60}
+_ESPN_POS_TIEBREAK = {"RB": 0, "WR": 1, "TE": 2, "QB": 3}
+
+
 @st.cache_data(show_spinner=False)
 def load_espn_ranks() -> dict:
-    """Map normalized player name → ESPN positional rank (e.g. 'RB6')."""
+    """Map normalized player name → ESPN overall rank (int as string).
+
+    Reads positional ranks (e.g. 'RB6') from data/raw/espn_ranks_2026.csv and
+    collapses them into a single cross-position overall ordering by draft value.
+    """
     if not ESPN_RANKS_CSV.exists():
         return {}
     df = pd.read_csv(ESPN_RANKS_CSV)
-    return {_norm_name(r["player"]): str(r["espn"]) for _, r in df.iterrows()}
+
+    scored = []
+    for _, r in df.iterrows():
+        label = str(r["espn"]).strip().upper()
+        pos = "".join(c for c in label if c.isalpha())
+        digits = "".join(c for c in label if c.isdigit())
+        if pos not in _ESPN_VALUE_BASE or not digits:
+            continue
+        pos_rank = int(digits)
+        value = _ESPN_VALUE_BASE[pos] - _ESPN_VALUE_SLOPE[pos] * (pos_rank - 1)
+        scored.append((value, _ESPN_POS_TIEBREAK[pos], pos_rank, _norm_name(r["player"])))
+
+    # Higher value first; ties broken by position priority then positional rank.
+    scored.sort(key=lambda t: (-t[0], t[1], t[2]))
+    return {name: str(i) for i, (_, _, _, name) in enumerate(scored, start=1)}
 
 
 @st.cache_data(show_spinner=False)
@@ -1223,9 +1250,9 @@ teams_df = load_teams()
 column_config_dict = {
     "ESPN": st.column_config.TextColumn(
                       label="ESPN", width="small",
-                      help="ESPN's 2026 positional ranking (Mike Clay, PPR) — e.g. RB6, WR22. "
-                           "Shown next to this model's own overall rank for a quick consensus "
-                           "comparison. Blank = outside ESPN's ranked pool."),
+                      help="ESPN's 2026 overall PPR draft rank (Mike Clay), interleaved across "
+                           "positions into a single 1..N order to sit alongside this model's own "
+                           "overall rank. Blank = outside ESPN's ranked pool."),
     "Rk": st.column_config.TextColumn(
                       label="Rk", width="small",
                       help="R = 2026 rookie. Rookies have no NFL history, so they are "
