@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import streamlit as st
 import pandas as pd
@@ -12,6 +13,11 @@ import plotly.graph_objects as go
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
 from utils.data_loader import load_weekly, load_teams, get_logo
 from utils.nav import render_sidebar_nav
+from model.projection import (
+    ProjectionConfig, build_predictions_core,
+    NFL_GAMES, POSITION_FEATURES, MIN_GAMES_BY_POS,
+    RIDGE_ALPHA, DECAY, PPG_BLEND_WEIGHT, PPG_BASELINE_GAMES,
+)
 
 st.set_page_config(page_title="Fantasy Predictions · NFL", page_icon="🔮", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
@@ -41,7 +47,6 @@ st.markdown("""
 # module load — the value is overwritten before build_predictions() runs.
 TARGET_COL = "fantasy_points_ppr"
 PREDICTION_YEAR = 2026
-NFL_GAMES = 17
 DEFAULT_PROJ_GAMES = 14.0   # fallback when prior-season data is absent
 
 # Map sidebar scoring selection → underlying column in weekly.csv.
@@ -52,10 +57,11 @@ SCORING_TARGET_COLS = {
     "Standard": "fantasy_points",
 }
 
-# QBs need 12 full games to qualify as a genuine starter (not a backup fill-in).
-# Skill positions use 6 — role players and injury-return candidates are valid.
-MIN_GAMES_BY_POS = {"QB": 12, "RB": 6, "WR": 6, "TE": 6}
-MAX_PROJ_GAMES   = 16       # conservative ceiling (no one is guaranteed 17)
+# NFL_GAMES, MIN_GAMES_BY_POS, RIDGE_ALPHA, DECAY, PPG_BLEND_WEIGHT, PPG_BASELINE_GAMES,
+# and POSITION_FEATURES now live in model/projection.py (imported above) — that module
+# is the single source of truth so the Streamlit page and scripts/backtest_model.py can
+# never drift apart on the projection engine's own constants.
+MAX_PROJ_GAMES = 16       # conservative ceiling (no one is guaranteed 17) — force-include-only
 
 # ── Value Over Replacement (VOR) — positional scarcity scoring ───────────────
 # Replacement level = projected points of the LAST startable player at each
@@ -83,46 +89,6 @@ SCORING_REPLACEMENT_LEVELS = {
 # LEAGUE SIZE — used to derive round grades from model rank (picks per round = league size)
 LEAGUE_SIZE = 10
 
-# Ridge penalty prevents wild extrapolation from small samples.
-# 4.0 balances regularisation vs. tracking elite consistent performers:
-# alpha=8 over-shrinks stars like Allen (15% below true level) while barely
-# affecting mediocre QBs — the asymmetry creates systematic ranking errors.
-RIDGE_ALPHA = 4.0
-# Per-year recency decay: the 2024→2025 pair is weighted ~35 % higher than 2023→2024.
-DECAY = 0.35
-# Prior-year PPG blend weight. Published research shows prior-year fantasy PPG
-# explains ~45-50% of the variance in the following year — making it the single
-# strongest predictor. The ridge model captures multi-year trends and component
-# stats (the other ~55%). Blending both gives a 2-model ensemble that mirrors
-# how professional projection systems (4for4, PFF, FantasyPros) are built.
-PPG_BLEND_WEIGHT = 0.45  # 45% prior-year PPG, 55% ridge model
-
-# Backtest-calibrated expected-games used ONLY for the PPG baseline component.
-# Projecting 17 games over-estimates because not all starters play a full season.
-# Backtesting 2024→2025 (train 2016-2023 only) found these scales minimise bias:
-#   QB: PPG×15 → bias ≈ −2 pts  (vs +44 at 17 games)  — QBs average 13-15 starts
-#   RB: PPG×15 → bias ≈ +3 pts  (vs +10 at 17 games)  — RBs high injury/rotation rate
-#   WR: PPG×15 → bias reduced   (role-changers & injuries common at 17+)
-#   TE: PPG×16 → slight reduction (TEs more durable than RB/WR)
-# NOTE: proj_games (17) is still used for the model component and the "Proj GP" display.
-# This dict only reduces the PPG anchor; it doesn't cap the final projected total.
-PPG_BASELINE_GAMES: dict[str, int] = {
-    "QB": 15,
-    "RB": 15,
-    "WR": 15,
-    "TE": 16,
-}
-
-# Per-game features only — normalises out "played more games = more counting stats".
-# game_rate (games/17) is always appended and captures injury-proneness / role depth.
-POSITION_FEATURES = {
-    "QB": ["passing_yards", "passing_tds", "interceptions",
-           "rushing_yards", "rushing_tds", "completions", "attempts"],
-    "RB": ["rushing_yards", "rushing_tds", "carries",
-           "receptions", "receiving_yards", "receiving_tds", "targets"],
-    "WR": ["receiving_yards", "receiving_tds", "targets", "receptions", "rushing_yards"],
-    "TE": ["receiving_yards", "receiving_tds", "targets", "receptions"],
-}
 POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
                    "WR": "Wide Receivers",  "TE": "Tight Ends"}
 
@@ -595,33 +561,6 @@ PROJ_GAMES_OVERRIDES = {
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
-# RIDGE REGRESSION (pure numpy — no sklearn dependency)
-# ══════════════════════════════════════════════════════════════════════════════
-
-def _ridge_fit(X: np.ndarray, y: np.ndarray,
-               alpha: float = RIDGE_ALPHA,
-               weights: np.ndarray | None = None):
-    """Weighted ridge regression via the regularised normal equation."""
-    n = X.shape[0]
-    Xb = np.column_stack([np.ones(n), X])
-    if weights is not None:
-        w = weights / weights.sum() * n      # normalise so sum = n
-        W = np.diag(w)
-        XtW = Xb.T @ W
-        A, bv = XtW @ Xb, XtW @ y
-    else:
-        A, bv = Xb.T @ Xb, Xb.T @ y
-    reg = np.eye(A.shape[0]) * alpha
-    reg[0, 0] = 0                           # do not regularise the intercept
-    theta = np.linalg.solve(A + reg, bv)
-    yp = Xb @ theta
-    ss_res = np.sum((y - yp) ** 2)
-    ss_tot = np.sum((y - y.mean()) ** 2)
-    r2   = 1 - ss_res / ss_tot if ss_tot > 0 else 0.0
-    rmse = float(np.sqrt(np.mean((y - yp) ** 2)))
-    return theta[1:], theta[0], r2, rmse
-
-# ══════════════════════════════════════════════════════════════════════════════
 # DATA
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -699,224 +638,31 @@ def build_predictions(weekly_df: pd.DataFrame, target_col: str = "fantasy_points
     # the module-level TARGET_COL global so the rest of the file stays simple.
     global TARGET_COL
     TARGET_COL = target_col
-    # ── Regular season only ──────────────────────────────────────────────────
-    reg = weekly_df.copy()
-    if "season_type" in reg.columns:
-        reg = reg[reg["season_type"] == "REG"]
-    reg = reg[reg[pos_col].isin(POSITION_FEATURES)]
 
-    # ── Season aggregates ────────────────────────────────────────────────────
-    all_feat_cols = list({c for feats in POSITION_FEATURES.values() for c in feats})
-    stat_cols     = [TARGET_COL] + [c for c in all_feat_cols if c in reg.columns]
-    group_keys    = [track_col, name_col, pos_col, "season"]
-    if team_col:
-        group_keys.append(team_col)
+    # Pure ridge/PPG-blend engine now lives in model/projection.py — no globals,
+    # explicit signature, reused as-is by scripts/backtest_model.py. This call
+    # (as_of_season=None) trains on every season pair in weekly_df, same as the
+    # original inline implementation.
+    config = ProjectionConfig(
+        target_col=TARGET_COL, name_col=name_col, pos_col=pos_col,
+        team_col=team_col, track_col=track_col,
+    )
+    all_preds, hist = build_predictions_core(weekly_df, config)
+    if all_preds.empty:
+        return all_preds, hist
 
-    agg = reg.groupby(group_keys, as_index=False)[stat_cols].sum()
-    gp  = reg.groupby(group_keys, as_index=False)[TARGET_COL].count()
-    gp.rename(columns={TARGET_COL: "games"}, inplace=True)
-    agg = agg.merge(gp, on=group_keys, how="left")
-
-    # Per-game rates (the core features the model trains on)
-    for c in stat_cols:
-        if c in agg.columns:
-            agg[f"{c}_pg"] = (agg[c] / agg["games"].clip(lower=1)).round(4)
-    # game_rate encodes starter reliability / injury history
-    agg["game_rate"] = (agg["games"] / NFL_GAMES).clip(upper=1.0).round(4)
-
-    all_seasons = sorted(agg["season"].dropna().unique().astype(int))
-    latest_szn  = all_seasons[-1]
-    prev_szn    = all_seasons[-2] if len(all_seasons) >= 2 else None
-
-    predictions_list = []
-
-    for pos, base_feats in POSITION_FEATURES.items():
-        min_g    = MIN_GAMES_BY_POS[pos]
-        pg_feats = [f"{c}_pg" for c in base_feats if f"{c}_pg" in agg.columns] + ["game_rate"]
-
-        pos_df = agg[(agg[pos_col] == pos) & (agg["games"] >= min_g)].copy()
-        if pos_df.empty:
-            continue
-
-        # ── Training: season-N per-game features → season-N+1 total points ──
-        train_X, train_y, train_w = [], [], []
-        for szn in all_seasons[:-1]:
-            nxt = szn + 1
-            if nxt not in all_seasons:
-                continue
-            cur_d = pos_df[pos_df["season"] == szn].set_index(track_col)
-            nxt_d = pos_df[pos_df["season"] == nxt].set_index(track_col)
-            common = cur_d.index.intersection(nxt_d.index)
-            # Recency weight: most-recent season pairs weighted highest
-            w = float(np.exp(DECAY * (szn - (latest_szn - 1))))
-            for pid in common:
-                rc = (cur_d.loc[pid] if isinstance(cur_d.loc[pid], pd.Series)
-                      else cur_d.loc[pid].iloc[-1])
-                rn = (nxt_d.loc[pid] if isinstance(nxt_d.loc[pid], pd.Series)
-                      else nxt_d.loc[pid].iloc[-1])
-                train_X.append([float(rc.get(f, 0) or 0) for f in pg_feats])
-                train_y.append(float(rn[TARGET_COL]))
-                train_w.append(w)
-
-        if len(train_X) < 20:
-            continue
-
-        Xtr = np.array(train_X, dtype=np.float64)
-        ytr = np.array(train_y, dtype=np.float64)
-        wtr = np.array(train_w, dtype=np.float64)
-
-        # Standardise for numerical stability
-        mu    = Xtr.mean(0)
-        sigma = Xtr.std(0); sigma[sigma == 0] = 1.0
-        coefs, intercept, r2, rmse = _ridge_fit((Xtr - mu) / sigma, ytr, weights=wtr)
-
-        # ── Predict on latest season ─────────────────────────────────────────
-        lat = pos_df[pos_df["season"] == latest_szn].copy()
-        if lat.empty:
-            continue
-
-        Xlat     = (lat[pg_feats].fillna(0).values.astype(np.float64) - mu) / sigma
-        raw_pred = np.clip(Xlat @ coefs + intercept, 0, None)
-
-        # ── Project 2026 games played ────────────────────────────────────────
-        # All healthy starters are assumed to play the full 17-game season.
-        # Specific exceptions (suspensions, confirmed carry-over injuries) are
-        # applied post-model via PROJ_GAMES_OVERRIDES.
-        # games_lat is retained to drive the adj_factor: per-game efficiency from
-        # an injury-shortened 2025 still needs scaling to a full 17-game season.
-        games_lat  = lat["games"].values.astype(float)
-        proj_games = np.full(len(lat), float(NFL_GAMES))   # 17 by default
-
-        # adj_factor: scale raw_pred (model trained on season totals with per-game
-        # features) from latent-season games_lat → proj_games (17). The model
-        # already includes game_rate (games/17) as a feature, so raw_pred reflects
-        # the season the player ACTUALLY had. adj_factor lifts that toward a full
-        # healthy season, but with safeguards against extrapolating from tiny samples.
-        #
-        # Empirical calibration (backtest 2024→2025):
-        #   damping=0.60 (was 0.45)  — full-season players see almost no change;
-        #                              legitimate partial-season starters get
-        #                              meaningful but not extreme scaling.
-        #   cap=1.20    (was 1.10)   — allows a 12-game QB (~17/12 = 1.42× raw)
-        #                              to be lifted by 20%, but still caps the
-        #                              wild over-extrapolation of 4-game samples.
-        #   floor=1.00              — never DEFLATE a player whose games_lat>17
-        #                              (theoretical only; defensive guard).
-        # The PPG_BLEND_WEIGHT (45% prior-year PPG) carries the rest of the load
-        # for partial-season starters whose model component is suppressed.
-        adj_factor = np.clip(
-            1.0 + (proj_games / games_lat.clip(min=1) - 1.0) * 0.60,
-            a_min=1.00, a_max=1.20
-        )
-        model_pts = np.clip(raw_pred * adj_factor, 0, None)
-
-        # ── QB-specific: recency-weighted multi-year PPG × 17 games ─────────
-        # QBs are projected on true fantasy value assuming full health (17g).
-        # Injury risk is tracked separately via the injury_risk flag.
-        # Weights: most recent season 65%, previous year 25%, two years ago 10%.
-        # Research shows the most recent season explains ~65% of next-year QB
-        # variance — this weighting is more responsive than DECAY=0.35 (44%).
-        if pos == "QB":
-            # Explicit season weights: most-recent=65%, 2nd-most-recent=25%, 3rd=10%
-            # Older seasons are excluded (weight 0) — only last 3 seasons matter.
-            _szn_sorted = sorted(all_seasons)   # ascending: oldest first
-            _n = len(_szn_sorted)
-            # Build weight map: position from END (0=most recent, 1=prev, 2=two years ago)
-            _recency_w = {0: 0.65, 1: 0.25, 2: 0.10}
-            _szn_weight = {
-                s: _recency_w.get(_n - 1 - i, 0.0)   # 0.0 for seasons older than 3 years
-                for i, s in enumerate(_szn_sorted)
-            }
-
-            wtd_ppg = np.zeros(len(lat))
-            wtd_sum = np.zeros(len(lat))
-            for szn in all_seasons:
-                szn_df = pos_df[pos_df["season"] == szn].set_index(track_col)
-                w_szn  = _szn_weight.get(szn, 0.10)
-                for idx, row in lat.iterrows():
-                    pid = row[track_col]
-                    if pid in szn_df.index:
-                        ppg_szn = szn_df.loc[pid, f"{TARGET_COL}_pg"] if isinstance(
-                            szn_df.loc[pid], pd.Series) else szn_df.loc[pid].iloc[-1][f"{TARGET_COL}_pg"]
-                        if ppg_szn and ppg_szn > 0:
-                            lat_idx = lat.index.get_loc(idx)
-                            wtd_ppg[lat_idx] += float(ppg_szn) * w_szn
-                            wtd_sum[lat_idx] += w_szn
-            wtd_sum = np.where(wtd_sum == 0, 1.0, wtd_sum)
-            qb_weighted_ppg = wtd_ppg / wtd_sum
-            # Fall back to prior-year PPG for QBs with no historical data
-            fallback_ppg = lat[f"{TARGET_COL}_pg"].fillna(0).values
-            qb_weighted_ppg = np.where(qb_weighted_ppg > 0, qb_weighted_ppg, fallback_ppg)
-            # Use position-specific baseline games (15 for QB, per PPG_BASELINE_GAMES)
-            # rather than the full 17. Backtesting 2024→2025 showed PPG×17 produces
-            # a +63.7 pt season-total bias because real starting QBs average 13–15
-            # starts due to injury, benching, and game-script blowouts. PPG×15
-            # cuts that bias to roughly +29 pts — much closer to actual.
-            qb_baseline_games = float(PPG_BASELINE_GAMES.get("QB", NFL_GAMES))
-            pred_pts = np.clip(qb_weighted_ppg * qb_baseline_games, 0, None)
-        else:
-            # ── Prior-year PPG baseline (45% weight) for RB/WR/TE ────────────
-            # Anchor projections to last season's actual per-game output.
-            # Uses PPG_BASELINE_GAMES (position-specific, < 17) instead of the
-            # full proj_games to correct for systematic over-prediction:
-            # backtesting showed projecting 17 games for the PPG anchor creates
-            # +44-pt QB bias and +10-pt RB bias — because real starters average
-            # 13-16 games due to injuries, bye weeks, and load management.
-            # The model component still projects to 17 games (proj_games);
-            # only the PPG anchor is calibrated to the realistic expected games.
-            prior_ppg      = lat[f"{TARGET_COL}_pg"].fillna(0).values
-            ppg_proj_g     = float(PPG_BASELINE_GAMES.get(pos, NFL_GAMES))
-            ppg_baseline   = np.clip(prior_ppg * ppg_proj_g, 0, None)
-            pred_pts = (model_pts * (1.0 - PPG_BLEND_WEIGHT)
-                        + ppg_baseline * PPG_BLEND_WEIGHT)
-
-        lat = lat.copy()
-        lat["predicted_pts"] = pred_pts.round(1)
-        lat["proj_games"]    = proj_games.round(1)
-        lat["pred_ppg"]      = (pred_pts / proj_games.clip(min=1)).round(2)
-        lat["rmse"]          = round(rmse, 1)
-
-        # ── Injury risk flag ──────────────────────────────────────────────────────
-        # QBs: flagged if EITHER avg games/yr < 14.5 over last 3 seasons OR listed
-        #      in INJURY_RISK_MAP (covers injury-shortened QBs like Mahomes / Love
-        #      whose multi-year avg doesn't trigger the threshold).
-        # RB/WR/TE: INJURY_RISK_MAP is the sole source (expert research, March 2026).
-        # Projection assumes healthy 17-game season regardless of flag.
-        if pos == "QB":
-            avg_g_map: dict = {}
-            for szn in all_seasons[-3:]:
-                szn_g = pos_df[pos_df["season"] == szn].set_index(track_col)["games"]
-                for pid, g in szn_g.items():
-                    avg_g_map.setdefault(pid, []).append(float(g))
-            lat["injury_risk"] = lat.apply(
-                lambda r: "      Yes      " if (
-                    (len(avg_g_map.get(r[track_col], [])) > 0 and
-                     sum(avg_g_map.get(r[track_col], [17])) /
-                     len(avg_g_map.get(r[track_col], [17])) < 14.5)
-                    or INJURY_RISK_MAP.get(str(r[name_col]), "") != ""
-                ) else "",
-                axis=1
-            )
-        else:
-            # RB/WR/TE: check expert injury risk map
-            lat["injury_risk"] = lat[name_col].map(
-                lambda player_name: INJURY_RISK_MAP.get(player_name, "")
-            )
-
-        predictions_list.append(lat)
-
-    if not predictions_list:
-        return pd.DataFrame(), pd.DataFrame()
-
-    all_preds = pd.concat(predictions_list, ignore_index=True)
-
-    # Historical per-season totals for the trajectory line chart (include games for PPG tooltip)
-    hist = (agg.groupby([track_col, name_col, pos_col, "season"], as_index=False)
-               [[TARGET_COL, "games"]].sum())
-    if team_col and team_col in agg.columns:
-        tl = agg.groupby([track_col, "season"], as_index=False)[team_col].first()
-        hist = hist.merge(tl, on=[track_col, "season"], how="left")
-
+    # ── Injury risk flag ──────────────────────────────────────────────────────
+    # build_predictions_core already sets the QB auto-flag (avg games/yr < 14.5
+    # over last 3 seasons). Overlay the hand-curated INJURY_RISK_MAP (expert
+    # research, March 2026) on top for ALL positions — RB/WR/TE have no
+    # auto-flag, so this reduces to a pure map lookup for them, same as before.
+    all_preds["injury_risk"] = all_preds.apply(
+        lambda r: "      Yes      " if (
+            r["injury_risk"] == "      Yes      "
+            or INJURY_RISK_MAP.get(str(r[name_col]), "") != ""
+        ) else "",
+        axis=1
+    )
     return all_preds, hist
 
 

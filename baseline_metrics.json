@@ -1,0 +1,335 @@
+{
+  "config": {
+    "target_col": "fantasy_points_ppr",
+    "ridge_alpha": 4.0,
+    "decay": 0.35,
+    "ppg_blend_weight": 0.45,
+    "ppg_baseline_games": {
+      "QB": 15,
+      "RB": 15,
+      "WR": 15,
+      "TE": 16
+    },
+    "min_games_by_pos": {
+      "QB": 12,
+      "RB": 6,
+      "WR": 6,
+      "TE": 6
+    }
+  },
+  "seasons": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "per_season": {
+    "2021": {
+      "top24_hit_rate": 0.375,
+      "top50_hit_rate": 0.6,
+      "overall": {
+        "n": 314,
+        "spearman_vor_rank": 0.6059,
+        "mean_abs_rank_error": 60.49,
+        "mean_signed_bias_pts": 29.01,
+        "mean_abs_error_pts": 57.61,
+        "rmse_pts": 72.89,
+        "mean_proj_vor_minus_actual_vor": 22.56
+      },
+      "by_position": {
+        "QB": {
+          "n": 23,
+          "spearman_vor_rank": 0.5939,
+          "mean_abs_rank_error": 4.35,
+          "mean_signed_bias_pts": 15.64,
+          "mean_abs_error_pts": 62.52,
+          "rmse_pts": 81.08,
+          "mean_proj_vor_minus_actual_vor": -2.0
+        },
+        "RB": {
+          "n": 89,
+          "spearman_vor_rank": 0.6038,
+          "mean_abs_rank_error": 17.81,
+          "mean_signed_bias_pts": 33.02,
+          "mean_abs_error_pts": 62.82,
+          "rmse_pts": 76.58,
+          "mean_proj_vor_minus_actual_vor": 21.92
+        },
+        "TE": {
+          "n": 65,
+          "spearman_vor_rank": 0.6865,
+          "mean_abs_rank_error": 11.08,
+          "mean_signed_bias_pts": 21.72,
+          "mean_abs_error_pts": 40.6,
+          "rmse_pts": 51.17,
+          "mean_proj_vor_minus_actual_vor": 10.72
+        },
+        "WR": {
+          "n": 137,
+          "spearman_vor_rank": 0.6019,
+          "mean_abs_rank_error": 25.64,
+          "mean_signed_bias_pts": 32.11,
+          "mean_abs_error_pts": 61.46,
+          "rmse_pts": 77.6,
+          "mean_proj_vor_minus_actual_vor": 32.71
+        }
+      }
+    },
+    "2022": {
+      "top24_hit_rate": 0.375,
+      "top50_hit_rate": 0.6,
+      "overall": {
+        "n": 320,
+        "spearman_vor_rank": 0.6432,
+        "mean_abs_rank_error": 61.07,
+        "mean_signed_bias_pts": 29.04,
+        "mean_abs_error_pts": 55.96,
+        "rmse_pts": 67.16,
+        "mean_proj_vor_minus_actual_vor": 16.87
+      },
+      "by_position": {
+        "QB": {
+          "n": 30,
+          "spearman_vor_rank": 0.4398,
+          "mean_abs_rank_error": 7.27,
+          "mean_signed_bias_pts": 33.46,
+          "mean_abs_error_pts": 77.77,
+          "rmse_pts": 90.17,
+          "mean_proj_vor_minus_actual_vor": 15.12
+        },
+        "RB": {
+          "n": 91,
+          "spearman_vor_rank": 0.7017,
+          "mean_abs_rank_error": 16.03,
+          "mean_signed_bias_pts": 38.27,
+          "mean_abs_error_pts": 64.02,
+          "rmse_pts": 75.3,
+          "mean_proj_vor_minus_actual_vor": 30.97
+        },
+        "TE": {
+          "n": 66,
+          "spearman_vor_rank": 0.7037,
+          "mean_abs_rank_error": 11.33,
+          "mean_signed_bias_pts": 19.69,
+          "mean_abs_error_pts": 38.23,
+          "rmse_pts": 45.7,
+          "mean_proj_vor_minus_actual_vor": -10.81
+        },
+        "WR": {
+          "n": 133,
+          "spearman_vor_rank": 0.7052,
+          "mean_abs_rank_error": 23.08,
+          "mean_signed_bias_pts": 26.36,
+          "mean_abs_error_pts": 54.32,
+          "rmse_pts": 64.06,
+          "mean_proj_vor_minus_actual_vor": 21.36
+        }
+      }
+    },
+    "2023": {
+      "top24_hit_rate": 0.583,
+      "top50_hit_rate": 0.58,
+      "overall": {
+        "n": 306,
+        "spearman_vor_rank": 0.6033,
+        "mean_abs_rank_error": 60.91,
+        "mean_signed_bias_pts": 28.37,
+        "mean_abs_error_pts": 56.76,
+        "rmse_pts": 72.07,
+        "mean_proj_vor_minus_actual_vor": 30.63
+      },
+      "by_position": {
+        "QB": {
+          "n": 24,
+          "spearman_vor_rank": 0.604,
+          "mean_abs_rank_error": 4.96,
+          "mean_signed_bias_pts": 68.22,
+          "mean_abs_error_pts": 91.99,
+          "rmse_pts": 116.75,
+          "mean_proj_vor_minus_actual_vor": 40.76
+        },
+        "RB": {
+          "n": 83,
+          "spearman_vor_rank": 0.5229,
+          "mean_abs_rank_error": 17.96,
+          "mean_signed_bias_pts": 26.4,
+          "mean_abs_error_pts": 68.32,
+          "rmse_pts": 82.98,
+          "mean_proj_vor_minus_actual_vor": 37.8
+        },
+        "TE": {
+          "n": 72,
+          "spearman_vor_rank": 0.709,
+          "mean_abs_rank_error": 12.4,
+          "mean_signed_bias_pts": 20.24,
+          "mean_abs_error_pts": 39.62,
+          "rmse_pts": 47.95,
+          "mean_proj_vor_minus_actual_vor": -6.24
+        },
+        "WR": {
+          "n": 127,
+          "spearman_vor_rank": 0.7542,
+          "mean_abs_rank_error": 19.82,
+          "mean_signed_bias_pts": 26.74,
+          "mean_abs_error_pts": 52.26,
+          "rmse_pts": 64.32,
+          "mean_proj_vor_minus_actual_vor": 44.94
+        }
+      }
+    },
+    "2024": {
+      "top24_hit_rate": 0.375,
+      "top50_hit_rate": 0.56,
+      "overall": {
+        "n": 321,
+        "spearman_vor_rank": 0.6495,
+        "mean_abs_rank_error": 61.07,
+        "mean_signed_bias_pts": 17.27,
+        "mean_abs_error_pts": 52.88,
+        "rmse_pts": 67.49,
+        "mean_proj_vor_minus_actual_vor": 17.9
+      },
+      "by_position": {
+        "QB": {
+          "n": 23,
+          "spearman_vor_rank": 0.6133,
+          "mean_abs_rank_error": 4.22,
+          "mean_signed_bias_pts": 41.3,
+          "mean_abs_error_pts": 79.37,
+          "rmse_pts": 98.32,
+          "mean_proj_vor_minus_actual_vor": 34.32
+        },
+        "RB": {
+          "n": 84,
+          "spearman_vor_rank": 0.699,
+          "mean_abs_rank_error": 13.73,
+          "mean_signed_bias_pts": 12.11,
+          "mean_abs_error_pts": 55.51,
+          "rmse_pts": 73.71,
+          "mean_proj_vor_minus_actual_vor": 18.91
+        },
+        "TE": {
+          "n": 74,
+          "spearman_vor_rank": 0.6535,
+          "mean_abs_rank_error": 13.35,
+          "mean_signed_bias_pts": 13.88,
+          "mean_abs_error_pts": 37.67,
+          "rmse_pts": 46.58,
+          "mean_proj_vor_minus_actual_vor": -10.72
+        },
+        "WR": {
+          "n": 140,
+          "spearman_vor_rank": 0.6722,
+          "mean_abs_rank_error": 26.81,
+          "mean_signed_bias_pts": 18.22,
+          "mean_abs_error_pts": 55.0,
+          "rmse_pts": 66.69,
+          "mean_proj_vor_minus_actual_vor": 29.72
+        }
+      }
+    },
+    "2025": {
+      "top24_hit_rate": 0.458,
+      "top50_hit_rate": 0.56,
+      "overall": {
+        "n": 305,
+        "spearman_vor_rank": 0.6768,
+        "mean_abs_rank_error": 52.75,
+        "mean_signed_bias_pts": 25.92,
+        "mean_abs_error_pts": 52.76,
+        "rmse_pts": 67.89,
+        "mean_proj_vor_minus_actual_vor": 19.18
+      },
+      "by_position": {
+        "QB": {
+          "n": 23,
+          "spearman_vor_rank": 0.167,
+          "mean_abs_rank_error": 6.17,
+          "mean_signed_bias_pts": 29.42,
+          "mean_abs_error_pts": 74.14,
+          "rmse_pts": 99.05,
+          "mean_proj_vor_minus_actual_vor": 13.34
+        },
+        "RB": {
+          "n": 77,
+          "spearman_vor_rank": 0.7036,
+          "mean_abs_rank_error": 12.84,
+          "mean_signed_bias_pts": 24.09,
+          "mean_abs_error_pts": 58.56,
+          "rmse_pts": 72.88,
+          "mean_proj_vor_minus_actual_vor": 13.89
+        },
+        "TE": {
+          "n": 74,
+          "spearman_vor_rank": 0.7466,
+          "mean_abs_rank_error": 12.34,
+          "mean_signed_bias_pts": 16.31,
+          "mean_abs_error_pts": 37.78,
+          "rmse_pts": 45.85,
+          "mean_proj_vor_minus_actual_vor": 11.41
+        },
+        "WR": {
+          "n": 131,
+          "spearman_vor_rank": 0.6919,
+          "mean_abs_rank_error": 22.3,
+          "mean_signed_bias_pts": 31.81,
+          "mean_abs_error_pts": 54.06,
+          "rmse_pts": 68.55,
+          "mean_proj_vor_minus_actual_vor": 27.71
+        }
+      }
+    }
+  },
+  "combined": {
+    "top24_hit_rate": 0.167,
+    "top50_hit_rate": 0.36,
+    "overall": {
+      "n": 1566,
+      "spearman_vor_rank": 0.6344,
+      "mean_abs_rank_error": 295.68,
+      "mean_signed_bias_pts": 25.88,
+      "mean_abs_error_pts": 55.19,
+      "rmse_pts": 69.52,
+      "mean_proj_vor_minus_actual_vor": 21.36
+    },
+    "by_position": {
+      "QB": {
+        "n": 123,
+        "spearman_vor_rank": 0.5101,
+        "mean_abs_rank_error": 26.26,
+        "mean_signed_bias_pts": 37.62,
+        "mean_abs_error_pts": 77.31,
+        "rmse_pts": 97.54,
+        "mean_proj_vor_minus_actual_vor": 20.18
+      },
+      "RB": {
+        "n": 424,
+        "spearman_vor_rank": 0.6422,
+        "mean_abs_rank_error": 78.47,
+        "mean_signed_bias_pts": 27.09,
+        "mean_abs_error_pts": 61.93,
+        "rmse_pts": 76.4,
+        "mean_proj_vor_minus_actual_vor": 24.92
+      },
+      "TE": {
+        "n": 351,
+        "spearman_vor_rank": 0.6967,
+        "mean_abs_rank_error": 60.95,
+        "mean_signed_bias_pts": 18.24,
+        "mean_abs_error_pts": 38.74,
+        "rmse_pts": 47.43,
+        "mean_proj_vor_minus_actual_vor": -1.18
+      },
+      "WR": {
+        "n": 668,
+        "spearman_vor_rank": 0.6801,
+        "mean_abs_rank_error": 118.0,
+        "mean_signed_bias_pts": 26.97,
+        "mean_abs_error_pts": 55.48,
+        "rmse_pts": 68.5,
+        "mean_proj_vor_minus_actual_vor": 31.17
+      }
+    }
+  }
+}
