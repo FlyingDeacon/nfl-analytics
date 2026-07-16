@@ -1137,13 +1137,17 @@ preds["change_pct"]      = ((preds["change"] / preds["last_season_pts"].replace(
 _rookie_col = preds["is_rookie"] if "is_rookie" in preds.columns else pd.Series(False, index=preds.index)
 preds["rookie_tag"] = _rookie_col.fillna(False).map(lambda x: "R" if bool(x) else "")
 
-# ESPN overall rank (consensus reference shown beside the model's own rank).
-# Nullable Int64 so the column sorts numerically (not lexicographically) and
-# unranked players render blank.
+# ESPN rank (consensus reference shown beside the model's own rank).
+# Look up each player's global ESPN overall value, then re-rank WITHIN the
+# current (position-filtered, top-N) view so the column renumbers 1..N by ESPN
+# order — exactly like the model's own Rank column re-bases when a position is
+# selected. Players ESPN never ranked stay NA: they render blank and sort to the
+# bottom. Nullable Int64 keeps the sort numeric rather than lexicographic.
 _espn_map = load_espn_ranks()
-preds["espn_rank"] = pd.to_numeric(
+_espn_overall = pd.to_numeric(
     preds[name_col].map(lambda n: _espn_map.get(_norm_name(n))), errors="coerce"
-).astype("Int64")
+)
+preds["espn_rank"] = _espn_overall.rank(method="first", ascending=True).astype("Int64")
 
 if preds.empty:
     st.info("No predictions available for the selected position.")
@@ -1254,9 +1258,9 @@ teams_df = load_teams()
 column_config_dict = {
     "ESPN": st.column_config.NumberColumn(
                       label="ESPN", width="small", format="%d",
-                      help="ESPN's 2026 overall PPR draft rank (Mike Clay), interleaved across "
-                           "positions into a single 1..N order to sit alongside this model's own "
-                           "overall rank. Blank = outside ESPN's ranked pool."),
+                      help="ESPN's 2026 PPR draft rank (Mike Clay), re-based to the current "
+                           "position filter so it renumbers 1..N alongside this model's own Rank. "
+                           "Blank = outside ESPN's ranked pool (sorts to the bottom)."),
     "Rk": st.column_config.TextColumn(
                       label="Rk", width="small",
                       help="R = 2026 rookie. Rookies have no NFL history, so they are "
