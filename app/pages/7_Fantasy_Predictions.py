@@ -810,7 +810,7 @@ def load_espn_ranks() -> dict:
 
     # Higher value first; ties broken by position priority then positional rank.
     scored.sort(key=lambda t: (-t[0], t[1], t[2]))
-    return {name: str(i) for i, (_, _, _, name) in enumerate(scored, start=1)}
+    return {name: i for i, (_, _, _, name) in enumerate(scored, start=1)}
 
 
 @st.cache_data(show_spinner=False)
@@ -1137,9 +1137,13 @@ preds["change_pct"]      = ((preds["change"] / preds["last_season_pts"].replace(
 _rookie_col = preds["is_rookie"] if "is_rookie" in preds.columns else pd.Series(False, index=preds.index)
 preds["rookie_tag"] = _rookie_col.fillna(False).map(lambda x: "R" if bool(x) else "")
 
-# ESPN positional rank (consensus reference shown beside the model's own rank).
+# ESPN overall rank (consensus reference shown beside the model's own rank).
+# Nullable Int64 so the column sorts numerically (not lexicographically) and
+# unranked players render blank.
 _espn_map = load_espn_ranks()
-preds["espn_rank"] = preds[name_col].map(lambda n: _espn_map.get(_norm_name(n), ""))
+preds["espn_rank"] = pd.to_numeric(
+    preds[name_col].map(lambda n: _espn_map.get(_norm_name(n))), errors="coerce"
+).astype("Int64")
 
 if preds.empty:
     st.info("No predictions available for the selected position.")
@@ -1248,8 +1252,8 @@ for c in disp.select_dtypes("float").columns:
 # Add logo URLs for team column if it exists
 teams_df = load_teams()
 column_config_dict = {
-    "ESPN": st.column_config.TextColumn(
-                      label="ESPN", width="small",
+    "ESPN": st.column_config.NumberColumn(
+                      label="ESPN", width="small", format="%d",
                       help="ESPN's 2026 overall PPR draft rank (Mike Clay), interleaved across "
                            "positions into a single 1..N order to sit alongside this model's own "
                            "overall rank. Blank = outside ESPN's ranked pool."),
