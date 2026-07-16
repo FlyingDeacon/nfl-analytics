@@ -33,6 +33,9 @@ col1, col2, col3 = st.columns([2, 0.5, 2])
 with col1:
     if st.button("🔮 2026 Fantasy Predictions", use_container_width=True, key="btn_fantasy_pred"):
         st.switch_page("pages/7_Fantasy_Predictions.py")
+with col3:
+    if st.button("🏈 Practice Draft Simulator", use_container_width=True, key="btn_draft_sim"):
+        st.switch_page("pages/8_Draft_Simulator.py")
 
 weekly = load_weekly()
 teams  = load_teams()

@@ -1129,6 +1129,40 @@ def _assign_vor(df: pd.DataFrame) -> pd.DataFrame:
 
 all_preds = _assign_vor(all_preds)
 
+
+# ── Persist finished board for the Draft Simulator ───────────────────────────
+BIG_BOARD_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "derived"
+
+
+def _persist_big_board(board: pd.DataFrame, scoring: str) -> None:
+    """Write the finished VOR-sorted board to parquet so the Draft Simulator
+    consumes the exact same rankings (incl. ESPN overall rank) shown here."""
+    if board.empty:
+        return
+    espn_map = load_espn_ranks()
+    n = len(board)
+    out = pd.DataFrame({
+        "player":        board[name_col].astype(str).values,
+        "pos":           board[pos_col].astype(str).values,
+        "team":          board[team_col].astype(str).values if team_col else [""] * n,
+        "predicted_pts": board["predicted_pts"].values,
+        "pred_ppg":      board["pred_ppg"].values,
+        "proj_games":    board["proj_games"].values,
+        "vor":           board["vor"].values,
+        "round_grade":   board["round_grade"].values,
+        "injury_risk":   board["injury_risk"].values if "injury_risk" in board.columns else [""] * n,
+        "is_rookie":     board["is_rookie"].fillna(False).values if "is_rookie" in board.columns else [False] * n,
+    })
+    out["espn_overall"] = out["player"].map(lambda nm: espn_map.get(_norm_name(nm)))
+    try:
+        BIG_BOARD_DIR.mkdir(parents=True, exist_ok=True)
+        out.to_parquet(BIG_BOARD_DIR / f"big_board_{scoring.replace(' ', '_')}.parquet", index=False)
+    except Exception:
+        pass
+
+
+_persist_big_board(all_preds, sel_scoring)
+
 if all_preds.empty:
     st.error("Not enough historical data to build predictions.")
     st.stop()
