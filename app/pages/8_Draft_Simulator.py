@@ -188,6 +188,10 @@ def _is_must_fill(slot: int) -> bool:
 _NEED_BONUS  = 30.0   # lift for a player who fills an open STARTING slot
 _FLEX_BONUS  = 14.0   # lift for filling the FLEX once core RB/WR/TE are set
 _STACK_PEN   = 45.0   # push down QB2 / TE2 / K2 taken before you need depth
+_K_PRIORITY  = 500.0  # once it's the kicker's turn, lift it above bench value
+                      # (K's VOR is deeply negative, so the need bonus alone
+                      # can't out-rank a high-VOR bench player) — beats any
+                      # realistic VOR gap but stays below _BLOCK
 _BLOCK       = 1e6    # effectively removes a player from consideration
 
 
@@ -210,8 +214,8 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
       • bonus for filling an open starting slot (or the FLEX once core is set)
       • penalty for stacking single-slot positions (QB2/TE2/K2) before you need
         bench depth
-      • kickers are held back until the final rounds (or once everything else is
-        set), matching how real drafts treat them
+      • the kicker (a required starter) is held back until it's the last starter
+        to fill or the draft is running tight, then surfaced like any other need
       • when remaining picks equal remaining starter slots, only starter-filling
         players are considered so you never miss a required position
     """
@@ -234,8 +238,16 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
             s += _FLEX_BONUS
         if pos in ("QB", "TE", "K") and c[pos] >= STARTER_TARGET[pos]:
             s -= _STACK_PEN
-        if pos == "K" and not (others_done or picks_left <= 2):
-            s -= _BLOCK               # don't draft a kicker early
+        # Kicker is a required starter: surface it once it's the last starter to
+        # fill (skill positions + FLEX all set) or the draft is running tight —
+        # the same "fill your starter" logic that promotes QB, just later.
+        k_time = others_done or picks_left <= max(2, st_["starters_left"])
+        if pos == "K" and core_need:
+            if not k_time:
+                s -= _BLOCK           # hold the kicker until it's its turn
+            else:
+                s += _K_PRIORITY      # its turn: rank ahead of bench depth
+                                      # (K's VOR is deeply negative, so lift it)
         if force and not core_need:
             s -= _BLOCK               # must fill a required starter now
         return s
