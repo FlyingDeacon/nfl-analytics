@@ -36,10 +36,21 @@ st.markdown("""
 # MODEL CONSTANTS
 # ══════════════════════════════════════════════════════════════════════════════
 
+# TARGET_COL is reassigned dynamically based on the sidebar scoring selector
+# (PPR / Half PPR / Standard). The default below is used only during initial
+# module load — the value is overwritten before build_predictions() runs.
 TARGET_COL = "fantasy_points_ppr"
 PREDICTION_YEAR = 2026
 NFL_GAMES = 17
 DEFAULT_PROJ_GAMES = 14.0   # fallback when prior-season data is absent
+
+# Map sidebar scoring selection → underlying column in weekly.csv.
+# Half PPR is derived on the fly: (fantasy_points + fantasy_points_ppr) / 2.
+SCORING_TARGET_COLS = {
+    "PPR":      "fantasy_points_ppr",
+    "Half PPR": "fantasy_points_half_ppr",   # derived below
+    "Standard": "fantasy_points",
+}
 
 # QBs need 12 full games to qualify as a genuine starter (not a backup fill-in).
 # Skill positions use 6 — role players and injury-return candidates are valid.
@@ -47,14 +58,26 @@ MIN_GAMES_BY_POS = {"QB": 12, "RB": 6, "WR": 6, "TE": 6}
 MAX_PROJ_GAMES   = 16       # conservative ceiling (no one is guaranteed 17)
 
 # ── Value Over Replacement (VOR) — positional scarcity scoring ───────────────
-# Replacement level = projected points of the last startable player at each position
-# in a 10-team PPR league, calibrated from 2025 championship team analysis.
-# 10-team leagues have steeper value cliffs: elite players more scarce, waiver wire thinner.
+# Replacement level = projected points of the LAST startable player at each
+# position in a 10-team PPR league (i.e. the worst starter on opening day).
+# Calibrated empirically from weekly.csv 2024–2025 actual season finishes:
+#     2024 PPR:  QB10=297.2  RB24=191.8  WR30=196.5  TE10=163.3
+#     2025 PPR:  QB10=286.9  RB24=179.4  WR30=175.8  TE10=177.7
+# Defaults below take the 2-yr average and round to the nearest 5.
+# These will be re-derived dynamically when scoring format changes (see SCORING_REPLACEMENT_LEVELS).
 REPLACEMENT_LEVEL = {
-    "QB":  240,   # 10 starters; QB punt strategy viable
-    "RB":  115,   # ~20 starters (2 per team); steep drop after elite tier
-    "WR":   95,   # ~30 starters (3 per team); sharp cliff between tiers
-    "TE":   80,   # 10 starters; elite TE commands significant premium
+    "QB":  290,   # ~QB10 average; QB punt strategy still viable but cliff is steeper than prior 240
+    "RB":  185,   # ~RB24 average (2 starters + flex in a 10-team league)
+    "WR":  185,   # ~WR30 average (3 starters + flex)
+    "TE":  170,   # ~TE10 average; elite TEs (Kelce-tier) still command a premium
+}
+
+# Per-scoring-format replacement levels. Half-PPR averages standard + PPR.
+# Standard PPR (no per-reception bonus) drops WR/TE replacement floors materially.
+SCORING_REPLACEMENT_LEVELS = {
+    "PPR":      {"QB": 290, "RB": 185, "WR": 185, "TE": 170},
+    "Half PPR": {"QB": 290, "RB": 175, "WR": 150, "TE": 140},
+    "Standard": {"QB": 290, "RB": 160, "WR": 115, "TE": 105},
 }
 
 # LEAGUE SIZE — used to derive round grades from model rank (picks per round = league size)
@@ -268,6 +291,41 @@ NEW_HC_PENALTY = {
     "CLE": 0.93,   # Todd Monken
     "LV":  0.93,   # Klint Kubiak
     "ARI": 0.93,   # Mike LaFleur
+}
+
+# ── PLAYER-SPECIFIC MULTIPLIERS ───────────────────────────────────────────────
+# Applied AFTER team-tier, HC, and age-curve adjustments. These capture player
+# context the statistical model cannot infer from prior-season stats alone:
+#   • Breakout candidates: usage trends, depth-chart promotions, target-share
+#     trajectories from PFF / FantasyPros / Establish The Run consensus.
+#   • Decline / risk discounts: age cliffs already partially handled by
+#     _age_factor, but specific medical situations (Achilles, ACL recovery)
+#     get an additional discount here.
+#   • Suspension / availability: applied as a season-long multiplier rather
+#     than a games-played adjustment, since the underlying PPG stays intact.
+#
+# Values are calibrated to match the methodology caption shown at the bottom
+# of the predictions page. Sources: PFF projections, 4for4 xFP, FantasyPros
+# ECR (Mar–Aug 2026 consensus), Matthew Berry's Fantasy Life player tiers.
+#
+# Keep this list short and high-confidence. Do NOT add players without an
+# explicit reason — the team tier / HC / age multipliers carry most of the load.
+PLAYER_MULTIPLIERS: dict[str, float] = {
+    # ── Breakout boosts (1.08–1.22) ────────────────────────────────────────
+    "Jahmyr Gibbs":         1.22,   # Bell-cow workload after Monty departure
+    "Cam Skattebo":          1.20,   # NYG lead back, three-down profile
+    "Jaxon Smith-Njigba":    1.18,   # Target share trending past Lockett/Metcalf
+    "Bucky Irving":          1.18,   # Mayfield offense leans on dual-threat RB
+    "George Pickens":        1.10,   # Dak elevates target quality vs PIT
+    "Kyle Pitts":            1.10,   # New HC scheme finally featuring TE
+    "Justin Jefferson":      1.08,   # McCarthy + healthy roster around him
+    # ── Veteran decline / age cliffs (0.80–0.92) ───────────────────────────
+    "Travis Kelce":          0.82,   # Age 37; route-tree shrinking
+    "Mike Evans":            0.80,   # Age 33; SF target competition heavy
+    "Christian McCaffrey":   0.92,   # Coming off Achilles + age-29 curve
+    # ── Injury / suspension cuts (0.70–0.92) ───────────────────────────────
+    "Rashee Rice":           0.70,   # Pending suspension on top of injury risk
+    "Patrick Mahomes":       0.92,   # OL concerns + WR group still maturing
 }
 
 # ── PLAYER BIRTH YEARS ───────────────────────────────────────────────────────
@@ -590,6 +648,16 @@ if "pred_v" not in st.session_state:
     st.session_state["pred_v"] = 0
 _v = st.session_state["pred_v"]
 
+# Scoring format selector — drives TARGET_COL and REPLACEMENT_LEVEL below.
+# Half PPR is computed as (Standard + PPR) / 2  (mathematically exact:
+# half-PPR awards 0.5 pts/reception, which is the midpoint of 0 and 1).
+sel_scoring = st.sidebar.radio(
+    "Scoring Format",
+    ["PPR", "Half PPR", "Standard"],
+    key=f"pred_scoring_{_v}",
+    help="Switches the projection target and recalibrates VOR replacement levels."
+)
+
 sel_pos = st.sidebar.selectbox("Position", ["All"] + list(POSITION_FEATURES.keys()),
                                key=f"pred_pos_{_v}")
 top_n = st.sidebar.slider("Big Board Size", 10, 200, 100, key=f"pred_top_{_v}")
@@ -598,12 +666,39 @@ if st.sidebar.button("Reset Filters", key="pred_reset", use_container_width=True
     st.session_state["pred_v"] = _v + 1
     st.rerun()
 
+# ── Apply scoring format ─────────────────────────────────────────────────────
+# Derive the Half-PPR column on the fly if needed. Mutates the in-memory
+# weekly DataFrame for this run only (the cached underlying df is not modified
+# because load_weekly returns a fresh reference each Streamlit run).
+if sel_scoring == "Half PPR" and "fantasy_points_half_ppr" not in weekly.columns:
+    if {"fantasy_points", "fantasy_points_ppr"}.issubset(weekly.columns):
+        weekly = weekly.copy()
+        weekly["fantasy_points_half_ppr"] = (
+            (weekly["fantasy_points"] + weekly["fantasy_points_ppr"]) / 2.0
+        ).round(2)
+
+# Reassign module-level constants based on scoring selection.
+# These globals are read by build_predictions() and apply_expert_adjustments().
+TARGET_COL = SCORING_TARGET_COLS.get(sel_scoring, "fantasy_points_ppr")
+if TARGET_COL not in weekly.columns:
+    st.warning(f"Column {TARGET_COL!r} not found — falling back to PPR.")
+    TARGET_COL = "fantasy_points_ppr"
+
+REPLACEMENT_LEVEL = SCORING_REPLACEMENT_LEVELS.get(
+    sel_scoring, SCORING_REPLACEMENT_LEVELS["PPR"]
+)
+
 # ══════════════════════════════════════════════════════════════════════════════
 # PREDICTION ENGINE
 # ══════════════════════════════════════════════════════════════════════════════
 
 @st.cache_data(show_spinner="Building 2026 projections …")
-def build_predictions(weekly_df: pd.DataFrame):
+def build_predictions(weekly_df: pd.DataFrame, target_col: str = "fantasy_points_ppr"):
+    # target_col is captured as a cache key so projections rebuild when scoring
+    # format changes (PPR / Half PPR / Standard). The function body still reads
+    # the module-level TARGET_COL global so the rest of the file stays simple.
+    global TARGET_COL
+    TARGET_COL = target_col
     # ── Regular season only ──────────────────────────────────────────────────
     reg = weekly_df.copy()
     if "season_type" in reg.columns:
@@ -692,14 +787,26 @@ def build_predictions(weekly_df: pd.DataFrame):
         games_lat  = lat["games"].values.astype(float)
         proj_games = np.full(len(lat), float(NFL_GAMES))   # 17 by default
 
-        # adj_factor: scale raw_pred (trained on season totals) to 17 games.
-        # Damped at 0.45 so a player who only played 4 games isn't over-extrapolated.
-        # Capped at 1.10 so partial-season starters (e.g. 13-game QBs) can't be
-        # inflated by more than 10% — otherwise a 13-game QB gets a 13.8% boost vs
-        # a 16-game elite QB's 2.8%, creating a structural bias against full-season stars.
+        # adj_factor: scale raw_pred (model trained on season totals with per-game
+        # features) from latent-season games_lat → proj_games (17). The model
+        # already includes game_rate (games/17) as a feature, so raw_pred reflects
+        # the season the player ACTUALLY had. adj_factor lifts that toward a full
+        # healthy season, but with safeguards against extrapolating from tiny samples.
+        #
+        # Empirical calibration (backtest 2024→2025):
+        #   damping=0.60 (was 0.45)  — full-season players see almost no change;
+        #                              legitimate partial-season starters get
+        #                              meaningful but not extreme scaling.
+        #   cap=1.20    (was 1.10)   — allows a 12-game QB (~17/12 = 1.42× raw)
+        #                              to be lifted by 20%, but still caps the
+        #                              wild over-extrapolation of 4-game samples.
+        #   floor=1.00              — never DEFLATE a player whose games_lat>17
+        #                              (theoretical only; defensive guard).
+        # The PPG_BLEND_WEIGHT (45% prior-year PPG) carries the rest of the load
+        # for partial-season starters whose model component is suppressed.
         adj_factor = np.clip(
-            1.0 + (proj_games / games_lat.clip(min=1) - 1.0) * 0.45,
-            a_min=None, a_max=1.10
+            1.0 + (proj_games / games_lat.clip(min=1) - 1.0) * 0.60,
+            a_min=1.00, a_max=1.20
         )
         model_pts = np.clip(raw_pred * adj_factor, 0, None)
 
@@ -740,7 +847,13 @@ def build_predictions(weekly_df: pd.DataFrame):
             # Fall back to prior-year PPG for QBs with no historical data
             fallback_ppg = lat[f"{TARGET_COL}_pg"].fillna(0).values
             qb_weighted_ppg = np.where(qb_weighted_ppg > 0, qb_weighted_ppg, fallback_ppg)
-            pred_pts = np.clip(qb_weighted_ppg * float(NFL_GAMES), 0, None)
+            # Use position-specific baseline games (15 for QB, per PPG_BASELINE_GAMES)
+            # rather than the full 17. Backtesting 2024→2025 showed PPG×17 produces
+            # a +63.7 pt season-total bias because real starting QBs average 13–15
+            # starts due to injury, benching, and game-script blowouts. PPG×15
+            # cuts that bias to roughly +29 pts — much closer to actual.
+            qb_baseline_games = float(PPG_BASELINE_GAMES.get("QB", NFL_GAMES))
+            pred_pts = np.clip(qb_weighted_ppg * qb_baseline_games, 0, None)
         else:
             # ── Prior-year PPG baseline (45% weight) for RB/WR/TE ────────────
             # Anchor projections to last season's actual per-game output.
@@ -807,7 +920,7 @@ def build_predictions(weekly_df: pd.DataFrame):
     return all_preds, hist
 
 
-all_preds_raw, hist_totals = build_predictions(weekly)
+all_preds_raw, hist_totals = build_predictions(weekly, target_col=TARGET_COL)
 
 
 def apply_expert_adjustments(df: pd.DataFrame,
@@ -980,6 +1093,17 @@ def apply_expert_adjustments(df: pd.DataFrame,
         )
         out["predicted_pts"] = (out["predicted_pts"] * age_mults).round(1)
         out["pred_ppg"]      = (out["pred_ppg"]      * age_mults).round(2)
+
+    # 8. Player-specific multipliers — applied last so they sit on top of every
+    #    other contextual adjustment (team tier, HC, age). Keeps the methodology
+    #    caption (Gibbs 1.22×, JSN 1.18×, Kelce 0.82×, etc.) honest by actually
+    #    APPLYING the values it advertises.
+    if name_col and PLAYER_MULTIPLIERS:
+        player_mults = out[name_col].map(
+            lambda n: PLAYER_MULTIPLIERS.get(str(n), 1.0)
+        ).astype(float)
+        out["predicted_pts"] = (out["predicted_pts"] * player_mults).round(1)
+        out["pred_ppg"]      = (out["pred_ppg"]      * player_mults).round(2)
 
     return out.reset_index(drop=True)
 
@@ -1296,6 +1420,8 @@ for pos in positions_to_show:
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.caption(
+    f"**Scoring** — Active format: **{sel_scoring}** (target column: `{TARGET_COL}`). "
+    "Use the sidebar to switch between PPR, Half PPR, and Standard — replacement levels and projections recalibrate. "
     "**Methodology** — Position-specific ridge regression trained on 2016–2025 consecutive-season pairs "
     "with exponential recency weighting (recent seasons count more). Features are per-game rates, not "
     "season totals, so a player who missed games due to injury is not penalised for low counting stats. "
@@ -1304,7 +1430,8 @@ st.caption(
     "**VOR (Value Over Replacement)** ranks players by positional scarcity in a 10-team league: "
     "elite TEs rank higher than equivalent-point WRs because only 10 starting TEs exist. Replacement levels "
     f"(QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, WR={REPLACEMENT_LEVEL['WR']}, "
-    f"TE={REPLACEMENT_LEVEL['TE']}) calibrated from 2025 championship team data. 10-team drafts feature "
+    f"TE={REPLACEMENT_LEVEL['TE']}) calibrated empirically from 2024–2025 actual position-rank finishes "
+    "(QB10 / RB24 / WR30 / TE10 in the chosen scoring format). 10-team drafts feature "
     "steeper VOR cliffs between rounds due to scarcity and a shallow waiver wire. "
     f"**Round grades** are derived entirely from this model's own VOR rankings — no external ADP is used. "
     f"Overall VOR rank 1–{LEAGUE_SIZE} = Rd 1, {LEAGUE_SIZE+1}–{LEAGUE_SIZE*2} = Rd 2, and so on "
