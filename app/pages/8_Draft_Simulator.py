@@ -348,8 +348,11 @@ with left:
     pos_filter = fcol1.selectbox("Position", ["All", *POSITIONS], key="ds_pos_filter")
     view = avail if pos_filter == "All" else avail[avail["pos"] == pos_filter]
 
-    show = view.head(50)[["my_rank", "player", "pos", "team", "vor",
-                          "predicted_pts", "proj_games", "espn_overall", "round_grade"]].copy()
+    # Show the full available board (scrollable). Capping at the top 50 by VOR
+    # hid every kicker, since their VOR ranks them ~150+ — use the "K" position
+    # filter (or scroll) to reach them.
+    show = view[["my_rank", "player", "pos", "team", "vor",
+                 "predicted_pts", "proj_games", "espn_overall", "round_grade"]].copy()
     show.columns = ["My Rank", "Player", "Pos", "Team", "VOR",
                     "Proj Pts", "Proj G", "ESPN Rank", "Grade"]
     st.dataframe(show, hide_index=True, use_container_width=True, height=430)
