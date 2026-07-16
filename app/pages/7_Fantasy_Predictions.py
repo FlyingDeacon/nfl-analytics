@@ -585,6 +585,20 @@ PROJ_GAMES_OVERRIDES = {
 
 ROOKIE_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "rookies_2026.csv"
 
+# ESPN 2026 positional rankings (Mike Clay PPR). Displayed on the big board next
+# to the model's own overall rank so users can compare the model vs consensus.
+# Matched to board players by normalized name so suffix / punctuation differences
+# (Jr., III, "A.J." vs "AJ") don't break the join.
+ESPN_RANKS_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "espn_ranks_2026.csv"
+
+_NAME_SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
+
+
+def _norm_name(n: str) -> str:
+    """Lowercase, strip punctuation and generational suffixes for name matching."""
+    n = str(n).lower().replace(".", "").replace(",", "").strip()
+    return " ".join(p for p in n.split() if p not in _NAME_SUFFIXES)
+
 # Depth-chart role → opportunity multiplier and projected games. QBs that sit
 # behind a veteran ("redshirt") accrue almost no fantasy value, hence the steep
 # cut; skill "backup" players still see rotational / injury-fill snaps.
@@ -761,6 +775,15 @@ def load_rookies() -> pd.DataFrame:
     if not ROOKIE_CSV.exists():
         return pd.DataFrame()
     return pd.read_csv(ROOKIE_CSV)
+
+
+@st.cache_data(show_spinner=False)
+def load_espn_ranks() -> dict:
+    """Map normalized player name → ESPN positional rank (e.g. 'RB6')."""
+    if not ESPN_RANKS_CSV.exists():
+        return {}
+    df = pd.read_csv(ESPN_RANKS_CSV)
+    return {_norm_name(r["player"]): str(r["espn"]) for _, r in df.iterrows()}
 
 
 @st.cache_data(show_spinner=False)
@@ -1087,6 +1110,10 @@ preds["change_pct"]      = ((preds["change"] / preds["last_season_pts"].replace(
 _rookie_col = preds["is_rookie"] if "is_rookie" in preds.columns else pd.Series(False, index=preds.index)
 preds["rookie_tag"] = _rookie_col.fillna(False).map(lambda x: "R" if bool(x) else "")
 
+# ESPN positional rank (consensus reference shown beside the model's own rank).
+_espn_map = load_espn_ranks()
+preds["espn_rank"] = preds[name_col].map(lambda n: _espn_map.get(_norm_name(n), ""))
+
 if preds.empty:
     st.info("No predictions available for the selected position.")
     st.stop()
@@ -1139,7 +1166,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 st.markdown(f"### 📋 2026 Fantasy Big Board {pos_label_str}")
 
-board_cols = ["Rank", name_col, "rookie_tag"]
+board_cols = ["Rank", "espn_rank", name_col, "rookie_tag"]
 if team_col: board_cols.append(team_col)
 if pos_col:  board_cols.append(pos_col)
 board_cols += ["injury_risk", "predicted_pts", "vor", "round_grade", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games", "last_season_ppg"]
@@ -1162,6 +1189,7 @@ board_cols = [c for c in board_cols if c in preds.columns]
 
 rename_map = {
     name_col: "Player",
+    "espn_rank": "ESPN",
     "rookie_tag": "Rk",
     "injury_risk": "Injury Risk",
     "predicted_pts": "2026 Proj",
@@ -1193,6 +1221,11 @@ for c in disp.select_dtypes("float").columns:
 # Add logo URLs for team column if it exists
 teams_df = load_teams()
 column_config_dict = {
+    "ESPN": st.column_config.TextColumn(
+                      label="ESPN", width="small",
+                      help="ESPN's 2026 positional ranking (Mike Clay, PPR) — e.g. RB6, WR22. "
+                           "Shown next to this model's own overall rank for a quick consensus "
+                           "comparison. Blank = outside ESPN's ranked pool."),
     "Rk": st.column_config.TextColumn(
                       label="Rk", width="small",
                       help="R = 2026 rookie. Rookies have no NFL history, so they are "
