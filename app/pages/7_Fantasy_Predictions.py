@@ -1682,3 +1682,139 @@ if chart_players:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.info("Select at least one player to see their trajectory.")
+
+st.markdown("---")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# AI ASSISTANT — chat over the live big board + model methodology
+# ══════════════════════════════════════════════════════════════════════════════
+
+st.markdown("### 🤖 Ask the Board")
+st.caption(
+    "Ask about any player, tier, or the logic behind a projection — the assistant "
+    "sees the full big board (rankings, VOR, round grades, ESPN rank) plus this model's "
+    "methodology for the active scoring format."
+)
+
+
+def _board_context(board: pd.DataFrame) -> str:
+    """Serialize the top-200 VOR board into a compact table the model can reason over."""
+    espn_map = load_espn_ranks()
+    ranked = board.sort_values("vor", ascending=False).head(200).reset_index(drop=True)
+    lines = [
+        "rank|player|pos|team|proj_pts|proj_ppg|proj_games|vor|round_grade|espn_overall|rookie|injury_risk"
+    ]
+    for i, row in ranked.iterrows():
+        espn = espn_map.get(_norm_name(str(row[name_col])))
+        lines.append("|".join([
+            str(i + 1),
+            str(row[name_col]),
+            str(row[pos_col]),
+            str(row[team_col]) if team_col else "",
+            f"{row['predicted_pts']:.1f}",
+            f"{row['pred_ppg']:.2f}",
+            f"{row['proj_games']:.1f}",
+            f"{row['vor']:.1f}",
+            str(row["round_grade"]),
+            str(int(espn)) if espn is not None and pd.notna(espn) else "",
+            "R" if bool(row.get("is_rookie", False)) else "",
+            str(row["injury_risk"]) if "injury_risk" in board.columns else "",
+        ]))
+    return "\n".join(lines)
+
+
+_ASSISTANT_SYSTEM = f"""You are the analytics assistant embedded in a fantasy football \
+projection app. Answer questions about the {sel_scoring} big board below and the model \
+that produced it. Be concise, specific, and cite numbers straight from the data (model \
+rank, VOR, projected points/PPG, round grade, ESPN overall rank). When a player's model \
+rank diverges from their ESPN rank, explain the likely driver from the methodology.
+
+MODEL METHODOLOGY:
+- Position-specific ridge regression trained on 2016-2025 consecutive-season pairs with \
+exponential recency weighting (recent seasons weighted more). Features are per-game rates, \
+not season totals, so injury-shortened seasons aren't penalized.
+- Projected 2026 games are player-specific: a recency-weighted average of recent-season \
+games regressed toward the positional mean. Points = projected per-game rate x expected games.
+- VOR (Value Over Replacement) ranks players by positional scarcity in a {LEAGUE_SIZE}-team \
+league. Replacement levels: QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, \
+WR={REPLACEMENT_LEVEL['WR']}, TE={REPLACEMENT_LEVEL['TE']}, K={REPLACEMENT_LEVEL['K']}. \
+The K replacement level is deliberately inflated so kickers carry strongly negative VOR and \
+sort into the final rounds.
+- Round grades come only from this model's own VOR ranking (no external ADP): overall VOR \
+rank 1-{LEAGUE_SIZE} = Rd 1, and so on.
+- Expert overlays are applied post-model: team-change corrections, injury/age-cliff discounts, \
+force-includes, and a short list of high-confidence breakout multipliers.
+- Rookies (marked R) have no NFL history, so they are projected from draft capital scaled by \
+depth-chart role, then run through the same team/HC/age overlays.
+- Kickers are curated projections (nflverse weekly data excludes FG/XP), so they always land \
+in the last rounds by design.
+
+Rules: Only use the data and methodology above — do not invent stats you can't derive from it. \
+If asked about a player not in the top-200 board, say they fall outside it and explain what that \
+implies. Keep answers under ~200 words unless asked for depth. This is analysis for a practice \
+draft, not betting advice.
+
+BIG BOARD ({sel_scoring}, top 200 by VOR):
+{_board_context(all_preds)}"""
+
+_CHAT_KEY = "fp_assistant_messages"
+if _CHAT_KEY not in st.session_state:
+    st.session_state[_CHAT_KEY] = []
+
+
+def _assistant_available():
+    """Return an Anthropic client if the SDK and an API key are present, else a reason string."""
+    import os
+    try:
+        import anthropic
+    except ImportError:
+        return None, "The `anthropic` package isn't installed. Run `pip install anthropic`."
+    key = None
+    try:
+        key = st.secrets.get("ANTHROPIC_API_KEY")
+    except Exception:
+        key = None
+    key = key or os.environ.get("ANTHROPIC_API_KEY")
+    if not key:
+        return None, ("No API key found. Add `ANTHROPIC_API_KEY` to `.streamlit/secrets.toml` "
+                      "or your environment, then reload.")
+    return anthropic.Anthropic(api_key=key), None
+
+
+for _msg in st.session_state[_CHAT_KEY]:
+    with st.chat_message(_msg["role"]):
+        st.markdown(_msg["content"])
+
+_prompt = st.chat_input("e.g. Why is George Pickens ranked above his ESPN rank?")
+if _prompt:
+    st.session_state[_CHAT_KEY].append({"role": "user", "content": _prompt})
+    with st.chat_message("user"):
+        st.markdown(_prompt)
+
+    _client, _err = _assistant_available()
+    with st.chat_message("assistant"):
+        if _client is None:
+            st.warning(_err)
+            st.session_state[_CHAT_KEY].append({"role": "assistant", "content": _err})
+        else:
+            def _stream_reply():
+                with _client.messages.stream(
+                    model="claude-opus-4-6",
+                    max_tokens=1500,
+                    system=[{
+                        "type": "text",
+                        "text": _ASSISTANT_SYSTEM,
+                        "cache_control": {"type": "ephemeral"},
+                    }],
+                    messages=st.session_state[_CHAT_KEY],
+                ) as stream:
+                    for _text in stream.text_stream:
+                        yield _text
+
+            try:
+                _reply = st.write_stream(_stream_reply())
+                st.session_state[_CHAT_KEY].append({"role": "assistant", "content": _reply})
+            except Exception as exc:  # surface API/network errors inline instead of crashing the page
+                _msg = f"Assistant error: {exc}"
+                st.error(_msg)
+                st.session_state[_CHAT_KEY].append({"role": "assistant", "content": _msg})

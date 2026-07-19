@@ -13,3 +13,4 @@ uvicorn
 jupyter
 python-dotenv
 nfl_data_py
+anthropic
