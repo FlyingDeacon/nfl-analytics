@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .DS_Store
 .env
+.streamlit/secrets.toml
 
 # Generated big-board snapshots (built on demand for the Draft Simulator)
 data/derived/big_board_*.parquet
