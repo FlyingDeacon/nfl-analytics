@@ -188,6 +188,7 @@ hr {
     border: 1px solid var(--glass-border);
     border-radius: 16px;
     padding: 1.3rem 1.4rem;
+    margin: 6px 0;
     text-align: center;
     box-shadow: var(--shadow-md);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
