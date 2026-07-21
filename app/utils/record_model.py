@@ -53,8 +53,10 @@ GAMES = 17
 _SQRT2 = np.sqrt(2.0)
 
 
-def _norm_cdf(x: np.ndarray) -> np.ndarray:
-    return np.vectorize(lambda v: 0.5 * (1.0 + erf(v / _SQRT2)))(x)
+def _norm_cdf(x) -> np.ndarray:
+    arr = np.asarray(x, dtype=np.float64)
+    flat = [0.5 * (1.0 + erf(float(v) / _SQRT2)) for v in arr.ravel()]
+    return np.array(flat, dtype=np.float64).reshape(arr.shape)
 
 
 # ── Player value ─────────────────────────────────────────────────────────────
@@ -234,25 +236,28 @@ def project_season(ratings, depth, divisions, schedule, weekly,
 
     team_list = power["team"].tolist()
     idx = {t: i for i, t in enumerate(team_list)}
-    n_teams = len(team_list)
+    n_teams = int(len(team_list))
+    n_sims = int(n_sims)
 
-    home_i = games["home_team"].map(idx).to_numpy()
-    away_i = games["away_team"].map(idx).to_numpy()
-    p_home = games["p_home"].to_numpy()
+    home_i = np.asarray(games["home_team"].map(idx).to_numpy(), dtype=np.int64)
+    away_i = np.asarray(games["away_team"].map(idx).to_numpy(), dtype=np.int64)
+    p_home = np.asarray(games["p_home"].to_numpy(), dtype=np.float64)
+    n_games = int(len(p_home))
 
-    exp_wins = np.zeros(n_teams)
+    exp_wins = np.zeros(n_teams, dtype=np.float64)
     np.add.at(exp_wins, home_i, p_home)
     np.add.at(exp_wins, away_i, 1.0 - p_home)
 
-    rng = np.random.default_rng(seed)
-    n_games = len(games)
-    home_win = rng.random((n_sims, n_games)) < p_home
-
-    wins = np.zeros((n_sims, n_teams), dtype=np.int16)
+    rng = np.random.default_rng(int(seed))
+    wins = np.zeros((n_sims, n_teams), dtype=np.int32)
     for g in range(n_games):
-        hw = home_win[:, g]
-        wins[hw, home_i[g]] += 1
-        wins[~hw, away_i[g]] += 1
+        # Scalar-size RNG per game keeps memory low and sidesteps any
+        # size-tuple dtype quirks in newer numpy Generator.random.
+        hw = rng.random(n_sims) < float(p_home[g])
+        hi = int(home_i[g])
+        ai = int(away_i[g])
+        wins[hw, hi] += 1
+        wins[~hw, ai] += 1
 
     noise = rng.random((n_sims, n_teams)) * 1e-3
     keyed = wins + noise
@@ -288,7 +293,8 @@ def project_season(ratings, depth, divisions, schedule, weekly,
         for k, t in enumerate(members):
             playoff[idx[t]] = in_playoffs[:, k].mean()
 
-    win_dist = [np.bincount(wins[:, i], minlength=GAMES + 1) / n_sims
+    win_dist = [np.bincount(np.asarray(wins[:, i], dtype=np.int64),
+                            minlength=GAMES + 1) / n_sims
                 for i in range(n_teams)]
 
     table = power[["team", "division", "conference", "power", "roster_index",
