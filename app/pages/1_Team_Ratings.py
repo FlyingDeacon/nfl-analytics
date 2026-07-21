@@ -72,7 +72,7 @@ if st.sidebar.button("Reset Filters", key="tr_reset", use_container_width=True):
     st.rerun()
 
 # ── Page action buttons ──────────────────────────────────────────────────────
-btn_col1, btn_col2 = st.columns([0.5, 3.5])
+btn_col1, btn_col2, _ = st.columns([1, 1, 2])
 with btn_col1:
     profile_team_for_button = (
         selected_team if selected_team != "All Teams"
@@ -81,6 +81,9 @@ with btn_col1:
     if st.button("🏟️ View Team Profile", key="goto_profile", use_container_width=True):
         st.session_state["profile_team"] = profile_team_for_button
         st.switch_page("pages/8_Team_Profile.py")
+with btn_col2:
+    if st.button("🔮 2026 Season Projections", key="goto_projections", use_container_width=True):
+        st.switch_page("pages/9_Record_Predictions.py")
 
 # ── Apply filters ────────────────────────────────────────────────────────────
 view_df = full_df.copy()

@@ -28,8 +28,8 @@ st.markdown("""
 <div class="nfl-page-header">
     <div class="icon">🏟️</div>
     <div>
-        <div class="title">2025 Team Profile</div>
-        <div class="subtitle">Roster · Depth chart · Recent performance</div>
+        <div class="title">2026 Team Profile</div>
+        <div class="subtitle">2026 roster & depth chart · 2025 results</div>
     </div>
 </div>
 <div class="gold-rule"></div>
@@ -90,7 +90,7 @@ st.markdown(f"""
     {logo_html}
     <div>
         <div class="title">{team_name}</div>
-        <div class="subtitle">{team_div} &nbsp;·&nbsp; {sel_season} Season Profile</div>
+        <div class="subtitle">{team_div} &nbsp;·&nbsp; 2026 roster · {sel_season} results</div>
     </div>
 </div>
 <div class="gold-rule"></div>

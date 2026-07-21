@@ -20,6 +20,7 @@ def render_sidebar_nav(current_page: str = ""):
     # ── Page links ────────────────────────────────────────────────────────────
     st.sidebar.page_link("main.py",                    label="Home",             icon="🏠")
     st.sidebar.page_link("pages/1_Team_Ratings.py",    label="Team Ratings",     icon="📊")
+    st.sidebar.page_link("pages/9_Record_Predictions.py", label="Season Projections", icon="🔮")
     st.sidebar.page_link("pages/2_Player_Stats.py",    label="Player Stats",     icon="🏃")
     st.sidebar.page_link("pages/3_Schedule.py",        label="Schedule",         icon="📅")
     st.sidebar.page_link("pages/4_Historical.py",      label="Historical Trends",icon="📈")
