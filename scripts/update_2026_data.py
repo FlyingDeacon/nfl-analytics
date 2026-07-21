@@ -131,12 +131,11 @@ def update_depth_chart() -> None:
         ).merge(by_name, on="_key", how="left")
         out.loc[miss, "GP"] = fill["GP"].values
         out.loc[miss, "fantasy_pts"] = fill["fantasy_pts"].values
-    out = out.drop(columns=["gsis_id"])
     out["GP"] = out["GP"].fillna(0).astype(int)
     out["fantasy_pts"] = out["fantasy_pts"].fillna(0.0)
 
     out = out[["team", "season", "position", "depth_order", "player_name",
-               "jersey_number", "side", "GP", "fantasy_pts"]]
+               "gsis_id", "jersey_number", "side", "GP", "fantasy_pts"]]
     out = out.sort_values(["team", "side", "position", "depth_order"]).reset_index(drop=True)
     out.to_csv(RAW / "depth_charts.csv", index=False)
     print(f"depth_charts.csv: rebuilt for {SEASON} — {len(out)} rows, "

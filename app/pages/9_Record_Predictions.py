@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
 from utils.data_loader import (
-    load_ratings, load_teams, load_schedules, load_divisions,
+    load_ratings, load_teams, load_schedules, load_divisions, load_weekly,
     get_logo, get_base_dir, _file_mtime,
 )
 from utils.record_model import project_season
@@ -39,20 +39,22 @@ ratings   = load_ratings(_mtime=_file_mtime(_base / "data/processed/team_ratings
 teams_df  = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
 schedules = load_schedules(_mtime=_file_mtime(_base / "data/raw/schedules.csv"))
 divisions = load_divisions(_mtime=_file_mtime(_base / "data/raw/nfl_divisions.csv"))
-depth = pd.read_csv(_base / "data/raw/depth_charts.csv")
+weekly    = load_weekly(_mtime=_file_mtime(_base / "data/raw/weekly.csv"))
 
 
 @st.cache_data(show_spinner="Simulating the 2026 season…")
-def _run(_r_m, _d_m, _s_m):
+def _run(_r_m, _d_m, _s_m, _w_m):
     depth_df = pd.read_csv(_base / "data/raw/depth_charts.csv")
-    return project_season(ratings, depth_df, divisions, schedules)
+    return project_season(ratings, depth_df, divisions, schedules, weekly)
 
 
-table, games = _run(
+table, games, changes = _run(
     _file_mtime(_base / "data/processed/team_ratings.csv"),
     _file_mtime(_base / "data/raw/depth_charts.csv"),
     _file_mtime(_base / "data/raw/schedules.csv"),
+    _file_mtime(_base / "data/raw/weekly.csv"),
 )
+_cal = table.attrs.get("calibration", {})
 
 ORD = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
 
@@ -77,6 +79,8 @@ disp = pd.DataFrame({
     "Division": league["division"],
     "Proj Record": [_rec(w) for w in league["proj_wins"]],
     "Proj Wins": league["proj_wins"].round(1),
+    "Proj Off PPG": league["proj_off_ppg"].round(1),
+    "Off Δ vs '25": league["off_change"].round(1),
     "Power": league["power"].round(1),
     "Make Playoffs": league["playoff_pct"].round(0),
     "Win Division": league["div_title_pct"].round(0),
@@ -89,6 +93,10 @@ st.dataframe(
     column_config={
         "Logo": st.column_config.ImageColumn("", width="small"),
         "Proj Wins": st.column_config.NumberColumn("Proj Wins", format="%.1f"),
+        "Proj Off PPG": st.column_config.NumberColumn("Proj Off PPG", format="%.1f",
+                    help="Offense projected from the 2026 roster (calibrated to 2025)"),
+        "Off Δ vs '25": st.column_config.NumberColumn("Off Δ vs '25", format="%+.1f",
+                    help="Predicted offensive PPG shift from offseason roster changes"),
         "Power": st.column_config.NumberColumn("Power", format="%+.1f",
                     help="Projected point margin vs a league-average team"),
         "Make Playoffs": st.column_config.NumberColumn("Playoffs %", format="%d%%"),
@@ -97,7 +105,10 @@ st.dataframe(
                     help="Average finishing place within the division across simulations"),
     },
 )
-st.caption("Sorted by projected wins · 20,000 simulated seasons")
+st.caption(
+    f"Sorted by projected wins · 20,000 simulated seasons · "
+    f"offense calibrated to 2025 (R² = {_cal.get('r2', 0):.2f})"
+)
 st.markdown("---")
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -162,6 +173,43 @@ for col, label, val, sub in cards:
         """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+
+# ── Offseason roster changes driving the offensive projection ────────────────
+ch = changes.get(sel, {"adds": [], "losses": [], "rookies": []})
+delta = trow["off_change"]
+arrow = "▲" if delta >= 0 else "▼"
+dcolor = "#16a34a" if delta >= 0 else "#dc2626"
+st.markdown(
+    f"#### 🔄 Offseason Impact &nbsp; "
+    f"<span style='color:{dcolor};font-weight:700;'>{arrow} {delta:+.1f} projected off. PPG</span>",
+    unsafe_allow_html=True,
+)
+st.caption("Predicted offensive PPG shift from this team's acquisitions and losses vs 2025.")
+
+ac1, ac2, ac3 = st.columns(3)
+with ac1:
+    st.markdown("**➕ Key Additions**")
+    if ch["adds"]:
+        for a in ch["adds"][:5]:
+            st.markdown(f"- {a['player']} ({a['pos']}) — from {a['from']} · {a['ppr']:.0f} PPR")
+    else:
+        st.caption("None of note.")
+with ac2:
+    st.markdown("**➖ Key Departures**")
+    if ch["losses"]:
+        for l in ch["losses"][:5]:
+            st.markdown(f"- {l['player']} ({l['pos']}) — {l['ppr']:.0f} PPR in '25")
+    else:
+        st.caption("None of note.")
+with ac3:
+    st.markdown("**🌟 Rookie / New Starters**")
+    if ch["rookies"]:
+        for r in ch["rookies"][:5]:
+            st.markdown(f"- {r['player']} ({r['pos']})")
+    else:
+        st.caption("None projected.")
+
+st.markdown("<br>", unsafe_allow_html=True)
 left, right = st.columns([1, 1])
 
 # ── Win-total distribution ────────────────────────────────────────────────────
@@ -207,21 +255,22 @@ with right:
 # METHODOLOGY
 # ══════════════════════════════════════════════════════════════════════════════
 with st.expander("ℹ️ How these projections are built"):
-    st.markdown("""
-Each team gets a **power rating** (projected point margin vs a league-average
-opponent) that blends two signals:
+    st.markdown(f"""
+**Offense is projected from the actual roster.** Every skill player gets a
+regressed 2025 per-game PPR value (small samples are pulled toward positional
+replacement). Each team's projected starters — read straight from the
+**updated post-offseason depth chart**, so **acquisitions and losses are baked
+in** — are combined into an offensive "roster index". A regression fit on 2025
+(actual offensive PPG vs that same index, R² = {_cal.get('r2', 0):.2f}) maps the
+index to a **predicted 2026 offensive PPG**. The "Off Δ" column is how much that
+prediction shifts purely from this offseason's roster turnover.
 
-- **Prior-season strength** — 2025 net points per game.
-- **2026 roster talent** — the weighted 2025 PPR production of each team's
-  projected offensive starters, pulled from the **updated post-offseason depth
-  chart**, so trades, signings and rookies move the needle.
+**Defense** is the 2025 points-allowed regressed toward the league mean
+(player-level data here is offense-only).
 
-For every 2026 scheduled game the win probability comes from the rating gap plus
-home-field advantage, run through a normal single-game margin model. The full
-272-game slate is then **simulated 20,000 times** to produce win-total
-distributions, division-title odds, playoff odds and expected finish
-(4 division winners + 3 wild cards per conference, ties broken at random).
-
-*Limitations:* defense enters only through prior-year net margin (player-level
-data here is offense-only), and rookie starters carry no prior production.
+A team's **power rating** is its predicted net PPG centered on the league. For
+every 2026 game, win probability comes from the rating gap plus home-field
+advantage through a normal single-game margin model, and the 272-game slate is
+**simulated 20,000 times** for win totals, division-title odds, playoff odds and
+expected finish (4 division winners + 3 wild cards per conference, ties random).
     """)
