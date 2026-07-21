@@ -1,15 +1,10 @@
-pandas
-numpy
-scipy
-plotly
-requests
-lxml
-sqlalchemy
-psycopg2-binary
-scikit-learn
+# Runtime dependencies for the Streamlit Cloud deploy.
+# The app (main.py, pages/, model/) imports only these third-party packages.
+# Heavy/build-fragile extras used by offline scripts (nfl_data_py, scipy,
+# scikit-learn, psycopg2, etc.) are intentionally excluded so the cloud build
+# stays reproducible on modern Python — install them locally when running
+# the data/back-test scripts.
 streamlit>=1.35.0
-fastapi
-uvicorn
-jupyter
-python-dotenv
-nfl_data_py
+pandas>=2.0
+numpy>=1.26
+plotly>=5.0
