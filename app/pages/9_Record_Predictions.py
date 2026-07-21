@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
 from utils.data_loader import (
     load_ratings, load_teams, load_schedules, load_divisions, load_weekly,
-    get_logo, get_base_dir, _file_mtime,
+    load_weekly_def, get_logo, get_base_dir, _file_mtime,
 )
 from utils.record_model import project_season
 from utils.nav import render_sidebar_nav
@@ -40,12 +40,13 @@ teams_df  = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
 schedules = load_schedules(_mtime=_file_mtime(_base / "data/raw/schedules.csv"))
 divisions = load_divisions(_mtime=_file_mtime(_base / "data/raw/nfl_divisions.csv"))
 weekly    = load_weekly(_mtime=_file_mtime(_base / "data/raw/weekly.csv"))
+weekly_def = load_weekly_def(_mtime=_file_mtime(_base / "data/raw/weekly_def.csv"))
 
 
 @st.cache_data(show_spinner="Simulating the 2026 season…")
-def _run(_r_m, _d_m, _s_m, _w_m):
+def _run(_r_m, _d_m, _s_m, _w_m, _wd_m):
     depth_df = pd.read_csv(_base / "data/raw/depth_charts.csv")
-    return project_season(ratings, depth_df, divisions, schedules, weekly)
+    return project_season(ratings, depth_df, divisions, schedules, weekly, weekly_def)
 
 
 table, games, changes = _run(
@@ -53,8 +54,10 @@ table, games, changes = _run(
     _file_mtime(_base / "data/raw/depth_charts.csv"),
     _file_mtime(_base / "data/raw/schedules.csv"),
     _file_mtime(_base / "data/raw/weekly.csv"),
+    _file_mtime(_base / "data/raw/weekly_def.csv"),
 )
 _cal = table.attrs.get("calibration", {})
+_def_cal = table.attrs.get("def_calibration", {})
 
 ORD = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
 
@@ -81,6 +84,8 @@ disp = pd.DataFrame({
     "Proj Wins": league["proj_wins"].round(1),
     "Proj Off PPG": league["proj_off_ppg"].round(1),
     "Off Δ vs '25": league["off_change"].round(1),
+    "Proj Def PPG": league["proj_def_ppg"].round(1),
+    "Def Δ vs '25": league["def_change"].round(1),
     "Power": league["power"].round(1),
     "Make Playoffs": league["playoff_pct"].round(0),
     "Win Division": league["div_title_pct"].round(0),
@@ -97,6 +102,10 @@ st.dataframe(
                     help="Offense projected from the 2026 roster (calibrated to 2025)"),
         "Off Δ vs '25": st.column_config.NumberColumn("Off Δ vs '25", format="%+.1f",
                     help="Predicted offensive PPG shift from offseason roster changes"),
+        "Proj Def PPG": st.column_config.NumberColumn("Proj Def PPG", format="%.1f",
+                    help="Projected points allowed per game (2025 results adjusted for roster turnover; lower = better)"),
+        "Def Δ vs '25": st.column_config.NumberColumn("Def Δ vs '25", format="%+.1f",
+                    help="Points-allowed shift from defensive roster changes (negative = improved defense)"),
         "Power": st.column_config.NumberColumn("Power", format="%+.1f",
                     help="Projected point margin vs a league-average team"),
         "Make Playoffs": st.column_config.NumberColumn("Playoffs %", format="%d%%"),
@@ -107,7 +116,8 @@ st.dataframe(
 )
 st.caption(
     f"Sorted by projected wins · 20,000 simulated seasons · "
-    f"offense calibrated to 2025 (R² = {_cal.get('r2', 0):.2f})"
+    f"offense calibrated to 2025 (R² = {_cal.get('r2', 0):.2f}) · "
+    f"defense = 2025 points allowed adjusted for roster turnover"
 )
 st.markdown("---")
 
@@ -174,37 +184,70 @@ for col, label, val, sub in cards:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Offseason roster changes driving the offensive projection ────────────────
-ch = changes.get(sel, {"adds": [], "losses": [], "rookies": []})
-delta = trow["off_change"]
-arrow = "▲" if delta >= 0 else "▼"
-dcolor = "#16a34a" if delta >= 0 else "#dc2626"
+# ── Offseason roster changes driving the projection ──────────────────────────
+_empty = {"adds": [], "losses": [], "rookies": []}
+ch = changes.get(sel, {"off": _empty, "def": _empty})
+off_ch, def_ch = ch.get("off", _empty), ch.get("def", _empty)
+
+o_delta = trow["off_change"]           # + = more points scored (good)
+d_delta = trow["def_change"]           # + = more points allowed (bad)
+o_arrow = "▲" if o_delta >= 0 else "▼"
+o_color = "#16a34a" if o_delta >= 0 else "#dc2626"
+d_arrow = "▼" if d_delta <= 0 else "▲"  # fewer points allowed = green
+d_color = "#16a34a" if d_delta <= 0 else "#dc2626"
 st.markdown(
     f"#### 🔄 Offseason Impact &nbsp; "
-    f"<span style='color:{dcolor};font-weight:700;'>{arrow} {delta:+.1f} projected off. PPG</span>",
+    f"<span style='color:{o_color};font-weight:700;'>{o_arrow} {o_delta:+.1f} off. PPG</span> &nbsp;·&nbsp; "
+    f"<span style='color:{d_color};font-weight:700;'>{d_arrow} {d_delta:+.1f} PPG allowed</span>",
     unsafe_allow_html=True,
 )
-st.caption("Predicted offensive PPG shift from this team's acquisitions and losses vs 2025.")
 
+# Offense
+st.markdown("**Offense** — predicted scoring shift from acquisitions & losses")
 ac1, ac2, ac3 = st.columns(3)
 with ac1:
-    st.markdown("**➕ Key Additions**")
-    if ch["adds"]:
-        for a in ch["adds"][:5]:
+    st.markdown("**➕ Additions**")
+    if off_ch["adds"]:
+        for a in off_ch["adds"][:5]:
             st.markdown(f"- {a['player']} ({a['pos']}) — from {a['from']} · {a['ppr']:.0f} PPR")
     else:
         st.caption("None of note.")
 with ac2:
-    st.markdown("**➖ Key Departures**")
-    if ch["losses"]:
-        for l in ch["losses"][:5]:
+    st.markdown("**➖ Departures**")
+    if off_ch["losses"]:
+        for l in off_ch["losses"][:5]:
             st.markdown(f"- {l['player']} ({l['pos']}) — {l['ppr']:.0f} PPR in '25")
     else:
         st.caption("None of note.")
 with ac3:
     st.markdown("**🌟 Rookie / New Starters**")
-    if ch["rookies"]:
-        for r in ch["rookies"][:5]:
+    if off_ch["rookies"]:
+        for r in off_ch["rookies"][:5]:
+            st.markdown(f"- {r['player']} ({r['pos']})")
+    else:
+        st.caption("None projected.")
+
+# Defense
+st.markdown("**Defense** — points-allowed shift from front-7 & secondary turnover")
+dc1, dc2, dc3 = st.columns(3)
+with dc1:
+    st.markdown("**➕ Additions**")
+    if def_ch["adds"]:
+        for a in def_ch["adds"][:5]:
+            st.markdown(f"- {a['player']} ({a['pos']}) — from {a['from']}")
+    else:
+        st.caption("None of note.")
+with dc2:
+    st.markdown("**➖ Departures**")
+    if def_ch["losses"]:
+        for l in def_ch["losses"][:5]:
+            st.markdown(f"- {l['player']} ({l['pos']})")
+    else:
+        st.caption("None of note.")
+with dc3:
+    st.markdown("**🌟 New Starters**")
+    if def_ch["rookies"]:
+        for r in def_ch["rookies"][:5]:
             st.markdown(f"- {r['player']} ({r['pos']})")
     else:
         st.caption("None projected.")
@@ -265,8 +308,15 @@ in** — are combined into an offensive "roster index". A regression fit on 2025
 index to a **predicted 2026 offensive PPG**. The "Off Δ" column is how much that
 prediction shifts purely from this offseason's roster turnover.
 
-**Defense** is the 2025 points-allowed regressed toward the league mean
-(player-level data here is offense-only).
+**Defense is roster-aware too, but built differently.** Each defender gets a
+regressed 2025 per-game value from a composite box score (sacks, tackles for
+loss, QB hits, interceptions, pass breakups, forced fumbles, tackles), and the
+projected DL/LB/DB starters form a defensive index. Because defensive box stats
+only weakly predict points allowed (R² = {_def_cal.get('r2', 0):.2f}), the model
+**anchors on the team's actual 2025 points allowed** (regressed toward the mean)
+and then **adjusts for defensive roster turnover** — the "Def Δ" column, centered
+so offseason moves redistribute rather than change league-wide scoring
+(negative = the defense improved).
 
 A team's **power rating** is its predicted net PPG centered on the league. For
 every 2026 game, win probability comes from the rating gap plus home-field

@@ -106,6 +106,19 @@ def load_weekly(_mtime: float = 0.0) -> pd.DataFrame:
     return df
 
 
+@st.cache_data(show_spinner=False)
+def load_weekly_def(_mtime: float = 0.0) -> pd.DataFrame:
+    """Load 2025 per-defender box stats used by the record model's defense side."""
+    path = get_base_dir() / "data" / "raw" / "weekly_def.csv"
+    if not path.exists():
+        return pd.DataFrame()
+    df = pd.read_csv(path, low_memory=False)
+    df.columns = [c.lower().strip() for c in df.columns]
+    if "team" in df.columns:
+        df["team"] = _norm_abbr(df["team"])
+    return df
+
+
 def get_logo(team_abbr: str, teams_df: pd.DataFrame) -> Optional[str]:
     abbr_col = "team_abbr" if "team_abbr" in teams_df.columns else "team"
     for col in ["team_logo_espn", "team_logo_wikipedia", "team_logo_squared", "team_logo"]:

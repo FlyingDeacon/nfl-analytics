@@ -71,6 +71,7 @@ def update_schedule() -> None:
 # ── 2. Depth chart ───────────────────────────────────────────────────────────
 OFF_POS = {"QB", "RB", "WR", "TE"}
 DL_POS = {"LDE", "RDE", "NT", "LDT", "RDT", "DE", "DT"}
+LB_POS = {"WLB", "SLB", "MLB", "LILB", "RILB", "LOLB", "ROLB", "ILB", "OLB", "LB"}
 DB_POS = {"LCB", "RCB", "NB", "SS", "FS", "CB", "S", "DB"}
 
 
@@ -108,9 +109,9 @@ def update_depth_chart() -> None:
             rows.append((team, r["pos_abb"], int(r["pos_rank"]),
                          r["player_name"], r["gsis_id"], "offense"))
 
-        # Defense: collapse detailed positions into DL / DB buckets.
+        # Defense: collapse detailed positions into DL / LB / DB buckets.
         dfn = tdf[tdf["pos_grp"].isin(["Base 3-4 D", "Base 4-3 D"])]
-        for bucket, pos_set in (("DL", DL_POS), ("DB", DB_POS)):
+        for bucket, pos_set in (("DL", DL_POS), ("LB", LB_POS), ("DB", DB_POS)):
             b = dfn[dfn["pos_abb"].isin(pos_set)].sort_values(["pos_rank", "pos_slot"])
             for order, (_, r) in enumerate(b.iterrows(), start=1):
                 rows.append((team, bucket, order, r["player_name"], r["gsis_id"], "defense"))
@@ -144,6 +145,40 @@ def update_depth_chart() -> None:
           f"defense {int((out['side'] == 'defense').sum())})")
 
 
+# ── 3. Defensive box stats ───────────────────────────────────────────────────
+DEF_STATS_URL = (
+    "https://github.com/nflverse/nflverse-data/releases/download/"
+    "stats_player/stats_player_week_2025.csv"
+)
+
+DEF_COLS = [
+    "player_id", "player_display_name", "position", "team", "week",
+    "def_tackles_solo", "def_tackle_assists", "def_tackles_for_loss",
+    "def_fumbles_forced", "def_sacks", "def_qb_hits", "def_interceptions",
+    "def_pass_defended", "def_tds", "def_fumble_recovery_opp",
+]
+
+
+def update_def_stats() -> None:
+    """Save 2025 regular-season per-defender box stats for the record model."""
+    df = pd.read_csv(DEF_STATS_URL, low_memory=False)
+    df.columns = [c.lower().strip() for c in df.columns]
+    if "season_type" in df.columns:
+        df = df[df["season_type"] == "REG"]
+    for c in DEF_COLS:
+        if c not in df.columns:
+            df[c] = 0
+    out = df[DEF_COLS].copy()
+    # Keep only rows with any defensive production.
+    stat_cols = [c for c in DEF_COLS if c.startswith("def_")]
+    out = out[out[stat_cols].fillna(0).abs().sum(axis=1) > 0]
+    out["team"] = _norm_abbr(out["team"])
+    out.to_csv(RAW / "weekly_def.csv", index=False)
+    print(f"weekly_def.csv: {len(out)} defender-weeks, "
+          f"{out['player_id'].nunique()} defenders")
+
+
 if __name__ == "__main__":
     update_schedule()
+    update_def_stats()
     update_depth_chart()

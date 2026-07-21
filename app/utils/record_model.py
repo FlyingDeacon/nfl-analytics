@@ -10,8 +10,12 @@ Approach (transparent, explainable):
    (actual offensive PPG vs the same index) maps that index to a predicted
    2026 offensive PPG.
 
-2. Predicted defensive PPG allowed = league mean regressed from 2025 (player
-   data here is offense-only, so defense leans on prior-year results).
+2. Predicted defensive PPG allowed, built the same way from the defensive
+   roster.  Each defender gets a regressed 2025 per-game value from a composite
+   box-score stat (sacks, TFL, QB hits, INTs, pass breakups, forced fumbles,
+   tackles).  Projected 2026 DL/LB/DB starters form a defensive index that a
+   2025 regression maps to points allowed, so defensive acquisitions and losses
+   move the projection too (teams with no index fall back to prior-year OPPG).
 
 3. Power rating (points of margin vs a league-average team) = predicted net
    PPG, centered on the league.
@@ -45,6 +49,35 @@ STARTER_WEIGHTS = {
 SKILL = ("QB", "RB", "WR", "TE")
 
 DEF_REGRESS = 0.60       # 2025 points-allowed regression toward league mean
+                         # (fallback for teams with no defensive roster index)
+
+# ── Defense (roster-based, mirrors offense) ─────────────────────────────────
+DEF_BUCKETS = ("DL", "LB", "DB")
+# Map granular 2025 stat positions into the same DL/LB/DB buckets the 2026
+# depth chart uses, so the 2025 and 2026 indices are built on one basis.
+DEF_POS_BUCKET = {
+    "DE": "DL", "DT": "DL", "NT": "DL", "DL": "DL",
+    "LB": "LB", "OLB": "LB", "MLB": "LB", "ILB": "LB", "EDGE": "LB",
+    "CB": "DB", "SAF": "DB", "FS": "DB", "SS": "DB", "S": "DB",
+    "DB": "DB", "NB": "DB",
+}
+# Composite per-play defensive value (sacks/turnovers weighted heaviest).
+DEF_WEIGHTS = {
+    "def_sacks": 2.0, "def_tackles_for_loss": 1.0, "def_qb_hits": 0.5,
+    "def_interceptions": 3.5, "def_pass_defended": 1.0,
+    "def_fumbles_forced": 2.5, "def_fumble_recovery_opp": 1.5,
+    "def_tds": 6.0, "def_tackles_solo": 0.35, "def_tackle_assists": 0.15,
+}
+DEF_REPL_PG = {"DL": 1.1, "LB": 1.2, "DB": 1.2}   # replacement-level per game
+DEF_ROOKIE_FACTOR = 0.85
+# Per-game weight of each projected defensive starter in the roster index.
+DEF_STARTER_WEIGHTS = {
+    ("DL", 1): 0.55, ("DL", 2): 0.45, ("DL", 3): 0.35, ("DL", 4): 0.25,
+    ("LB", 1): 0.50, ("LB", 2): 0.40, ("LB", 3): 0.25,
+    ("DB", 1): 0.45, ("DB", 2): 0.40, ("DB", 3): 0.30, ("DB", 4): 0.25, ("DB", 5): 0.15,
+}
+DEF_DISP = {"DL": 4, "LB": 3, "DB": 5}   # depth cutoffs shown as "starters"
+
 HOME_ADV = 1.6           # home-field advantage, points
 GAME_SD = 13.2           # single-game point-margin standard deviation
 N_SIMS = 20_000
@@ -168,8 +201,124 @@ def roster_changes(depth: pd.DataFrame, players: pd.DataFrame) -> dict:
     return changes
 
 
+# ── Defensive player value (mirror of the offense functions) ─────────────────
+def _defender_values(weekly_def: pd.DataFrame) -> pd.DataFrame:
+    """Per-defender 2025 composite value, regressed to a per-game figure."""
+    w = weekly_def.copy()
+    w["bucket"] = w["position"].map(DEF_POS_BUCKET)
+    w = w.dropna(subset=["bucket"])
+    val = sum(w[c].fillna(0) * wt for c, wt in DEF_WEIGHTS.items())
+    w = w.assign(val=val)
+    g = w.groupby(["player_id", "player_display_name", "bucket", "team"]).agg(
+        gp=("week", "nunique"),
+        val=("val", "sum"),
+    ).reset_index()
+    repl = g["bucket"].map(DEF_REPL_PG).fillna(1.2)
+    g["reg_pg"] = (g["val"] + repl * REG_GAMES) / (g["gp"] + REG_GAMES)
+    return g
+
+
+def _aggregate_def_by_id(defenders: pd.DataFrame) -> pd.DataFrame:
+    """One row per defender (primary team + bucket = most games)."""
+    primary = (defenders.sort_values("gp", ascending=False)
+               .drop_duplicates("player_id")[["player_id", "team", "bucket"]]
+               .rename(columns={"team": "team_2025"}))
+    agg = defenders.groupby("player_id").agg(
+        player_display_name=("player_display_name", "first"),
+        gp=("gp", "sum"),
+        val=("val", "sum"),
+    ).reset_index().merge(primary, on="player_id", how="left")
+    repl = agg["bucket"].map(DEF_REPL_PG).fillna(1.2)
+    agg["reg_pg"] = (agg["val"] + repl * REG_GAMES) / (agg["gp"] + REG_GAMES)
+    return agg.set_index("player_id")
+
+
+def _def_index_2025(defenders: pd.DataFrame) -> dict:
+    """Each team's 2025 defensive starters, weighted per bucket, summed."""
+    out = {}
+    for team, tdf in defenders.groupby("team"):
+        s = 0.0
+        for bucket in DEF_BUCKETS:
+            ranked = tdf[tdf["bucket"] == bucket].sort_values("val", ascending=False)
+            for rank, (_, r) in enumerate(ranked.iterrows(), start=1):
+                s += DEF_STARTER_WEIGHTS.get((bucket, rank), 0.0) * r["reg_pg"]
+        out[team] = s
+    return out
+
+
+def _def_index_2026(depth: pd.DataFrame, pg_by_id: dict) -> dict:
+    """Sum weighted per-game value of each team's projected 2026 defensive starters."""
+    dfn = depth[(depth["side"] == "defense") & (depth["position"].isin(DEF_BUCKETS))]
+    index = {}
+    for team, tdf in dfn.groupby("team"):
+        s = 0.0
+        for _, r in tdf.iterrows():
+            bucket, order = r["position"], int(r["depth_order"])
+            w = DEF_STARTER_WEIGHTS.get((bucket, order), 0.0)
+            if w == 0.0:
+                continue
+            gid = r["gsis_id"]
+            if pd.notna(gid) and gid in pg_by_id:
+                pg = pg_by_id[gid]
+            else:
+                pg = DEF_REPL_PG.get(bucket, 1.2) * DEF_ROOKIE_FACTOR
+            s += w * pg
+        index[team] = s
+    return index
+
+
+def def_roster_changes(depth: pd.DataFrame, defenders: pd.DataFrame) -> dict:
+    """Per-team defensive acquisitions, losses and new starters vs 2025."""
+    dfn = depth[(depth["side"] == "defense") & (depth["position"].isin(DEF_BUCKETS))]
+    by_id = _aggregate_def_by_id(defenders)
+    id_team_2025 = by_id["team_2025"].to_dict()
+    changes = {}
+    for team, tdf in dfn.groupby("team"):
+        roster_ids = set(tdf["gsis_id"].dropna())
+        adds, rookies = [], []
+        for _, r in tdf.iterrows():
+            if int(r["depth_order"]) > DEF_DISP[r["position"]]:
+                continue
+            gid = r["gsis_id"]
+            if pd.notna(gid) and gid in id_team_2025:
+                if id_team_2025[gid] != team:
+                    p = by_id.loc[gid]
+                    adds.append({"player": r["player_name"], "pos": r["position"],
+                                 "from": id_team_2025[gid], "pg": round(float(p["reg_pg"]), 1),
+                                 "val": round(float(p["val"]), 1)})
+            else:
+                rookies.append({"player": r["player_name"], "pos": r["position"]})
+        prior = by_id[(by_id["team_2025"] == team) & (by_id["val"] >= 20)]
+        losses = []
+        for gid, p in prior.iterrows():
+            if gid not in roster_ids:
+                losses.append({"player": p["player_display_name"], "pos": p["bucket"],
+                               "pg": round(float(p["reg_pg"]), 1),
+                               "val": round(float(p["val"]), 1)})
+        adds.sort(key=lambda x: -x["pg"])
+        losses.sort(key=lambda x: -x["val"])
+        changes[team] = {"adds": adds, "losses": losses, "rookies": rookies}
+    return changes
+
+
 # ── Projection ───────────────────────────────────────────────────────────────
-def build_team_projections(ratings, depth, divisions, weekly):
+def _calibrate(idx25: dict, target: pd.Series, teams: pd.DataFrame):
+    """Least-squares fit of a 2025 roster index against a per-team 2025 target.
+
+    Returns (slope, intercept, r2).
+    """
+    cal = pd.DataFrame({"team": list(idx25.keys()),
+                        "index": [idx25[t] for t in idx25]})
+    cal = cal.merge(teams[["team"]].assign(y=target.values), on="team", how="inner").dropna()
+    slope, intercept = np.polyfit(cal["index"].to_numpy(), cal["y"].to_numpy(), 1)
+    fit = intercept + slope * cal["index"].to_numpy()
+    ss_res = ((cal["y"].to_numpy() - fit) ** 2).sum()
+    ss_tot = ((cal["y"].to_numpy() - cal["y"].mean()) ** 2).sum()
+    r2 = 1.0 - ss_res / ss_tot if ss_tot else 0.0
+    return float(slope), float(intercept), float(r2)
+
+
+def build_team_projections(ratings, depth, divisions, weekly, weekly_def=None):
     """Return a per-team table with predicted PPG, power rating and change info."""
     teams = divisions[["team_abbr", "division", "conference"]].rename(
         columns={"team_abbr": "team"}).copy()
@@ -183,14 +332,7 @@ def build_team_projections(ratings, depth, divisions, weekly):
     idx26, _ = _team_index_2026(depth, pg_by_id)
 
     # Calibrate offensive PPG from the 2025 roster index.
-    cal = pd.DataFrame({
-        "team": list(idx25.keys()),
-        "index": [idx25[t] for t in idx25],
-    }).merge(teams[["team", "ppg"]], on="team", how="inner").dropna()
-    slope, intercept = np.polyfit(cal["index"].to_numpy(), cal["ppg"].to_numpy(), 1)
-    fit = intercept + slope * cal["index"].to_numpy()
-    r2 = 1.0 - ((cal["ppg"].to_numpy() - fit) ** 2).sum() / \
-        ((cal["ppg"].to_numpy() - cal["ppg"].mean()) ** 2).sum()
+    slope, intercept, r2 = _calibrate(idx25, teams["ppg"], teams)
 
     teams["roster_index"] = teams["team"].map(idx26).fillna(np.nan)
     teams["index_2025"] = teams["team"].map(idx25)
@@ -200,13 +342,43 @@ def build_team_projections(ratings, depth, divisions, weekly):
     teams["off_ppg_2025"] = teams["ppg"]
     teams["off_change"] = slope * (teams["roster_index"] - teams["index_2025"])
 
+    # ── Defense ──────────────────────────────────────────────────────────
+    # Defensive box stats only weakly predict points allowed (R^2 ~ 0.1), so
+    # unlike offense we do NOT predict the absolute level from the roster.
+    # Instead we anchor on last year's actual points allowed (regressed toward
+    # the mean) and adjust ONLY for roster turnover: how much a team's
+    # defensive index moved vs 2025, mapped through the calibration slope and
+    # centered so offseason moves redistribute rather than inflate league-wide.
     lg_oppg = teams["oppg"].mean()
-    teams["proj_def_ppg"] = lg_oppg + DEF_REGRESS * (teams["oppg"] - lg_oppg)
+    baseline = lg_oppg + DEF_REGRESS * (teams["oppg"] - lg_oppg)
+    def_cal = {}
+    if weekly_def is not None and not weekly_def.empty:
+        defenders = _defender_values(weekly_def)
+        dpg_by_id = _aggregate_def_by_id(defenders)["reg_pg"].to_dict()
+        didx25 = _def_index_2025(defenders)
+        didx26 = _def_index_2026(depth, dpg_by_id)
+        d_slope, d_intercept, d_r2 = _calibrate(didx25, teams["oppg"], teams)
+
+        teams["def_index"] = teams["team"].map(didx26)
+        teams["def_index_2025"] = teams["team"].map(didx25)
+        raw_delta = d_slope * (teams["def_index"] - teams["def_index_2025"])
+        # Center so the leaguewide adjustment nets to zero (removes any
+        # roster-matching bias); missing indices get no adjustment.
+        delta = (raw_delta - raw_delta.mean()).fillna(0.0)
+        teams["def_change"] = delta
+        teams["proj_def_ppg"] = baseline + delta
+        def_cal = {"slope": d_slope, "intercept": d_intercept, "r2": d_r2}
+    else:
+        teams["proj_def_ppg"] = baseline
+        teams["def_change"] = 0.0
+
+    teams["def_ppg_2025"] = teams["oppg"]
 
     teams["proj_net"] = teams["proj_off_ppg"] - teams["proj_def_ppg"]
     teams["power"] = teams["proj_net"] - teams["proj_net"].mean()
 
     teams.attrs["calibration"] = {"slope": slope, "intercept": intercept, "r2": r2}
+    teams.attrs["def_calibration"] = def_cal
     return teams
 
 
@@ -220,19 +392,28 @@ def _game_probs(schedule, power):
     return games.reset_index(drop=True)
 
 
-def project_season(ratings, depth, divisions, schedule, weekly,
+def project_season(ratings, depth, divisions, schedule, weekly, weekly_def=None,
                    n_sims=N_SIMS, seed=7):
     """Full projection.
 
     Returns (team_table, games_table, changes):
-      team_table adds proj_off_ppg / proj_def_ppg / off_change on top of
-      proj_wins, playoff_pct, div_title_pct, exp_finish, win_dist, power.
-      changes: dict team -> {adds, losses, rookies}.
+      team_table adds proj_off_ppg / proj_def_ppg / off_change / def_change on
+      top of proj_wins, playoff_pct, div_title_pct, exp_finish, win_dist, power.
+      changes: dict team -> {"off": {...}, "def": {...}}.
     """
-    power = build_team_projections(ratings, depth, divisions, weekly)
+    power = build_team_projections(ratings, depth, divisions, weekly, weekly_def)
     cal = power.attrs.get("calibration", {})
+    def_cal = power.attrs.get("def_calibration", {})
     games = _game_probs(schedule, power)
-    changes = roster_changes(depth, _player_values(weekly))
+
+    off_changes = roster_changes(depth, _player_values(weekly))
+    if weekly_def is not None and not weekly_def.empty:
+        def_changes = def_roster_changes(depth, _defender_values(weekly_def))
+    else:
+        def_changes = {}
+    changes = {t: {"off": off_changes.get(t, {"adds": [], "losses": [], "rookies": []}),
+                   "def": def_changes.get(t, {"adds": [], "losses": [], "rookies": []})}
+               for t in power["team"]}
 
     team_list = power["team"].tolist()
     idx = {t: i for i, t in enumerate(team_list)}
@@ -298,7 +479,8 @@ def project_season(ratings, depth, divisions, schedule, weekly,
                 for i in range(n_teams)]
 
     table = power[["team", "division", "conference", "power", "roster_index",
-                   "proj_off_ppg", "proj_def_ppg", "off_ppg_2025", "off_change"]].copy()
+                   "proj_off_ppg", "proj_def_ppg", "off_ppg_2025", "off_change",
+                   "def_ppg_2025", "def_change"]].copy()
     table["proj_wins"] = exp_wins.round(1)
     table["proj_losses"] = (GAMES - exp_wins).round(1)
     table["playoff_pct"] = playoff * 100
@@ -307,6 +489,7 @@ def project_season(ratings, depth, divisions, schedule, weekly,
     table["win_dist"] = win_dist
     table = table.sort_values("proj_wins", ascending=False).reset_index(drop=True)
     table.attrs["calibration"] = cal
+    table.attrs["def_calibration"] = def_cal
     return table, games, changes
 
 
