@@ -185,7 +185,7 @@ INJURY_RISK_MAP = {
     "Tank Dell":          "      Yes      ",   # Multi-ligament (ACL/MCL/LCL/meniscus); missed 2025
     "Christian Watson":   "      Yes      ",   # ACL tear (Jan 2025); significant 2026 miss risk
     "Puka Nacua":         "      Yes      ",   # Knee injury (2024); missed majority of season
-    "Rashee Rice":        "      Yes      ",   # ACL/MCL tear Week 3 (2024); returning + 10-game NFL suspension
+    "Rashee Rice":        "      Yes      ",   # May-2026 knee surgery + off-field risk (suspension served); full-go for camp
     "Chris Godwin":       "      Yes      ",   # ACL (2021); ankle dislocation/fracture (Oct 2024); chronic injury profile
     "Stefon Diggs":       "      Yes      ",   # ACL recovery (2024); age 33; team transition adds uncertainty
     "Tyreek Hill":        "      Yes      ",   # Multi-ligament knee injury (ACL+); released by MIA
@@ -309,7 +309,7 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Mike Evans":            0.80,   # Age 33; SF target competition heavy
     "Christian McCaffrey":   0.92,   # Coming off Achilles + age-29 curve
     # ── Injury / suspension cuts (0.70–0.92) ───────────────────────────────
-    "Rashee Rice":           0.70,   # Pending suspension on top of injury risk
+    "Rashee Rice":           0.92,   # Suspension served; mild haircut for May-2026 knee surgery + off-field risk
     "Patrick Mahomes":       0.92,   # OL concerns + WR group still maturing
 }
 
@@ -581,8 +581,9 @@ RUSHING_OFFENSE_TIERS = {
 # preserved and only availability changes. Format: name_fragment → 2026 games.
 # Sources: 2026 offseason reporting (CBS/FantasyPros/NBC/4for4, Mar–Jul 2026).
 PROJ_GAMES_OVERRIDES = {
-    # Suspension
-    "Rashee Rice":      10,   # NFL suspension; available ~Week 7+
+    # 2025 suspension served; healthy for 2026 (ready for camp per Jul-2026 reporting),
+    # projected as a full-season starter. Prior-year 8-game total understates his role.
+    "Rashee Rice":      16,
     # Carry-over / offseason injuries the prior-season game count understates
     "Patrick Mahomes":  14,   # ACL recovery; Week 1 availability uncertain
     "Daniel Jones":     13,   # Torn Achilles Wk14 2025; 6–8mo recovery, Wk1 uncertain (IND)
