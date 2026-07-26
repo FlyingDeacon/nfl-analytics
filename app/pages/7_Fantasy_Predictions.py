@@ -298,7 +298,7 @@ NEW_HC_PENALTY = {
 PLAYER_MULTIPLIERS: dict[str, float] = {
     # ── Breakout boosts (1.08–1.22) ────────────────────────────────────────
     "Jahmyr Gibbs":         1.22,   # Bell-cow workload after Monty departure
-    "Cam Skattebo":          1.20,   # NYG lead back, three-down profile
+    "Cam Skattebo":          1.10,   # NYG lead back but a committee (~55% of carries) w/ Tracy on passing downs
     "Jaxon Smith-Njigba":    1.18,   # Target share trending past Lockett/Metcalf
     "Bucky Irving":          1.18,   # Mayfield offense leans on dual-threat RB
     "George Pickens":        1.10,   # Dak elevates target quality vs PIT
@@ -311,6 +311,8 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     # ── Injury / suspension cuts (0.70–0.92) ───────────────────────────────
     "Rashee Rice":           0.92,   # Suspension served; mild haircut for May-2026 knee surgery + off-field risk
     "Patrick Mahomes":       0.92,   # OL concerns + WR group still maturing
+    # ── Committee / role demotions (0.70–0.85) ─────────────────────────────
+    "Tyrone Tracy Jr.":      0.75,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's injury
 }
 
 # ── PLAYER BIRTH YEARS ───────────────────────────────────────────────────────
