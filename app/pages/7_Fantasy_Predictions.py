@@ -1370,6 +1370,15 @@ _espn_overall = pd.to_numeric(
 )
 preds["espn_rank"] = _espn_overall.rank(method="first", ascending=True).astype("Int64")
 
+# 2025 final finish (actual prior-season result shown beside the projections).
+# Re-ranked WITHIN the current position-filtered, top-N view by 2025 total
+# fantasy points — exactly like the ESPN and model Rank columns — so it
+# renumbers 1..N. Rookies and players with no 2025 production stay NA: they
+# render blank and sort to the bottom. Nullable Int64 keeps the sort numeric.
+_last_pts = pd.to_numeric(preds["last_season_pts"], errors="coerce")
+_no_2025 = _rookie_col.fillna(False).to_numpy() | (_last_pts <= 0)
+preds["finish_2025"] = _last_pts.mask(_no_2025).rank(method="first", ascending=False).astype("Int64")
+
 if preds.empty:
     st.info("No predictions available for the selected position.")
     st.stop()
@@ -1422,7 +1431,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 st.markdown(f"### 📋 2026 Fantasy Big Board {pos_label_str}")
 
-board_cols = ["Rank", "espn_rank", name_col, "rookie_tag"]
+board_cols = ["Rank", "espn_rank", "finish_2025", name_col, "rookie_tag"]
 if team_col: board_cols.append(team_col)
 if pos_col:  board_cols.append(pos_col)
 board_cols += ["injury_risk", "predicted_pts", "vor", "round_grade", "pred_ppg", "proj_games", "last_season_pts", "change", "change_pct", "games", "last_season_ppg"]
@@ -1446,6 +1455,7 @@ board_cols = [c for c in board_cols if c in preds.columns]
 rename_map = {
     name_col: "Player",
     "espn_rank": "ESPN",
+    "finish_2025": "2025 Finish",
     "rookie_tag": "Rk",
     "injury_risk": "Injury Risk",
     "predicted_pts": "2026 Proj",
@@ -1482,6 +1492,12 @@ column_config_dict = {
                       help="ESPN's 2026 PPR draft rank (Mike Clay), re-based to the current "
                            "position filter so it renumbers 1..N alongside this model's own Rank. "
                            "Blank = outside ESPN's ranked pool (sorts to the bottom)."),
+    "2025 Finish": st.column_config.NumberColumn(
+                      label="2025 Finish", width="small", format="%d",
+                      help="Where the player actually finished in 2025 fantasy scoring "
+                           "(this scoring format), re-based to the current position filter so it "
+                           "renumbers 1..N alongside ESPN and this model's Rank. "
+                           "Blank = no 2025 production (rookies / non-qualifiers), sorts to the bottom."),
     "Rk": st.column_config.TextColumn(
                       label="Rk", width="small",
                       help="R = 2026 rookie. Rookies have no NFL history, so they are "
