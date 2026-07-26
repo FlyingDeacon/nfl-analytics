@@ -137,6 +137,9 @@ EXPERT_REMOVE = {
     "Alvin Kamara",      # Demoted to NO RB2 behind Travis Etienne; also only 11 games in 2025 (below 6-game floor)
     "Austin Ekeler",     # Torn Achilles; out for 2026 season
     "Malik Nabers",      # ACL in 2025; only 4 games played — below 6-game WR minimum
+    "Stefon Diggs",      # Unsigned FA (2026); no confirmed team — removed pending signing
+    "Deebo Samuel Sr.",  # Unsigned FA (2026); no confirmed team — removed pending signing
+    "Zach Ertz",         # Unsigned FA (2026); no confirmed team — removed pending signing
 }
 
 # Injury risk mapping — 2026 season outlook
@@ -242,6 +245,14 @@ EXPERT_TEAM_CORRECTIONS = {
     "Rico Dowdle":       "PIT",  # Signed with Pittsburgh Steelers (was DAL)
     "George Pickens":    "DAL",  # Traded PIT → DAL; pairs with Dak Prescott
     "Tyler Shough":      "NO",   # Confirmed New Orleans Saints starter 2026
+    # ── 2026 top-150 audit: wrong-team corrections (moves not in historical data)
+    "A.J. Brown":        "NE",   # Traded PHI → New England
+    "Wan'Dale":          "TEN",  # Signed with Tennessee Titans (left NYG)
+    "Rashid Shaheed":    "SEA",  # Signed with Seattle Seahawks (left NO)
+    "Kenneth Gainwell":  "TB",   # Signed with Tampa Bay Buccaneers (left PIT)
+    "Romeo Doubs":       "NE",   # Signed with New England Patriots (left GB)
+    "Chris Rodriguez":   "JAX",  # Signed with Jacksonville Jaguars (left WAS)
+    "Jauan Jennings":    "MIN",  # Traded SF → Minnesota Vikings
 }
 
 # ── NEW HEAD COACH PENALTY ───────────────────────────────────────────────────
@@ -313,6 +324,38 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Patrick Mahomes":       0.92,   # OL concerns + WR group still maturing
     # ── Committee / role demotions (0.70–0.85) ─────────────────────────────
     "Tyrone Tracy Jr.":      0.75,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's injury
+    # ── 2026 top-150 audit: same-team committee / role cuts ────────────────
+    "Travis Etienne":        0.82,   # NO backfield split w/ Kamara + Devin Neal; no longer bell-cow
+    "RJ Harvey":             0.72,   # DEN RB committee (Dobbins/Estime); early-down/passing split
+    "Rhamondre Stevenson":   0.85,   # NE committee w/ Henderson; goal-line + volume not guaranteed
+    "Kyle Monangai":         0.80,   # CHI RB2 behind Swift; spot starter only
+    "Parker Washington":     0.82,   # JAX WR3 behind Thomas/Hunter target hierarchy
+    "Juwan Johnson":         0.85,   # NO TE sharing with rookie Delp; TD-dependent
+    "Woody Marks":           0.78,   # HOU committee behind Mixon; change-of-pace back
+    "Michael Wilson":        0.85,   # ARI WR3 behind MHJ + Harrison target share
+    "Marvin Harrison Jr.":   0.90,   # ARI target share capped by McBride + rookie WR draft
+    "Kimani Vidal":          0.75,   # LAC RB2 behind Hampton
+    "Bam Knight":            0.62,   # ARI depth RB; minimal projected volume
+    "Devin Neal":            0.62,   # NO rookie-year committee, 3rd on depth chart
+    "Chimere Dike":          0.75,   # TEN WR in crowded young group
+    "Elic Ayomanor":         0.72,   # TEN WR2/3 competing for targets
+    "Khalil Shakir":         0.88,   # BUF slot but target share diluted by additions
+    "Troy Franklin":         0.82,   # DEN WR behind Sutton/rookie; TD-dependent
+    "Courtland Sutton":      0.86,   # DEN target competition from young additions
+    "Travis Hunter":         0.78,   # JAX two-way snap load caps offensive volume
+    "Theo Johnson":          0.85,   # NYG TE in low-volume passing offense
+    "DeMario Douglas":       0.78,   # NE slot; target share diluted by roster adds
+    # ── 2026 top-150 audit: departure boosts (target share vacated) ────────
+    "Rome Odunze":           1.12,   # CHI WR1 role solidified after D.J. Moore departure
+    "Emeka Egbuka":          1.12,   # TB target share up with Mike Evans gone to SF
+    "Josh Downs":            1.10,   # IND slot volume up after Pittman departure
+    "Brock Bowers":          1.08,   # LV featured TE, healthy, elite target profile
+    "DeVonta Smith":         1.10,   # PHI WR1 target share up after A.J. Brown departure
+    "Matthew Golden":        1.08,   # GB target share up after Romeo Doubs departure
+    # ── 2026 top-150 audit: injury haircuts (paired w/ games override) ─────
+    "Chris Godwin Jr.":      0.88,   # TB ankle recovery (PUP watch), ramp-up expected
+    "Alec Pierce":           0.90,   # IND ankle; deep-role volatility
+    "Zach Charbonnet":       0.65,   # SEA ACL recovery; limited early-season role
 }
 
 # ── PLAYER BIRTH YEARS ───────────────────────────────────────────────────────
@@ -592,6 +635,13 @@ PROJ_GAMES_OVERRIDES = {
     "Kyler Murray":     14,   # Foot cost ~11 games 2025; Wk1 starter but ~14% career miss rate (MIN)
     "Jayden Daniels":   14,   # 7 games 2025 (knee/hamstring/elbow); aggressive rushing profile (WAS)
     "Puka Nacua":       15,   # Elite when active but recurring lower-body history (2024 knee, 2025 ankle) (LAR)
+    # 2026 top-150 audit — offseason injuries the prior game count understates
+    "George Kittle":    14,   # Lower-body/age-33 durability; SF manages his snaps
+    "Tucker Kraft":     15,   # ACL recovery; expected back but ramp risk (GB)
+    "Chris Godwin Jr.": 13,   # Ankle PUP watch; slow start likely (TB)
+    "Jordan Addison":   14,   # 3-game suspension to open 2026 (MIN)
+    "Alec Pierce":      14,   # Ankle; deep-threat availability risk (IND)
+    "Zach Charbonnet":  8,    # ACL recovery; limited early-season availability (SEA)
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
