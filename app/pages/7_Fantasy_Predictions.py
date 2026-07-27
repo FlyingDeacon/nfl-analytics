@@ -123,7 +123,7 @@ POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
 FORCE_INCLUDE_STARTERS = {
     "Kyler Murray":     ("00-0035228", "QB", "MIN", None),   # 5 games 2025 (ARI injury); uses 2024 full season
     "Malik Willis":     ("00-0038128", "QB", "MIA", 15.5),   # career backup turned starter — expert PPG
-    "Tyler Shough":     ("00-0040743", "QB", "NO",  16.0),   # NO QB1; 10 games 2025 (below 12 QB min); ~16 PPG
+    "Tyler Shough":     ("00-0040743", "QB", "NO",  15.8),   # NO QB1; his actual 2025 rate (157.96 pts / 10 g) held over a full season — older-than-typical rookie, so no ascending-QB boost
     "Matthew Stafford": ("00-0026498", "QB", "LAR", None),   # Returning for 2026 with LAR; find most recent qualifying season
     "Jayden Daniels":   ("00-0039910", "QB", "WAS", None),   # 7 games 2025 (injury); uses 2024 full season (20.93 PPG)
 }
@@ -1052,6 +1052,11 @@ def apply_expert_adjustments(df: pd.DataFrame,
                 "proj_games":  proj_g,
                 "pred_ppg":    round(ppg, 2),
                 "rmse":        0.0,
+                # Expert-supplied PPG (manual_ppg) is already the projection; the
+                # small-sample regression / peak-cap below must NOT drag it toward
+                # a generic positional median (that inflated e.g. Shough's 15.8 to
+                # ~17.9 by blending halfway to the QB starter median).
+                "_curated_ppg": manual_ppg is not None,
                 "injury_risk": (
                     ("      Yes      " if float(display_games) < 14.5 else "")
                     if pos == "QB" else
@@ -1147,6 +1152,10 @@ def apply_expert_adjustments(df: pd.DataFrame,
     # 9. Sanity guards on the final per-game rate — applied last, over each
     #    player's real game history: cap at their own ceiling, then regress
     #    tiny samples toward the position's established median. See constants.
+    if "_curated_ppg" not in out.columns:
+        out["_curated_ppg"] = False
+    out["_curated_ppg"] = out["_curated_ppg"].fillna(False).astype(bool)
+
     if (name_col and raw_weekly is not None and not raw_weekly.empty
             and "season" in raw_weekly.columns):
         _reg = raw_weekly
@@ -1162,8 +1171,10 @@ def apply_expert_adjustments(df: pd.DataFrame,
 
         # (a) Cap each player with real history at 105% of their best season.
         def _cap_ppg(row):
-            pk = peak_ppg.get(str(row[name_col]))
             ppg = float(row["pred_ppg"])
+            if row["_curated_ppg"]:
+                return ppg  # trust the expert-supplied rate as-is
+            pk = peak_ppg.get(str(row[name_col]))
             return min(ppg, pk * PEAK_CAP_MULT) if pk is not None else ppg
         out["pred_ppg"] = out.apply(_cap_ppg, axis=1).round(2)
 
@@ -1183,8 +1194,8 @@ def apply_expert_adjustments(df: pd.DataFrame,
             def _regress_ppg(row):
                 cg = career_g.get(str(row[name_col]), 0)
                 ppg = float(row["pred_ppg"])
-                if cg <= 0 or cg >= REGRESS_MIN_GAMES:
-                    return ppg  # no history here (rookies/curated) or established
+                if row["_curated_ppg"] or cg <= 0 or cg >= REGRESS_MIN_GAMES:
+                    return ppg  # expert-curated, no history (rookies), or established
                 b = base.get(row.get(pos_col, ""), ppg)
                 w = cg / (cg + REGRESS_K)
                 return w * ppg + (1 - w) * b
@@ -1194,7 +1205,7 @@ def apply_expert_adjustments(df: pd.DataFrame,
         if "proj_games" in out.columns:
             out["predicted_pts"] = (out["pred_ppg"] * out["proj_games"]).round(1)
 
-    return out.reset_index(drop=True)
+    return out.drop(columns=["_curated_ppg"], errors="ignore").reset_index(drop=True)
 
 
 all_preds = apply_expert_adjustments(all_preds_raw, weekly)
