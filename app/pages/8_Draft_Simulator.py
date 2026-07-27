@@ -91,14 +91,37 @@ def _build_board(scoring: str) -> bool:
     return _board_path(scoring).exists()
 
 
+# Positions the finished board must contain; a board missing any of these is
+# stale (built before that position was added) and gets rebuilt automatically.
+_REQUIRED_BOARD_POS = ("QB", "RB", "WR", "TE", "DEF", "K")
+
+
+def _board_is_current(path: Path) -> bool:
+    """True if the parquet exists and already carries every required position
+    (e.g. defenses/kickers). Guards against a board written by older code."""
+    if not path.exists():
+        return False
+    try:
+        have = set(pd.read_parquet(path, columns=["pos"])["pos"].unique())
+    except Exception:
+        return False
+    return all(p in have for p in _REQUIRED_BOARD_POS)
+
+
 def _ensure_board(scoring: str) -> Path | None:
-    """Return the parquet path, building it first if it does not exist yet."""
+    """Return the parquet path, (re)building it when it's missing or stale.
+
+    A stale board is one produced before defenses/kickers existed — it would
+    silently lack a required position. The rebuild runs build_big_boards.py in a
+    fresh subprocess, so it uses the *current* pipeline even if this Streamlit
+    process is still holding older module code in memory.
+    """
     path = _board_path(scoring)
-    if path.exists():
+    if _board_is_current(path):
         return path
-    with st.spinner(f"Building your {scoring} big board (first run only)…"):
+    with st.spinner(f"Building your {scoring} big board…"):
         ok = _build_board(scoring)
-    return path if ok else None
+    return path if (ok and _board_is_current(path)) else (path if path.exists() else None)
 
 
 @st.cache_data(show_spinner=False)
