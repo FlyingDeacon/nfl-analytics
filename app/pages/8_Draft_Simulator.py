@@ -120,6 +120,11 @@ STARTER_SLOTS = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "DEF", "K"]
 FLEX_POS = ("RB", "WR", "TE")
 FLEX_TOTAL = STARTER_TARGET["RB"] + STARTER_TARGET["WR"] + STARTER_TARGET["TE"] + 1  # 6
 
+# Robot draft variance: how many ESPN-rank "spots" of gaussian noise to add to
+# each available player before a robot takes its best-available. 0 = pure chalk
+# (always the ADP top); larger = more real-draft reaches and slides.
+_ROBOT_SIGMA_BY_STYLE = {"Chalk (strict ADP)": 0.0, "Realistic": 6.0, "Wild": 12.0}
+
 settings_locked = st.session_state.get("dr_started", False)
 
 with st.expander("⚙️ Draft Settings", expanded=not settings_locked):
@@ -128,7 +133,7 @@ with st.expander("⚙️ Draft Settings", expanded=not settings_locked):
                            disabled=settings_locked, key="ds_scoring")
     teams = c2.selectbox("Teams", [8, 10, 12, 14], index=2,
                          disabled=settings_locked, key="ds_teams")
-    rounds = c3.selectbox("Rounds", list(range(10, 21)), index=5,
+    rounds = c3.selectbox("Rounds", list(range(10, 21)), index=6,
                           disabled=settings_locked, key="ds_rounds")
 
     c4, c5 = st.columns(2)
@@ -143,6 +148,15 @@ with st.expander("⚙️ Draft Settings", expanded=not settings_locked):
         horizontal=True, disabled=settings_locked, key="ds_mode",
         help="Manual lets you make every team's selection yourself — useful for "
              "running a mock where you control the whole room.",
+    )
+
+    robot_style = st.radio(
+        "Robot draft style",
+        list(_ROBOT_SIGMA_BY_STYLE.keys()), index=1,
+        horizontal=True, disabled=settings_locked, key="ds_robot_style",
+        help="How far the robots stray from ESPN best-available. Realistic adds "
+             "draft-day variance (reaches and slides); Wild swings harder; Chalk "
+             "always takes the ADP top. Roster rules are always respected.",
     )
 
 
@@ -175,6 +189,7 @@ if not settings_locked:
         st.session_state.dr_rounds = rounds
         st.session_state.dr_slot = slot
         st.session_state.dr_manual = draft_mode.startswith("Manual")
+        st.session_state.dr_robot_sigma = _ROBOT_SIGMA_BY_STYLE[robot_style]
         st.session_state.dr_snake = (order_type == "Snake")
         st.session_state.dr_order = _snake_order(teams, rounds, order_type == "Snake")
         st.session_state.dr_board = board.to_dict("records")
@@ -186,7 +201,7 @@ if not settings_locked:
 
 if creset.button("🔄 Reset Draft", use_container_width=True, key="ds_reset"):
     for k in ("dr_started", "dr_order", "dr_board", "dr_drafted",
-              "dr_picks", "dr_pick_idx", "dr_manual"):
+              "dr_picks", "dr_pick_idx", "dr_manual", "dr_robot_sigma"):
         st.session_state.pop(k, None)
     st.rerun()
 
@@ -370,7 +385,15 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
 def _robot_pick(slot: int) -> dict | None:
     """Best available for a robot: ESPN overall (asc, NaN last), tiebreak VOR.
     Respects positional caps and a must-fill-starters guard so every robot team
-    finishes with a full, legal lineup (QB/RB/RB/WR/WR/TE/FLEX)."""
+    finishes with a full, legal lineup (QB/RB/RB/WR/WR/TE/FLEX/DEF/K).
+
+    Draft-day variance: each available player's ESPN rank is jittered by gaussian
+    noise (σ = dr_robot_sigma, set by the "Robot draft style" setting) before the
+    best-available is taken. This produces realistic reaches and slides — players
+    ranked close together frequently swap, while big rank gaps rarely do — instead
+    of a perfectly chalky ADP order every time. Noise never moves the NaN-ranked
+    K/DEF (parked at 1e9), and the must-fill guard still guarantees legal rosters.
+    """
     counts = _pos_counts(slot)
 
     avail = board[~board["player"].isin(drafted.keys())].copy()
@@ -387,9 +410,12 @@ def _robot_pick(slot: int) -> dict | None:
     if avail.empty:
         avail = board[~board["player"].isin(drafted.keys())].copy()
 
-    # ESPN best-player-available: rank asc with NaN pushed to the bottom.
-    espn = pd.to_numeric(avail["espn_overall"], errors="coerce")
-    avail = avail.assign(_espn=espn.fillna(1e9))
+    # ESPN best-player-available with rank asc, NaN (K/DEF) pushed to the bottom.
+    espn = pd.to_numeric(avail["espn_overall"], errors="coerce").fillna(1e9).to_numpy(dtype=float)
+    sigma = float(st.session_state.get("dr_robot_sigma", 6.0))
+    if sigma > 0:
+        espn = espn + np.random.normal(0.0, sigma, size=len(espn))
+    avail = avail.assign(_espn=espn)
     avail = avail.sort_values(["_espn", "vor"], ascending=[True, False])
     return avail.iloc[0].to_dict()
 
