@@ -340,8 +340,9 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Chimere Dike":          0.75,   # TEN WR in crowded young group
     "Elic Ayomanor":         0.72,   # TEN WR2/3 competing for targets
     "Khalil Shakir":         0.88,   # BUF slot but target share diluted by additions
-    "Troy Franklin":         0.82,   # DEN WR behind Sutton/rookie; TD-dependent
-    "Courtland Sutton":      0.86,   # DEN target competition from young additions
+    "Troy Franklin":         0.88,   # DEN WR3 (2025 WR31 finish) but Waddle arrival caps ceiling
+    "Quentin Johnston":      0.85,   # LAC WR2 behind McConkey; heavy TD-dependence in 2025 = regression risk
+    "Courtland Sutton":      1.00,   # DEN clear WR1 (2025 WR14 finish); Waddle competition already priced into base
     "Travis Hunter":         0.78,   # JAX two-way snap load caps offensive volume
     "Theo Johnson":          0.85,   # NYG TE in low-volume passing offense
     "DeMario Douglas":       0.78,   # NE slot; target share diluted by roster adds
