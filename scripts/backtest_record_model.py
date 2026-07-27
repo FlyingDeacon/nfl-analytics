@@ -81,6 +81,84 @@ def _season_table(sched: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(out)
 
 
+def _netppg_values(stats: pd.DataFrame) -> dict:
+    """(season, team) -> raw point differential per game."""
+    return {(r["season"], r["team"]): r["net_ppg"] for _, r in stats.iterrows()}
+
+
+def _srs_values(sched: pd.DataFrame, iters: int = 60) -> dict:
+    """(season, team) -> opponent-adjusted margin (Simple Rating System).
+
+    srs_t = avg_margin_t + avg(srs of opponents faced), solved by iteration.
+    This is point differential corrected for strength of schedule.
+    """
+    g = _reg_games(sched)
+    out = {}
+    for season, sg in g.groupby("season"):
+        teams = sorted(set(sg["home_team"]) | set(sg["away_team"]))
+        opps = {t: [] for t in teams}
+        for _, r in sg.iterrows():
+            h, a, m = r["home_team"], r["away_team"], r["home_margin"]
+            opps[h].append((a, m)); opps[a].append((h, -m))
+        avg_margin = {t: float(np.mean([m for _, m in opps[t]])) for t in teams}
+        srs = dict(avg_margin)
+        for _ in range(iters):
+            new = {t: avg_margin[t] + float(np.mean([srs[o] for o, _ in opps[t]]))
+                   for t in teams}
+            mu = float(np.mean(list(new.values())))
+            srs = {t: new[t] - mu for t in teams}
+        for t in teams:
+            out[(season, t)] = srs[t]
+    return out
+
+
+def _epa_values(weekly: pd.DataFrame, stats: pd.DataFrame) -> dict:
+    """(season, team) -> two-sided net EPA per game (offense - defense allowed).
+
+    EPA (expected points added) strips out some of the point-differential noise
+    that comes from turnover-return TDs and other luck, so a de-lucked rating.
+    """
+    w = weekly.copy()
+    if "season_type" in w.columns:
+        w = w[w["season_type"] == "REG"]
+    alias = {"LAR": "LA", "JAC": "JAX", "STL": "LA", "SD": "LAC", "OAK": "LV"}
+    w["recent_team"] = w["recent_team"].replace(alias)
+    w["opponent_team"] = w["opponent_team"].replace(alias)
+    w["epa"] = w["passing_epa"].fillna(0.0) + w["rushing_epa"].fillna(0.0)
+    off = w.groupby(["season", "recent_team"])["epa"].sum()
+    dfa = w.groupby(["season", "opponent_team"])["epa"].sum()
+    gp = {(r["season"], r["team"]): r["gp"] for _, r in stats.iterrows()}
+    out = {}
+    for (s, t), games in gp.items():
+        o = float(off.get((s, t), 0.0))
+        d = float(dfa.get((s, t), 0.0))
+        out[(s, t)] = (o - d) / games
+    return out
+
+
+def _prior_from_values(values: dict, season: int, gain: float) -> dict:
+    """Power rating for `season` = gain * (prior-season value - league mean)."""
+    vals = {t: v for (ss, t), v in values.items() if ss == season - 1}
+    if not vals:
+        return {}
+    mu = float(np.mean(list(vals.values())))
+    return {t: gain * (v - mu) for t, v in vals.items()}
+
+
+def _walkforward_mae(values: dict, stats: pd.DataFrame, sched: pd.DataFrame,
+                     gain: float) -> float:
+    tgt = [s for s in SEASONS if s - 1 in SEASONS]
+    maes = []
+    for s in tgt:
+        power = _prior_from_values(values, s, gain)
+        if not power:
+            continue
+        pred = _predict_wins(sched, s, power, HOME_ADV, GAME_SD)
+        mae, _, _ = _score(pred, stats[stats["season"] == s])
+        maes.append(mae)
+    return float(np.mean(maes))
+
+
 def _prior_power(stats: pd.DataFrame, season: int, k: int, regress: float) -> dict:
     """Power rating for `season` = regressed avg net PPG of the prior `k` seasons.
 
@@ -201,6 +279,46 @@ def main() -> None:
             maes.append(mae)
         print(f"  k={k} season(s):  MAE={np.mean(maes):.3f}  (n={len(maes)} seasons)")
 
+    # ── Rating-source shootout (each at its own best-fit gain) ───────────────
+    print("\n" + "=" * 78)
+    print("RATING-SOURCE SHOOTOUT — best walk-forward MAE per prior signal")
+    print("=" * 78)
+    weekly = pd.read_csv(REPO_ROOT / "data" / "raw" / "weekly.csv", low_memory=False)
+    sources = {
+        "net PPG (point diff)": _netppg_values(stats),
+        "SRS (opp-adjusted)":   _srs_values(sched),
+        "net EPA (two-sided)":  _epa_values(weekly, stats),
+    }
+    # Ensemble: average the per-source powers at a shared gain.
+    gain_grid = np.round(np.arange(0.30, 1.31, 0.05), 2)
+    best_by_source = {}
+    print(f"{'Source':<24} {'best gain':>9} {'MAE':>7}")
+    for name, vals in sources.items():
+        scored = [(g, _walkforward_mae(vals, stats, sched, g)) for g in gain_grid]
+        bg, bm = min(scored, key=lambda x: x[1])
+        best_by_source[name] = (vals, bg, bm)
+        print(f"{name:<24} {bg:>9.2f} {bm:>7.3f}")
+
+    # Ensemble of net-PPG + SRS + EPA (each pre-scaled to its own best gain,
+    # then averaged) — does combining de-correlated signals help?
+    def _ensemble_mae() -> float:
+        tgt = [s for s in SEASONS if s - 1 in SEASONS]
+        maes = []
+        for s in tgt:
+            powers = []
+            for name in sources:
+                vals, bg, _ = best_by_source[name]
+                powers.append(_prior_from_values(vals, s, bg))
+            teams = set().union(*[set(p) for p in powers])
+            combined = {t: float(np.mean([p.get(t, 0.0) for p in powers])) for t in teams}
+            pred = _predict_wins(sched, s, combined, HOME_ADV, GAME_SD)
+            mae, _, _ = _score(pred, stats[stats["season"] == s])
+            maes.append(mae)
+        return float(np.mean(maes))
+
+    print(f"{'ensemble (avg of 3)':<24} {'—':>9} {_ensemble_mae():>7.3f}")
+    print("\n(Lower MAE = more accurate. This is the signal the production power "
+          "rating should be built from, before the market blend.)")
     print()
 
 

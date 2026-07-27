@@ -88,11 +88,13 @@ GAME_SD = 13.2           # single-game point-margin standard deviation
 N_SIMS = 20_000
 GAMES = 17
 
-# Blend the roster-model power rating toward the market's implied rating.
-# Vegas win totals are the single most accurate publicly available preseason
-# signal, so we anchor most of the way to them and let the roster model supply
-# the rest (and drive the offseason-impact narrative).  0 => ignore the market.
-MARKET_WEIGHT = 0.65
+# Blend the model power rating toward the market's implied rating.  Vegas win
+# totals are the single most accurate publicly available preseason signal — the
+# backtest shows any prior-year model tops out around 2.4 wins MAE, while good
+# win-total models reach ~1.7-2.0 — so the market is the backbone and the roster
+# model supplies the rest (and drives the offseason-impact narrative).
+# 0 => ignore the market entirely.
+MARKET_WEIGHT = 0.80
 
 _SQRT2 = np.sqrt(2.0)
 
@@ -378,16 +380,19 @@ def build_team_projections(ratings, depth, divisions, weekly, weekly_def=None,
 
     teams["roster_index"] = teams["team"].map(idx26).fillna(np.nan)
     teams["index_2025"] = teams["team"].map(idx25)
-    raw_off = intercept + slope * teams["roster_index"]
-    # Fallback for any team with no index: prior-year offense.
-    raw_off = raw_off.fillna(teams["ppg"])
-    # Regress the projected scoring level toward league-average offense so a
-    # single strong (or weak) roster season isn't taken at full face value —
-    # matches how defense is handled and how the backtest tunes best.
+    # Anchor offense on last year's ACTUAL scoring (regressed toward the mean),
+    # then adjust for roster turnover — exactly how defense is handled below.
+    # The backtest (scripts/backtest_record_model.py) shows prior-year point
+    # differential is the most accurate prior signal; the calibrated roster
+    # index only supplies the *delta* from acquisitions/losses, not the level.
     lg_off = teams["ppg"].mean()
-    teams["proj_off_ppg"] = lg_off + OFF_REGRESS * (raw_off - lg_off)
+    baseline_off = lg_off + OFF_REGRESS * (teams["ppg"] - lg_off)
+    raw_off_delta = slope * (teams["roster_index"] - teams["index_2025"])
+    # Roster turnover is zero-sum across the league, so center the shift.
+    off_delta = (raw_off_delta - raw_off_delta.mean()).fillna(0.0)
+    teams["proj_off_ppg"] = baseline_off + off_delta
     teams["off_ppg_2025"] = teams["ppg"]
-    teams["off_change"] = OFF_REGRESS * slope * (teams["roster_index"] - teams["index_2025"])
+    teams["off_change"] = off_delta
 
     # ── Defense ──────────────────────────────────────────────────────────
     # Defensive box stats only weakly predict points allowed (R^2 ~ 0.1), so

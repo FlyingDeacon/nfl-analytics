@@ -62,8 +62,6 @@ table, games, changes = _run(
     _file_mtime(_base / "data/raw/weekly_def.csv"),
     _file_mtime(_WIN_TOTALS_CSV),
 )
-_cal = table.attrs.get("calibration", {})
-_def_cal = table.attrs.get("def_calibration", {})
 _market = table.attrs.get("market", {})
 
 ORD = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
@@ -125,8 +123,8 @@ _anchor = (f"power blended {int(_market.get('weight', 0)*100)}% to market win to
            if _market.get("used") else "")
 st.caption(
     f"Sorted by projected wins · 20,000 simulated seasons · {_anchor}"
-    f"offense calibrated to 2025 (R² = {_cal.get('r2', 0):.2f}) · "
-    f"defense = 2025 points allowed adjusted for roster turnover"
+    f"model rating = 2025 points scored & allowed, regressed toward the mean and "
+    f"adjusted for offseason roster turnover"
 )
 st.markdown("---")
 
@@ -318,24 +316,24 @@ with st.expander("ℹ️ How these projections are built"):
     else:
         _power_para = "A team's **power rating** is its predicted net PPG centered on the league."
     st.markdown(f"""
-**Offense is projected from the actual roster.** Every skill player gets a
-regressed 2025 per-game PPR value (small samples are pulled toward positional
-replacement). Each team's projected starters — read straight from the
-**updated post-offseason depth chart**, so **acquisitions and losses are baked
-in** — are combined into an offensive "roster index". A regression fit on 2025
-(actual offensive PPG vs that same index, R² = {_cal.get('r2', 0):.2f}) maps the
-index to a **predicted 2026 offensive PPG**, regressed toward league-average
-scoring. The "Off Δ" column is how much that prediction shifts purely from this
-offseason's roster turnover.
+**Team quality is anchored on what actually happened, not on fantasy points.**
+A walk-forward backtest (2016-2025) showed that a team's prior-season point
+differential is the most accurate preseason signal available to us — swapping in
+opponent-adjusted ratings or EPA barely moved the error — so the model builds
+each side from **2025 results, regressed toward the league mean**, and then lets
+the roster do the rest.
 
-**Defense is roster-aware too, but built differently.** Each defender gets a
-regressed 2025 per-game value from a composite box score (sacks, tackles for
-loss, QB hits, interceptions, pass breakups, forced fumbles, tackles), and the
-projected DL/LB/DB starters form a defensive index. Because defensive box stats
-only weakly predict points allowed (R² = {_def_cal.get('r2', 0):.2f}), the model
-**anchors on the team's actual 2025 points allowed** (regressed toward the mean)
-and then **adjusts for defensive roster turnover** — the "Def Δ" column, centered
-so offseason moves redistribute rather than change league-wide scoring
+**Offense** starts from 2025 points scored (regressed) and is **adjusted for
+offseason roster turnover** — the "Off Δ" column. Each projected starter, read
+straight from the **updated post-offseason depth chart** (so acquisitions and
+losses are baked in), carries a regressed 2025 per-game PPR value; the change in
+that roster index maps to a scoring shift that's centered league-wide so trades
+redistribute rather than inflate scoring.
+
+**Defense** works the same way: it **anchors on the team's actual 2025 points
+allowed** (regressed toward the mean) and **adjusts for defensive roster
+turnover** — the "Def Δ" column, built from a composite box score (sacks, TFL,
+QB hits, INTs, pass breakups, forced fumbles) and centered so moves redistribute
 (negative = the defense improved).
 
 {_power_para} For every 2026 game, win probability comes from the rating gap
