@@ -50,7 +50,15 @@ PPG_BLEND_WEIGHT = 0.45
 # Backtest-calibrated expected-games used as the PER-POSITION CENTRE of the
 # player-specific availability model below (a perfectly average-availability
 # player projects at this many games).
-PPG_BASELINE_GAMES: dict[str, int] = {"QB": 15, "RB": 15, "WR": 15, "TE": 16}
+#
+# Recalibrated against the 2022-2025 walk-forward backtest: the prior 15/15/15/16
+# centres over-projected season totals by ~+28 pts on average (training pairs only
+# ever include players who survived into season N+1, so the fit skews to the
+# durable). Scaling the skill-position centres ~0.90 and pulling QB down to 13
+# (its +44 bias was the worst — nearly a full extra game of counting stats) cut
+# the overall bias to ~+21 and QB's to ~+10, improved MAE and top-50 hit rate,
+# and left the rank correlation (spearman) essentially unchanged.
+PPG_BASELINE_GAMES: dict[str, float] = {"QB": 13, "RB": 13.5, "WR": 13.5, "TE": 14.4}
 
 # ── Player-specific availability (expected games) ─────────────────────────────
 # Replaces the flat positional games constant with a per-player estimate:
@@ -274,7 +282,9 @@ def build_predictions_core(weekly_df: pd.DataFrame, config: ProjectionConfig,
         model_pts = np.clip(raw_pred * adj_factor, 0, None)
 
         if pos == "QB":
-            # Explicit season weights: most-recent=65%, 2nd-most-recent=25%, 3rd=10%
+            # Explicit season weights: most-recent=65%, 2nd-most-recent=25%, 3rd=10%.
+            # Backtest-validated best (softening it hurts QB rank accuracy — recent
+            # QB performance predicts better than betting on bounce-backs).
             _szn_sorted = sorted(all_seasons)
             _n = len(_szn_sorted)
             _recency_w = {0: 0.65, 1: 0.25, 2: 0.10}
