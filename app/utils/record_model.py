@@ -48,6 +48,11 @@ STARTER_WEIGHTS = {
 }
 SKILL = ("QB", "RB", "WR", "TE")
 
+OFF_REGRESS = 0.60       # roster-index offense regressed toward league mean.
+                         # Walk-forward backtest (scripts/backtest_record_model.py)
+                         # shows ~0.5-0.6 shrinkage of a team's scoring signal is
+                         # optimal; previously offense was taken at full face value
+                         # while defense was already regressed (asymmetric bias).
 DEF_REGRESS = 0.60       # 2025 points-allowed regression toward league mean
                          # (fallback for teams with no defensive roster index)
 
@@ -83,6 +88,12 @@ GAME_SD = 13.2           # single-game point-margin standard deviation
 N_SIMS = 20_000
 GAMES = 17
 
+# Blend the roster-model power rating toward the market's implied rating.
+# Vegas win totals are the single most accurate publicly available preseason
+# signal, so we anchor most of the way to them and let the roster model supply
+# the rest (and drive the offseason-impact narrative).  0 => ignore the market.
+MARKET_WEIGHT = 0.65
+
 _SQRT2 = np.sqrt(2.0)
 
 
@@ -90,6 +101,36 @@ def _norm_cdf(x) -> np.ndarray:
     arr = np.asarray(x, dtype=np.float64)
     flat = [0.5 * (1.0 + erf(float(v) / _SQRT2)) for v in arr.ravel()]
     return np.array(flat, dtype=np.float64).reshape(arr.shape)
+
+
+def _norm_ppf(p) -> np.ndarray:
+    """Inverse standard-normal CDF (Acklam's rational approximation)."""
+    a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02,
+         1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00]
+    b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02,
+         6.680131188771972e+01, -1.328068155288572e+01]
+    c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
+         -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00]
+    d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00,
+         3.754408661907416e+00]
+    out = []
+    for v in np.ravel(np.asarray(p, dtype=np.float64)):
+        v = min(max(float(v), 1e-6), 1 - 1e-6)
+        if v < 0.02425:
+            q = np.sqrt(-2 * np.log(v))
+            x = (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / \
+                ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)
+        elif v <= 0.97575:
+            q = v - 0.5
+            r = q*q
+            x = (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / \
+                (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1)
+        else:
+            q = np.sqrt(-2 * np.log(1 - v))
+            x = -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / \
+                ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)
+        out.append(x)
+    return np.array(out, dtype=np.float64)
 
 
 # ── Player value ─────────────────────────────────────────────────────────────
@@ -318,7 +359,8 @@ def _calibrate(idx25: dict, target: pd.Series, teams: pd.DataFrame):
     return float(slope), float(intercept), float(r2)
 
 
-def build_team_projections(ratings, depth, divisions, weekly, weekly_def=None):
+def build_team_projections(ratings, depth, divisions, weekly, weekly_def=None,
+                           win_totals=None):
     """Return a per-team table with predicted PPG, power rating and change info."""
     teams = divisions[["team_abbr", "division", "conference"]].rename(
         columns={"team_abbr": "team"}).copy()
@@ -336,11 +378,16 @@ def build_team_projections(ratings, depth, divisions, weekly, weekly_def=None):
 
     teams["roster_index"] = teams["team"].map(idx26).fillna(np.nan)
     teams["index_2025"] = teams["team"].map(idx25)
-    teams["proj_off_ppg"] = intercept + slope * teams["roster_index"]
+    raw_off = intercept + slope * teams["roster_index"]
     # Fallback for any team with no index: prior-year offense.
-    teams["proj_off_ppg"] = teams["proj_off_ppg"].fillna(teams["ppg"])
+    raw_off = raw_off.fillna(teams["ppg"])
+    # Regress the projected scoring level toward league-average offense so a
+    # single strong (or weak) roster season isn't taken at full face value —
+    # matches how defense is handled and how the backtest tunes best.
+    lg_off = teams["ppg"].mean()
+    teams["proj_off_ppg"] = lg_off + OFF_REGRESS * (raw_off - lg_off)
     teams["off_ppg_2025"] = teams["ppg"]
-    teams["off_change"] = slope * (teams["roster_index"] - teams["index_2025"])
+    teams["off_change"] = OFF_REGRESS * slope * (teams["roster_index"] - teams["index_2025"])
 
     # ── Defense ──────────────────────────────────────────────────────────
     # Defensive box stats only weakly predict points allowed (R^2 ~ 0.1), so
@@ -375,16 +422,50 @@ def build_team_projections(ratings, depth, divisions, weekly, weekly_def=None):
     teams["def_ppg_2025"] = teams["oppg"]
 
     teams["proj_net"] = teams["proj_off_ppg"] - teams["proj_def_ppg"]
-    teams["power"] = teams["proj_net"] - teams["proj_net"].mean()
+    model_power = teams["proj_net"] - teams["proj_net"].mean()
+    teams["model_power"] = model_power
+
+    # ── Anchor to the market ─────────────────────────────────────────────
+    # Convert each team's win total to an implied power rating by inverting the
+    # game model against an average opponent (E[wins] ~ GAMES * Phi(power/SD)),
+    # then blend it with the roster model.  The off/def PPG columns stay as the
+    # roster story; only the power rating that drives the simulation is blended.
+    market_used = False
+    if win_totals is not None and not win_totals.empty and MARKET_WEIGHT > 0:
+        wt = (win_totals.rename(columns={c: c.lower() for c in win_totals.columns})
+              .set_index("team")["win_total"])
+        implied = pd.Series(index=teams.index, dtype=float)
+        frac = (teams["team"].map(wt) / GAMES).clip(0.03, 0.97)
+        implied[:] = GAME_SD * _norm_ppf(frac.to_numpy())
+        implied = implied - implied[frac.notna().to_numpy()].mean()
+        blended = np.where(
+            teams["team"].map(wt).notna().to_numpy(),
+            MARKET_WEIGHT * implied + (1 - MARKET_WEIGHT) * model_power,
+            model_power,
+        )
+        teams["power"] = blended - blended.mean()
+        teams["market_power"] = implied
+        market_used = True
+    else:
+        teams["power"] = model_power
 
     teams.attrs["calibration"] = {"slope": slope, "intercept": intercept, "r2": r2}
     teams.attrs["def_calibration"] = def_cal
+    teams.attrs["market"] = {"used": market_used, "weight": MARKET_WEIGHT}
     return teams
+
+
+# Schedule feeds occasionally use different abbreviations than our ratings/
+# divisions (e.g. the Rams are "LA" on the schedule but "LAR" everywhere else),
+# which would silently drop that team's games and give it a 0-win projection.
+_SCHED_TEAM_ALIAS = {"LA": "LAR", "JAC": "JAX", "STL": "LAR", "SD": "LAC", "OAK": "LV"}
 
 
 def _game_probs(schedule, power):
     games = schedule[(schedule["season"] == 2026) & (schedule["game_type"] == "REG")][
         ["week", "home_team", "away_team"]].copy()
+    games["home_team"] = games["home_team"].replace(_SCHED_TEAM_ALIAS)
+    games["away_team"] = games["away_team"].replace(_SCHED_TEAM_ALIAS)
     pmap = power.set_index("team")["power"]
     games = games[games["home_team"].isin(pmap.index) & games["away_team"].isin(pmap.index)]
     margin = games["home_team"].map(pmap) - games["away_team"].map(pmap) + HOME_ADV
@@ -393,7 +474,7 @@ def _game_probs(schedule, power):
 
 
 def project_season(ratings, depth, divisions, schedule, weekly, weekly_def=None,
-                   n_sims=N_SIMS, seed=7):
+                   win_totals=None, n_sims=N_SIMS, seed=7):
     """Full projection.
 
     Returns (team_table, games_table, changes):
@@ -401,9 +482,11 @@ def project_season(ratings, depth, divisions, schedule, weekly, weekly_def=None,
       top of proj_wins, playoff_pct, div_title_pct, exp_finish, win_dist, power.
       changes: dict team -> {"off": {...}, "def": {...}}.
     """
-    power = build_team_projections(ratings, depth, divisions, weekly, weekly_def)
+    power = build_team_projections(ratings, depth, divisions, weekly, weekly_def,
+                                   win_totals=win_totals)
     cal = power.attrs.get("calibration", {})
     def_cal = power.attrs.get("def_calibration", {})
+    market = power.attrs.get("market", {})
     games = _game_probs(schedule, power)
 
     off_changes = roster_changes(depth, _player_values(weekly))
@@ -490,6 +573,7 @@ def project_season(ratings, depth, divisions, schedule, weekly, weekly_def=None,
     table = table.sort_values("proj_wins", ascending=False).reset_index(drop=True)
     table.attrs["calibration"] = cal
     table.attrs["def_calibration"] = def_cal
+    table.attrs["market"] = market
     return table, games, changes
 
 

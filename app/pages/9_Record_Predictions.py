@@ -43,10 +43,15 @@ weekly    = load_weekly(_mtime=_file_mtime(_base / "data/raw/weekly.csv"))
 weekly_def = load_weekly_def(_mtime=_file_mtime(_base / "data/raw/weekly_def.csv"))
 
 
+_WIN_TOTALS_CSV = _base / "data/raw/win_totals_2026.csv"
+
+
 @st.cache_data(show_spinner="Simulating the 2026 season…")
-def _run(_r_m, _d_m, _s_m, _w_m, _wd_m):
+def _run(_r_m, _d_m, _s_m, _w_m, _wd_m, _wt_m):
     depth_df = pd.read_csv(_base / "data/raw/depth_charts.csv")
-    return project_season(ratings, depth_df, divisions, schedules, weekly, weekly_def)
+    win_totals = pd.read_csv(_WIN_TOTALS_CSV) if _WIN_TOTALS_CSV.exists() else None
+    return project_season(ratings, depth_df, divisions, schedules, weekly,
+                          weekly_def, win_totals=win_totals)
 
 
 table, games, changes = _run(
@@ -55,9 +60,11 @@ table, games, changes = _run(
     _file_mtime(_base / "data/raw/schedules.csv"),
     _file_mtime(_base / "data/raw/weekly.csv"),
     _file_mtime(_base / "data/raw/weekly_def.csv"),
+    _file_mtime(_WIN_TOTALS_CSV),
 )
 _cal = table.attrs.get("calibration", {})
 _def_cal = table.attrs.get("def_calibration", {})
+_market = table.attrs.get("market", {})
 
 ORD = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
 
@@ -114,8 +121,10 @@ st.dataframe(
                     help="Average finishing place within the division across simulations"),
     },
 )
+_anchor = (f"power blended {int(_market.get('weight', 0)*100)}% to market win totals · "
+           if _market.get("used") else "")
 st.caption(
-    f"Sorted by projected wins · 20,000 simulated seasons · "
+    f"Sorted by projected wins · 20,000 simulated seasons · {_anchor}"
     f"offense calibrated to 2025 (R² = {_cal.get('r2', 0):.2f}) · "
     f"defense = 2025 points allowed adjusted for roster turnover"
 )
@@ -298,6 +307,16 @@ with right:
 # METHODOLOGY
 # ══════════════════════════════════════════════════════════════════════════════
 with st.expander("ℹ️ How these projections are built"):
+    if _market.get("used"):
+        _power_para = (
+            f"A team's **power rating** starts as its predicted net PPG centered "
+            f"on the league, then is **blended {_market.get('weight', 0.0):.0%} "
+            f"toward the market's implied rating** — the Vegas win total is the "
+            f"most accurate public preseason signal, so the sim leans on it while "
+            f"the roster model supplies the offseason-impact story above."
+        )
+    else:
+        _power_para = "A team's **power rating** is its predicted net PPG centered on the league."
     st.markdown(f"""
 **Offense is projected from the actual roster.** Every skill player gets a
 regressed 2025 per-game PPR value (small samples are pulled toward positional
@@ -305,8 +324,9 @@ replacement). Each team's projected starters — read straight from the
 **updated post-offseason depth chart**, so **acquisitions and losses are baked
 in** — are combined into an offensive "roster index". A regression fit on 2025
 (actual offensive PPG vs that same index, R² = {_cal.get('r2', 0):.2f}) maps the
-index to a **predicted 2026 offensive PPG**. The "Off Δ" column is how much that
-prediction shifts purely from this offseason's roster turnover.
+index to a **predicted 2026 offensive PPG**, regressed toward league-average
+scoring. The "Off Δ" column is how much that prediction shifts purely from this
+offseason's roster turnover.
 
 **Defense is roster-aware too, but built differently.** Each defender gets a
 regressed 2025 per-game value from a composite box score (sacks, tackles for
@@ -318,9 +338,9 @@ and then **adjusts for defensive roster turnover** — the "Def Δ" column, cent
 so offseason moves redistribute rather than change league-wide scoring
 (negative = the defense improved).
 
-A team's **power rating** is its predicted net PPG centered on the league. For
-every 2026 game, win probability comes from the rating gap plus home-field
-advantage through a normal single-game margin model, and the 272-game slate is
-**simulated 20,000 times** for win totals, division-title odds, playoff odds and
-expected finish (4 division winners + 3 wild cards per conference, ties random).
+{_power_para} For every 2026 game, win probability comes from the rating gap
+plus home-field advantage through a normal single-game margin model, and the
+272-game slate is **simulated 20,000 times** for win totals, division-title odds,
+playoff odds and expected finish (4 division winners + 3 wild cards per
+conference, ties random).
     """)
