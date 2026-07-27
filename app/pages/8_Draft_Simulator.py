@@ -36,7 +36,42 @@ st.markdown("""
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 BIG_BOARD_DIR = ROOT_DIR / "data" / "derived"
 BUILD_SCRIPT = ROOT_DIR / "scripts" / "build_big_boards.py"
+SCHEDULE_CSV = ROOT_DIR / "data" / "raw" / "schedules.csv"
 SCORING_FORMATS = ["PPR", "Half PPR", "Standard"]
+DRAFT_SEASON = 2026
+
+# Board team abbreviations vs. nflverse schedule abbreviations (only differences).
+_SCHED_TEAM_ALIAS = {"LAR": "LA", "LA": "LA", "JAC": "JAX"}
+
+
+@st.cache_data(show_spinner=False)
+def _bye_weeks() -> dict:
+    """Map each team abbreviation → its 2026 regular-season bye week.
+
+    Derived from the schedule: a team's bye is the one regular-season week it
+    has no game. Returns {} if the schedule is unavailable so the sim degrades
+    gracefully (bye columns just show blank).
+    """
+    try:
+        s = pd.read_csv(SCHEDULE_CSV)
+    except Exception:
+        return {}
+    s = s[(s["season"] == DRAFT_SEASON) & (s.get("game_type", "REG") == "REG")]
+    if s.empty:
+        return {}
+    all_weeks = set(range(1, int(s["week"].max()) + 1))
+    byes: dict = {}
+    for t in set(s["home_team"]) | set(s["away_team"]):
+        played = set(s[(s["home_team"] == t) | (s["away_team"] == t)]["week"])
+        missing = sorted(all_weeks - played)
+        byes[str(t)] = int(missing[0]) if missing else None
+    return byes
+
+
+def _team_bye(team: str, byes: dict) -> int | None:
+    """Bye week for a board team abbr, resolving the LA/LAR-style aliases."""
+    t = str(team)
+    return byes.get(t, byes.get(_SCHED_TEAM_ALIAS.get(t, t)))
 
 
 def _board_path(scoring: str) -> Path:
@@ -102,6 +137,14 @@ with st.expander("⚙️ Draft Settings", expanded=not settings_locked):
     order_type = c5.radio("Draft order", ["Snake", "Linear"], horizontal=True,
                           disabled=settings_locked, key="ds_order_type")
 
+    draft_mode = st.radio(
+        "Draft mode",
+        ["Standard (robots auto-draft)", "Manual (you pick for every team)"],
+        horizontal=True, disabled=settings_locked, key="ds_mode",
+        help="Manual lets you make every team's selection yourself — useful for "
+             "running a mock where you control the whole room.",
+    )
+
 
 def _snake_order(teams: int, rounds: int, snake: bool) -> list:
     """Return a flat list of team slots (1-based) for each overall pick."""
@@ -131,6 +174,7 @@ if not settings_locked:
         st.session_state.dr_teams = teams
         st.session_state.dr_rounds = rounds
         st.session_state.dr_slot = slot
+        st.session_state.dr_manual = draft_mode.startswith("Manual")
         st.session_state.dr_snake = (order_type == "Snake")
         st.session_state.dr_order = _snake_order(teams, rounds, order_type == "Snake")
         st.session_state.dr_board = board.to_dict("records")
@@ -142,7 +186,7 @@ if not settings_locked:
 
 if creset.button("🔄 Reset Draft", use_container_width=True, key="ds_reset"):
     for k in ("dr_started", "dr_order", "dr_board", "dr_drafted",
-              "dr_picks", "dr_pick_idx"):
+              "dr_picks", "dr_pick_idx", "dr_manual"):
         st.session_state.pop(k, None)
     st.rerun()
 
@@ -154,6 +198,19 @@ order = st.session_state.dr_order
 total_picks = len(order)
 board = pd.DataFrame(st.session_state.dr_board)
 drafted = st.session_state.dr_drafted
+manual = st.session_state.get("dr_manual", False)
+
+# Attach each player's 2026 bye week (from the schedule) to the board so it can
+# be shown and factored into suggestions. Recomputed per rerun since dr_board is
+# persisted without it.
+_BYES = _bye_weeks()
+board["bye"] = board["team"].map(lambda t: _team_bye(t, _BYES))
+_BYE_BY_PLAYER = dict(zip(board["player"], board["bye"]))
+
+
+def _bye_label(player: str) -> str:
+    b = _BYE_BY_PLAYER.get(player)
+    return "" if b is None or pd.isna(b) else str(int(b))
 
 
 def _team_roster(slot: int) -> list:
@@ -192,6 +249,12 @@ _K_PRIORITY  = 500.0  # once it's the kicker's turn, lift it above bench value
                       # (K's VOR is deeply negative, so the need bonus alone
                       # can't out-rank a high-VOR bench player) — beats any
                       # realistic VOR gap but stays below _BLOCK
+_BYE_PEN     = 12.0   # nudge down a depth pick that shares a bye with a player
+                      # already at that position — keeps starters/backups from
+                      # being off the same week. Deliberately small (in VOR
+                      # points) so a clearly superior player overrides it, and
+                      # only applied to non-starter-need picks so it mostly
+                      # shapes bench/FLEX choices, not required starters
 _BLOCK       = 1e6    # effectively removes a player from consideration
 
 # Positional draft windows distilled from recent (2023-24) championship-roster
@@ -241,6 +304,15 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
     others_done = all(core[p] == 0 for p in ("QB", "RB", "WR", "TE")) and flex_filled
     cur_round = rounds - picks_left + 1
 
+    # Bye weeks already on this roster, per position — used to avoid stacking
+    # depth at a position that would all sit out the same week.
+    team_byes: dict = {}
+    for p in st.session_state.dr_picks:
+        if p["team"] == slot:
+            b = _BYE_BY_PLAYER.get(p["player"])
+            if b is not None and not pd.isna(b):
+                team_byes.setdefault(p["pos"], set()).add(int(b))
+
     def _score(row) -> float:
         pos = row["pos"]
         s = float(row["vor"])
@@ -252,6 +324,13 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
             s += _FLEX_BONUS
         if pos in ("QB", "TE", "K") and c[pos] >= STARTER_TARGET[pos]:
             s -= _STACK_PEN
+        # Bye-week fit: only for depth picks (not an open starting need), nudge
+        # down a player who'd share a bye with someone already at that position.
+        # Small enough that a high-VOR player still wins the slot.
+        if not core_need:
+            b = _BYE_BY_PLAYER.get(row["player"])
+            if b is not None and not pd.isna(b) and int(b) in team_byes.get(pos, set()):
+                s -= _BYE_PEN
         # Winning-strategy timing: don't reach for your first QB/TE too early.
         if pos in _REACH_ROUND and core_need:
             early = _REACH_ROUND[pos] - cur_round
@@ -327,7 +406,13 @@ def _record_pick(slot: int, row: dict) -> None:
 
 
 def _advance_robots() -> None:
-    """Run robot picks until it is the user's turn or the draft ends."""
+    """Run robot picks until it is the user's turn or the draft ends.
+
+    In manual mode the user makes every team's selection, so no robot ever
+    picks — the on-clock team is always whoever's slot is up next.
+    """
+    if manual:
+        return
     while (st.session_state.dr_pick_idx < total_picks
            and order[st.session_state.dr_pick_idx] != user_slot):
         slot = order[st.session_state.dr_pick_idx]
@@ -351,11 +436,11 @@ def _roster_slot_rows(picks_list: list) -> list:
         take = next((p for p in remaining if p["pos"] in allowed), None)
         if take:
             remaining.remove(take)
-            rows.append((slot_name, f'{take["player"]} ({take["pos"]})'))
+            rows.append((slot_name, f'{take["player"]} ({take["pos"]})', _bye_label(take["player"])))
         else:
-            rows.append((slot_name, "—"))
+            rows.append((slot_name, "—", ""))
     for p in remaining:
-        rows.append(("BE", f'{p["player"]} ({p["pos"]})'))
+        rows.append(("BE", f'{p["player"]} ({p["pos"]})', _bye_label(p["player"])))
     return rows
 
 
@@ -433,14 +518,23 @@ _advance_robots()
 pick_idx = st.session_state.dr_pick_idx
 drafted = st.session_state.dr_drafted
 done = pick_idx >= total_picks
+# Team currently on the clock (always the user in standard mode after robots
+# advance; any team in manual mode). This is who the pick UI drafts for.
+active_slot = None if done else order[pick_idx]
+# Which team's roster the right panel shows: the on-clock team in manual mode,
+# otherwise always the user.
+roster_slot = active_slot if (manual and active_slot is not None) else user_slot
 
 # ── Header status ────────────────────────────────────────────────────────────
 if done:
     st.success("🏁 Draft complete! Review your roster below.")
 else:
     cur_round = pick_idx // teams + 1
-    on_clock = order[pick_idx]
-    who = "🟢 **You're on the clock!**" if on_clock == user_slot else f"Team {on_clock} is picking…"
+    on_clock = active_slot
+    if manual:
+        who = f"🟠 **Manual mode** — you're picking for **Team {on_clock}**"
+    else:
+        who = "🟢 **You're on the clock!**" if on_clock == user_slot else f"Team {on_clock} is picking…"
     st.markdown(
         f"**Pick {pick_idx + 1} / {total_picks}**  ·  Round {cur_round}  ·  "
         f"Your slot: **{user_slot}**  ·  {who}"
@@ -460,30 +554,31 @@ with left:
     # Show the full available board (scrollable). Capping at the top 50 by VOR
     # hid every kicker, since their VOR ranks them ~150+ — use the "K" position
     # filter (or scroll) to reach them.
-    show = view[["my_rank", "player", "pos", "team", "vor",
+    show = view[["my_rank", "player", "pos", "team", "bye", "vor",
                  "predicted_pts", "proj_games", "espn_overall", "round_grade"]].copy()
-    show.columns = ["My Rank", "Player", "Pos", "Team", "VOR",
+    show.columns = ["My Rank", "Player", "Pos", "Team", "Bye", "VOR",
                     "Proj Pts", "Proj G", "ESPN Rank", "Grade"]
     st.dataframe(show, hide_index=True, use_container_width=True, height=430)
 
-    if not done and order[pick_idx] == user_slot:
-        counts = _pos_counts(user_slot)
-        needed = _needed_positions(user_slot)
-        must = _is_must_fill(user_slot)
+    if not done:
+        counts = _pos_counts(active_slot)
+        needed = _needed_positions(active_slot)
+        must = _is_must_fill(active_slot)
+        who_txt = "Team " + str(active_slot) if manual and active_slot != user_slot else "you"
 
-        # Selectable pool = available players you can still roster (respect caps).
+        # Selectable pool = available players this team can still roster (caps).
         pool = avail[avail["pos"].apply(lambda p: counts.get(p, 0) < POS_CAPS.get(p, 99))].copy()
         if must and needed:
             forced = pool[pool["pos"].isin(needed)]
             if not forced.empty:
                 pool = forced
                 st.warning(
-                    f"⚠️ Roster requirement — you still need **{', '.join(needed)}**. "
-                    "Only those positions are selectable so you finish with a full lineup."
+                    f"⚠️ Roster requirement — {who_txt} still need **{', '.join(needed)}**. "
+                    "Only those positions are selectable so the roster finishes with a full lineup."
                 )
 
         # Suggestion is computed over the full legal pool (roster-aware).
-        sug = _suggest_pick(user_slot, pool)
+        sug = _suggest_pick(active_slot, pool)
         if sug is not None:
             st.info(f"💡 **Suggested pick:** {sug['player']} ({sug['pos']}) — {sug['reason']}")
 
@@ -501,27 +596,30 @@ with left:
             default_idx = pick_opts.index(sug["player"]) if sug and sug["player"] in pick_opts else 0
             # Pick-scoped keys so a stale selection can never carry across picks
             # (which previously let a non-required player slip through the guard).
-            choice = fcol2.selectbox("Make your pick", pick_opts, index=default_idx,
+            pick_label = "Make your pick" if not manual else f"Make Team {active_slot}'s pick"
+            choice = fcol2.selectbox(pick_label, pick_opts, index=default_idx,
                                      format_func=lambda p: labels.get(p, p),
                                      key=f"ds_user_choice_{pick_idx}")
             if st.button(f"✅ Draft {choice}", type="primary", use_container_width=True,
                          key=f"ds_draft_btn_{pick_idx}"):
                 row = pool_view[pool_view["player"] == choice].iloc[0].to_dict()
-                _record_pick(user_slot, row)
+                _record_pick(active_slot, row)
                 _advance_robots()
                 st.rerun()
 
 # ── Your roster + recent picks ───────────────────────────────────────────────
 with right:
-    st.markdown("#### 🧢 Your Roster")
-    my_picks = [p for p in st.session_state.dr_picks if p["team"] == user_slot]
+    roster_hdr = (f"#### 🧢 Team {roster_slot} Roster"
+                  if manual and roster_slot != user_slot else "#### 🧢 Your Roster")
+    st.markdown(roster_hdr)
+    my_picks = [p for p in st.session_state.dr_picks if p["team"] == roster_slot]
 
     st.dataframe(
-        pd.DataFrame(_roster_slot_rows(my_picks), columns=["Slot", "Player"]),
+        pd.DataFrame(_roster_slot_rows(my_picks), columns=["Slot", "Player", "Bye"]),
         hide_index=True, use_container_width=True, height=340,
     )
 
-    _still_need = _needed_positions(user_slot)
+    _still_need = _needed_positions(roster_slot)
     if _still_need:
         st.caption(f"⚠️ Still to fill: {', '.join(_still_need)}")
     else:
@@ -579,7 +677,7 @@ vcol1, vcol2 = st.columns(2)
 with vcol1:
     st.caption("Starting lineup")
     st.dataframe(
-        pd.DataFrame(_roster_slot_rows(sel_picks), columns=["Slot", "Player"]),
+        pd.DataFrame(_roster_slot_rows(sel_picks), columns=["Slot", "Player", "Bye"]),
         hide_index=True, use_container_width=True,
     )
 with vcol2:
