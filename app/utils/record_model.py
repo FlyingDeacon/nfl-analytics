@@ -432,17 +432,21 @@ def build_team_projections(ratings, depth, divisions, weekly, weekly_def=None,
     # roster story; only the power rating that drives the simulation is blended.
     market_used = False
     if win_totals is not None and not win_totals.empty and MARKET_WEIGHT > 0:
-        wt = (win_totals.rename(columns={c: c.lower() for c in win_totals.columns})
-              .set_index("team")["win_total"])
-        implied = pd.Series(index=teams.index, dtype=float)
-        frac = (teams["team"].map(wt) / GAMES).clip(0.03, 0.97)
-        implied[:] = GAME_SD * _norm_ppf(frac.to_numpy())
-        implied = implied - implied[frac.notna().to_numpy()].mean()
-        blended = np.where(
-            teams["team"].map(wt).notna().to_numpy(),
-            MARKET_WEIGHT * implied + (1 - MARKET_WEIGHT) * model_power,
-            model_power,
-        )
+        wt = win_totals.rename(columns={c: c.lower() for c in win_totals.columns})
+        wt_map = dict(zip(wt["team"].astype(str),
+                          pd.to_numeric(wt["win_total"], errors="coerce")))
+        wins_arr = np.array([wt_map.get(str(t), np.nan) for t in teams["team"]],
+                            dtype=float)
+        have = ~np.isnan(wins_arr)
+        mp = np.asarray(model_power, dtype=float)
+        implied = np.full(len(teams), np.nan, dtype=float)
+        if have.any():
+            frac = np.clip(wins_arr[have] / GAMES, 0.03, 0.97)
+            imp = GAME_SD * _norm_ppf(frac)
+            implied[have] = imp - imp.mean()
+        blended = np.where(have,
+                           MARKET_WEIGHT * np.nan_to_num(implied) + (1 - MARKET_WEIGHT) * mp,
+                           mp)
         teams["power"] = blended - blended.mean()
         teams["market_power"] = implied
         market_used = True
