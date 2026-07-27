@@ -112,11 +112,11 @@ def _load_board(path: str, mtime: float) -> pd.DataFrame:
 
 
 # ── Draft settings ───────────────────────────────────────────────────────────
-POSITIONS = ("QB", "RB", "WR", "TE", "K")
-POS_CAPS = {"QB": 2, "RB": 8, "WR": 8, "TE": 3, "K": 2}  # max per roster
-REQ_MIN = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "K": 1}   # starters that must be filled
-STARTER_TARGET = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "K": 1}  # weekly starters (+1 FLEX)
-STARTER_SLOTS = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "K"]
+POSITIONS = ("QB", "RB", "WR", "TE", "DEF", "K")
+POS_CAPS = {"QB": 2, "RB": 8, "WR": 8, "TE": 3, "DEF": 2, "K": 2}  # max per roster
+REQ_MIN = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "DEF": 1, "K": 1}   # starters that must be filled
+STARTER_TARGET = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "DEF": 1, "K": 1}  # weekly starters (+1 FLEX)
+STARTER_SLOTS = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "DEF", "K"]
 FLEX_POS = ("RB", "WR", "TE")
 FLEX_TOTAL = STARTER_TARGET["RB"] + STARTER_TARGET["WR"] + STARTER_TARGET["TE"] + 1  # 6
 
@@ -322,7 +322,7 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
             s += _NEED_BONUS
         elif flex_ok:
             s += _FLEX_BONUS
-        if pos in ("QB", "TE", "K") and c[pos] >= STARTER_TARGET[pos]:
+        if pos in ("QB", "TE", "K", "DEF") and c[pos] >= STARTER_TARGET[pos]:
             s -= _STACK_PEN
         # Bye-week fit: only for depth picks (not an open starting need), nudge
         # down a player who'd share a bye with someone already at that position.
@@ -336,16 +336,17 @@ def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
             early = _REACH_ROUND[pos] - cur_round
             if early > 0:
                 s -= _REACH_PEN * early
-        # Kicker is a required starter: surface it once it's the last starter to
-        # fill (skill positions + FLEX all set) or the draft is running tight —
-        # the same "fill your starter" logic that promotes QB, just later.
-        k_time = others_done or picks_left <= max(2, st_["starters_left"])
-        if pos == "K" and core_need:
-            if not k_time:
-                s -= _BLOCK           # hold the kicker until it's its turn
+        # Kicker and defense are required starters but streamed last: surface
+        # them once they're the final starters to fill (skill positions + FLEX
+        # all set) or the draft is running tight — the same "fill your starter"
+        # logic that promotes QB, just later.
+        late_time = others_done or picks_left <= max(2, st_["starters_left"])
+        if pos in ("K", "DEF") and core_need:
+            if not late_time:
+                s -= _BLOCK           # hold K/DEF until it's their turn
             else:
-                s += _K_PRIORITY      # its turn: rank ahead of bench depth
-                                      # (K's VOR is deeply negative, so lift it)
+                s += _K_PRIORITY      # their turn: rank ahead of bench depth
+                                      # (K/DEF VOR is deeply negative, so lift it)
         if force and not core_need:
             s -= _BLOCK               # must fill a required starter now
         return s

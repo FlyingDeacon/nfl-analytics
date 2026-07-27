@@ -95,21 +95,26 @@ REPLACEMENT_LEVEL = {
     "K":   220,   # deliberately inflated (well above any kicker projection) so
                   # kicker VOR is strongly negative and they sort into the final
                   # rounds — mirrors real drafts where kickers go last
+    "DEF": 200,   # same idea for team defenses: inflated above every D/ST
+                  # projection so their VOR is strongly negative and they land
+                  # in the final rounds (DST is streamed, drafted late)
 }
 
 # Per-scoring-format replacement levels. Half-PPR averages standard + PPR.
 # Standard PPR (no per-reception bonus) drops WR/TE replacement floors materially.
+# K and DEF scoring is format-independent, so their floors are constant.
 SCORING_REPLACEMENT_LEVELS = {
-    "PPR":      {"QB": 290, "RB": 185, "WR": 185, "TE": 170, "K": 220},
-    "Half PPR": {"QB": 290, "RB": 175, "WR": 150, "TE": 140, "K": 220},
-    "Standard": {"QB": 290, "RB": 160, "WR": 115, "TE": 105, "K": 220},
+    "PPR":      {"QB": 290, "RB": 185, "WR": 185, "TE": 170, "K": 220, "DEF": 200},
+    "Half PPR": {"QB": 290, "RB": 175, "WR": 150, "TE": 140, "K": 220, "DEF": 200},
+    "Standard": {"QB": 290, "RB": 160, "WR": 115, "TE": 105, "K": 220, "DEF": 200},
 }
 
 # LEAGUE SIZE — used to derive round grades from model rank (picks per round = league size)
 LEAGUE_SIZE = 10
 
 POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
-                   "WR": "Wide Receivers",  "TE": "Tight Ends", "K": "Kickers"}
+                   "WR": "Wide Receivers",  "TE": "Tight Ends", "K": "Kickers",
+                   "DEF": "Defenses"}
 
 # ══════════════════════════════════════════════════════════════════════════════
 # NFL EXPERT ADJUSTMENTS — 2026 roster intelligence
@@ -675,6 +680,10 @@ ROOKIE_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "rookies_202
 # injected from a curated, editable projection file (points ≈ scoring-independent).
 KICKER_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "kickers_2026.csv"
 
+# Team defenses (D/ST), same story as kickers: nflverse weekly stats are per
+# player, so team-defense fantasy scoring lives in its own curated file.
+DEFENSE_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "defenses_2026.csv"
+
 # ESPN 2026 positional rankings (Mike Clay PPR). Displayed on the big board next
 # to the model's own overall rank so users can compare the model vs consensus.
 # Matched to board players by normalized name so suffix / punctuation differences
@@ -787,7 +796,7 @@ sel_scoring = st.sidebar.radio(
     help="Switches the projection target and recalibrates VOR replacement levels."
 )
 
-sel_pos = st.sidebar.selectbox("Position", ["All"] + list(POSITION_FEATURES.keys()) + ["K"],
+sel_pos = st.sidebar.selectbox("Position", ["All"] + list(POSITION_FEATURES.keys()) + ["K", "DEF"],
                                key=f"pred_pos_{_v}")
 top_n = st.sidebar.slider("Big Board Size", 10, 200, 100, key=f"pred_top_{_v}")
 
@@ -1270,12 +1279,54 @@ def build_kicker_predictions() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def build_defense_predictions() -> pd.DataFrame:
+    """Curated 2026 team-defense (D/ST) projections from data/raw/defenses_2026.csv.
+
+    Same shape and lifecycle as build_kicker_predictions: D/ST scoring is
+    format-independent, so a single projection serves PPR/Half/Standard, and the
+    rows flow through VOR and round-grade exactly like every other player.
+    """
+    if not DEFENSE_CSV.exists():
+        return pd.DataFrame()
+    dd = pd.read_csv(DEFENSE_CSV)
+    if dd.empty:
+        return pd.DataFrame()
+
+    rows = []
+    for _, r in dd.iterrows():
+        pred = round(float(r["proj_pts"]), 1)
+        row = {
+            name_col:        str(r["player"]),
+            pos_col:         "DEF",
+            "season":        PREDICTION_YEAR - 1,
+            "games":         0,
+            TARGET_COL:      0.0,
+            "predicted_pts": pred,
+            "proj_games":    float(MAX_PROJ_GAMES),
+            "pred_ppg":      round(pred / MAX_PROJ_GAMES, 2),
+            "rmse":          0.0,
+            "injury_risk":   "",
+            "is_rookie":     False,
+        }
+        if track_col != name_col:
+            row[track_col] = f"DEF-{r['team']}"
+        if team_col:
+            row[team_col] = str(r["team"])
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 # Inject kickers just before VOR so they rank by the same scarcity logic. Their
 # replacement level (REPLACEMENT_LEVEL["K"]) is inflated above every kicker
 # projection, so kicker VOR is strongly negative and they land in the final rounds.
 _kicker_preds = build_kicker_predictions()
 if not _kicker_preds.empty:
     all_preds = pd.concat([all_preds, _kicker_preds], ignore_index=True)
+
+# Team defenses, same treatment (inflated REPLACEMENT_LEVEL["DEF"] sorts them last).
+_defense_preds = build_defense_predictions()
+if not _defense_preds.empty:
+    all_preds = pd.concat([all_preds, _defense_preds], ignore_index=True)
 
 
 def _assign_vor(df: pd.DataFrame) -> pd.DataFrame:
