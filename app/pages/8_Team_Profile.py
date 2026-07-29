@@ -23,18 +23,6 @@ render_sidebar_nav(current_page="8_Team_Profile")
 if st.button("← Back to Team Ratings", key="back_to_ratings"):
     st.switch_page("pages/1_Team_Ratings.py")
 
-# ── Page header ─────────────────────────────────────────────────────────────
-st.markdown("""
-<div class="nfl-page-header">
-    <div class="icon">🏟️</div>
-    <div>
-        <div class="title">2026 Team Profile</div>
-        <div class="subtitle">2026 roster & depth chart · 2025 results</div>
-    </div>
-</div>
-<div class="gold-rule"></div>
-""", unsafe_allow_html=True)
-
 # ── Load data (pass mtime so cache auto-invalidates when files change) ────────
 _base = get_base_dir()
 ratings      = load_ratings(_mtime=_file_mtime(_base / "data/processed/team_ratings.csv"))
@@ -44,24 +32,44 @@ weekly       = load_weekly(_mtime=_file_mtime(_base / "data/raw/weekly.csv"))
 depth_charts = load_depth_charts(_mtime=_file_mtime(_base / "data/raw/depth_charts.csv"))
 divisions_df = load_divisions(_mtime=_file_mtime(_base / "data/raw/nfl_divisions.csv"))
 
-# ── Season and team selection (no sidebar filters) ────────────────────────
-seasons = sorted(ratings["season"].dropna().unique().astype(int), reverse=True)
-sel_season = seasons[0] if seasons else 2025  # Default to most recent season
+# ── Season and team selection ─────────────────────────────────────────────
+abbr_col = "team_abbr" if "team_abbr" in teams_df.columns else "team"
 
-team_list = sorted(ratings[ratings["season"] == sel_season]["team"].unique().tolist())
+# Available years = anything with ratings OR a schedule (so next season shows up
+# automatically as soon as its schedule/ratings land, with no code change needed).
+rating_seasons   = set(ratings["season"].dropna().unique().astype(int).tolist())
+schedule_seasons = set(schedules["season"].dropna().unique().astype(int).tolist())
+seasons = sorted(rating_seasons | schedule_seasons, reverse=True)
+
+default_season = st.session_state.get("profile_season", 2025 if 2025 in seasons else seasons[0])
+if default_season not in seasons:
+    default_season = seasons[0]
+sel_season = default_season
+st.session_state["profile_season"] = sel_season
+
+team_list = sorted(teams_df[abbr_col].dropna().unique().tolist())
 
 # Use pre-selection passed from Team Ratings (via session_state)
 default_team = st.session_state.get("profile_team", team_list[0] if team_list else "")
 if default_team not in team_list:
     default_team = team_list[0] if team_list else ""
-
 sel_team = default_team
-# Note: sel_team is now determined by session_state or defaults to first team
-# No filters on this page - team is set via session_state from Team Ratings page
 st.session_state["profile_team"] = sel_team
 
-# ── Team selector ────────────────────────────────────────────────────────────
-sel_col, _ = st.columns([1, 2.5])
+# ── Page header (year reflects the season filter below) ──────────────────────
+st.markdown(f"""
+<div class="nfl-page-header">
+    <div class="icon">🏟️</div>
+    <div>
+        <div class="title">{sel_season} Team Profile</div>
+        <div class="subtitle">Roster, depth chart & season results</div>
+    </div>
+</div>
+<div class="gold-rule"></div>
+""", unsafe_allow_html=True)
+
+# ── Team + season selectors ───────────────────────────────────────────────────
+sel_col, season_col, _ = st.columns([1, 1, 1.5])
 with sel_col:
     page_sel_team = st.selectbox(
         "Select Team",
@@ -70,13 +78,30 @@ with sel_col:
         key="tp_team_selector",
         label_visibility="collapsed",
     )
-    if page_sel_team != sel_team:
-        sel_team = page_sel_team
-        st.session_state["profile_team"] = sel_team
-        st.rerun()
+with season_col:
+    page_sel_season = st.selectbox(
+        "Select Season",
+        seasons,
+        index=seasons.index(sel_season),
+        key="tp_season_selector",
+        label_visibility="collapsed",
+    )
+
+if page_sel_team != sel_team or page_sel_season != sel_season:
+    sel_team = page_sel_team
+    sel_season = page_sel_season
+    st.session_state["profile_team"]   = sel_team
+    st.session_state["profile_season"] = sel_season
+    st.rerun()
+
+if sel_season not in rating_seasons:
+    st.info(
+        f"📡 The {sel_season} season hasn't started — stats below show as 0. "
+        "This page connects to live data automatically once game results "
+        "start landing in `team_ratings.csv`."
+    )
 
 # ── Team metadata ────────────────────────────────────────────────────────────
-abbr_col  = "team_abbr" if "team_abbr" in teams_df.columns else "team"
 team_row  = teams_df[teams_df[abbr_col] == sel_team]
 team_name = team_row.iloc[0]["team_name"]      if not team_row.empty else sel_team
 team_div  = team_row.iloc[0]["team_division"]  if not team_row.empty else ""
@@ -90,21 +115,30 @@ st.markdown(f"""
     {logo_html}
     <div>
         <div class="title">{team_name}</div>
-        <div class="subtitle">{team_div} &nbsp;·&nbsp; 2026 roster · {sel_season} results</div>
+        <div class="subtitle">{team_div} &nbsp;·&nbsp; Current roster · {sel_season} results</div>
     </div>
 </div>
 <div class="gold-rule"></div>
 """, unsafe_allow_html=True)
 
 # ── Team ratings for selected season ─────────────────────────────────────────
-season_ratings = add_ranks(ratings[ratings["season"] == sel_season].copy())
-team_stats = season_ratings[season_ratings["team"] == sel_team]
+if sel_season in rating_seasons:
+    season_ratings = add_ranks(ratings[ratings["season"] == sel_season].copy())
+    team_stats = season_ratings[season_ratings["team"] == sel_team]
+else:
+    team_stats = pd.DataFrame()
 
 if team_stats.empty:
-    st.warning(f"No rating data found for {sel_team} in {sel_season}.")
-    st.stop()
-
-row = team_stats.iloc[0]
+    # No live ratings yet (e.g. season hasn't started) — show a clean zero-state
+    # instead of erroring. Once team_ratings.csv gains rows for this season,
+    # this branch stops firing automatically.
+    row = pd.Series({
+        "team": sel_team, "season": sel_season, "games": 0,
+        "ppg": 0.0, "oppg": 0.0, "net_ppg": 0.0,
+        "offense_rank": 0, "defense_rank": 0, "overall_rank": 0,
+    })
+else:
+    row = team_stats.iloc[0]
 
 # ══════════════════════════════════════════════════════════════════════════════
 # STAT CARDS — PPG / OPPG / Net Rating with ranks
@@ -429,7 +463,7 @@ else:
 # OFFENSIVE DEPTH CHART  (sourced from actual 2025 REG game logs)
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 🏈 Offensive Depth Chart")
-st.caption("2025 regular season · ranked by games played & stats · all 32 teams")
+st.caption(f"{sel_season} regular season · ranked by games played & stats · all 32 teams")
 
 OFF_POS_GROUPS = [
     ("QB", "Quarterbacks"),
@@ -530,7 +564,7 @@ st.markdown("---")
 # DEFENSIVE DEPTH CHART  (sourced from actual 2025 REG game logs)
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("### 🛡️ Defensive Depth Chart")
-st.caption("2025 regular season · ranked by games played")
+st.caption(f"{sel_season} regular season · ranked by games played")
 
 DEF_POS_GROUPS = [
     ("Defensive Line",  ["DL"]),
@@ -563,9 +597,14 @@ else:
             st.markdown("<br>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+_stats_note = (
+    f"Season stats from {sel_season} regular season game logs."
+    if sel_season in rating_seasons
+    else f"{sel_season} season hasn't started — stats connect live once games are played."
+)
 st.caption(
     f"**Data sources** — Season ratings from processed team stats · "
     f"Records calculated from {sel_season} regular season schedule · "
-    "Depth chart based on projected 2026 rosters · "
-    "Season stats from 2025 regular season game logs."
+    "Depth chart based on current projected rosters · "
+    f"{_stats_note}"
 )
