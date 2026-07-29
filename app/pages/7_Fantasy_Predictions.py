@@ -131,6 +131,7 @@ FORCE_INCLUDE_STARTERS = {
     "Tyler Shough":     ("00-0040743", "QB", "NO",  15.8),   # NO QB1; his actual 2025 rate (157.96 pts / 10 g) held over a full season — older-than-typical rookie, so no ascending-QB boost
     "Matthew Stafford": ("00-0026498", "QB", "LAR", None),   # Returning for 2026 with LAR; find most recent qualifying season
     "Jayden Daniels":   ("00-0039910", "QB", "WAS", None),   # 7 games 2025 (injury); uses 2024 full season (20.93 PPG)
+    "Malik Nabers":     ("00-0039337", "WR", "NYG", None),   # 4 games 2025 (ACL); confirmed NYG WR1 for 2026; uses 2024 full season
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
@@ -141,7 +142,6 @@ EXPERT_REMOVE = {
     "Tua Tagovailoa",    # ATL backup/placeholder — NOT a 2026 starter; Penix is intended starter
     "Alvin Kamara",      # Demoted to NO RB2 behind Travis Etienne; also only 11 games in 2025 (below 6-game floor)
     "Austin Ekeler",     # Torn Achilles; out for 2026 season
-    "Malik Nabers",      # ACL in 2025; only 4 games played — below 6-game WR minimum
     "Stefon Diggs",      # Unsigned FA (2026); no confirmed team — removed pending signing
     "Deebo Samuel Sr.",  # Unsigned FA (2026); no confirmed team — removed pending signing
     "Zach Ertz",         # Unsigned FA (2026); no confirmed team — removed pending signing
@@ -189,6 +189,7 @@ INJURY_RISK_MAP = {
 
     # ── WIDE RECEIVERS ───────────────────────────────────────────────────────
     # Returning from significant 2024/2025 injury
+    "Malik Nabers":       "      Yes      ",   # ACL tear (Oct 2025); missed rest of season; confirmed NYG WR1 for 2026
     "Brandon Aiyuk":      "      Yes      ",   # ACL/MCL tear (2025); missed entire season
     "Tank Dell":          "      Yes      ",   # Multi-ligament (ACL/MCL/LCL/meniscus); missed 2025
     "Christian Watson":   "      Yes      ",   # ACL tear (Jan 2025); significant 2026 miss risk
@@ -327,6 +328,7 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     # ── Injury / suspension cuts (0.70–0.92) ───────────────────────────────
     "Rashee Rice":           0.92,   # Suspension served; mild haircut for May-2026 knee surgery + off-field risk
     "Patrick Mahomes":       0.92,   # OL concerns + WR group still maturing
+    "Malik Nabers":          0.90,   # Confirmed NYG WR1, but ACL tear Oct-2025 — mild haircut for camp ramp-up/re-injury risk
     # ── Committee / role demotions (0.70–0.85) ─────────────────────────────
     "Tyrone Tracy Jr.":      0.75,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's injury
     # ── 2026 top-150 audit: same-team committee / role cuts ────────────────
@@ -648,6 +650,7 @@ PROJ_GAMES_OVERRIDES = {
     "Jordan Addison":   14,   # 3-game suspension to open 2026 (MIN)
     "Alec Pierce":      14,   # Ankle; deep-threat availability risk (IND)
     "Zach Charbonnet":  8,    # ACL recovery; limited early-season availability (SEA)
+    "Malik Nabers":     15,   # ACL tear Oct-2025; confirmed NYG WR1, ~11mo out by Wk1 but mild ramp risk (NYG)
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
