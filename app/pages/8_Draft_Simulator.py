@@ -154,7 +154,7 @@ with st.expander("⚙️ Draft Settings", expanded=not settings_locked):
     c1, c2, c3 = st.columns(3)
     scoring = c1.selectbox("Scoring", SCORING_FORMATS, index=0,
                            disabled=settings_locked, key="ds_scoring")
-    teams = c2.selectbox("Teams", [8, 10, 12, 14], index=2,
+    teams = c2.selectbox("Teams", [8, 9, 10, 11, 12, 13, 14], index=4,
                          disabled=settings_locked, key="ds_teams")
     rounds = c3.selectbox("Rounds", list(range(10, 21)), index=6,
                           disabled=settings_locked, key="ds_rounds")
