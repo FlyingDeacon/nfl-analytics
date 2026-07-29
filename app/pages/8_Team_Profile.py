@@ -393,208 +393,278 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown("---")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# DEPTH CHART HELPERS
+# 2026 → current/projected roster (depth chart). Every other year → that
+# season already happened, so show the actual schedule & results instead.
 # ══════════════════════════════════════════════════════════════════════════════
+IS_ROSTER_YEAR = sel_season == 2026
 
-# ── Build detailed stats from weekly for merging into depth chart ─────────────
-# Depth chart already has GP + fantasy_pts from the rebuild.
-# We only need per-stat breakdowns (pass yds, rush yds, targets, etc.) from weekly.
-_wk = weekly.copy() if not weekly.empty else pd.DataFrame()
-if not _wk.empty:
-    if "season_type" in _wk.columns:
-        _wk = _wk[_wk["season_type"] == "REG"]
-    _wk_team = _wk[
-        (_wk["recent_team"] == sel_team) & (_wk["season"] == sel_season)
+if not IS_ROSTER_YEAR:
+    st.markdown("### 🗓️ Schedule & Results")
+    st.caption(f"{sel_season} season · every game played")
+
+    season_games = schedules[
+        (schedules["season"] == sel_season) &
+        ((schedules["home_team"] == sel_team) | (schedules["away_team"] == sel_team))
     ].copy()
-    detail_cols = [
-        "carries", "rushing_yards", "rushing_tds",
-        "receptions", "targets", "receiving_yards", "receiving_tds",
-        "completions", "attempts", "passing_yards", "passing_tds", "interceptions",
-    ]
-    detail_cols = [c for c in detail_cols if c in _wk_team.columns]
-    if not _wk_team.empty and detail_cols:
-        _stats = _wk_team.groupby("player_display_name", as_index=False)[detail_cols].sum()
+    season_games["week"] = pd.to_numeric(season_games["week"], errors="coerce")
+    season_games = season_games.sort_values(["week"], na_position="last")
+
+    if season_games.empty:
+        st.info(f"No schedule found for {sel_team} in {sel_season}.")
     else:
-        _stats = pd.DataFrame()
-else:
-    _wk_team = pd.DataFrame()
-    _stats   = pd.DataFrame()
+        sched_html = """
+<table style="width:100%;border-collapse:collapse;font-family:Inter,sans-serif;font-size:0.92rem;">
+<thead>
+  <tr style="border-bottom:2px solid #e2e5ef;color:#4a4e69;text-align:left;">
+    <th style="padding:8px 6px;">Week</th>
+    <th style="padding:8px 6px;">Date</th>
+    <th style="padding:8px 6px;">Type</th>
+    <th style="padding:8px 6px;">Opponent</th>
+    <th style="padding:8px 6px;text-align:center;">Score</th>
+    <th style="padding:8px 6px;text-align:center;">Result</th>
+  </tr>
+</thead>
+<tbody>
+"""
+        for _, g in season_games.iterrows():
+            is_home    = g["home_team"] == sel_team
+            opp        = g["away_team"] if is_home else g["home_team"]
+            team_score = pd.to_numeric(g["home_score"] if is_home else g["away_score"], errors="coerce")
+            opp_score  = pd.to_numeric(g["away_score"] if is_home else g["home_score"], errors="coerce")
+            loc        = "vs" if is_home else "@"
+            logo       = _logo_cell(opp)
 
-
-def _merge_stats(dc_pos_df):
-    """Merge depth chart rows with per-stat breakdowns from weekly.
-    GP, PPR Pts and PPG come from the depth chart rebuild — not re-computed here.
-    """
-    player_col = "Player" if "Player" in dc_pos_df.columns else "player_name"
-
-    # Rename depth chart fantasy_pts → PPR Pts, compute PPG
-    out = dc_pos_df.copy()
-    if "fantasy_pts" in out.columns:
-        out = out.rename(columns={"fantasy_pts": "PPR Pts"})
-    if "GP" in out.columns and "PPR Pts" in out.columns:
-        out["PPG"] = (
-            pd.to_numeric(out["PPR Pts"], errors="coerce") /
-            out["GP"].clip(lower=1)
-        ).round(1)
-
-    if _stats.empty:
-        return out
-
-    merged = out.merge(
-        _stats,
-        left_on=player_col,
-        right_on="player_display_name",
-        how="left",
-    ).drop(columns=["player_display_name"], errors="ignore")
-
-    return merged
-
-
-# Get team's depth chart rows from nflverse data
-_dc = depth_charts[(depth_charts["team"] == sel_team)].copy() if not depth_charts.empty else pd.DataFrame()
-
-# preserve season label for caption
-if not _dc.empty and "season" in _dc.columns:
-    dc_season = int(_dc["season"].mode()[0])
-else:
-    dc_season = sel_season
-
-# ══════════════════════════════════════════════════════════════════════════════
-# OFFENSIVE DEPTH CHART  (sourced from actual 2025 REG game logs)
-# ══════════════════════════════════════════════════════════════════════════════
-st.markdown("### 🏈 Offensive Depth Chart")
-st.caption(f"{sel_season} regular season · ranked by games played & stats · all 32 teams")
-
-OFF_POS_GROUPS = [
-    ("QB", "Quarterbacks"),
-    ("RB", "Running Backs"),
-    ("WR", "Wide Receivers"),
-    ("TE", "Tight Ends"),
-]
-
-OFF_STAT_COLS = {
-    "QB": {
-        "cols":   ["Player", "GP", "PPR Pts", "PPG",
-                   "completions", "attempts", "passing_yards", "passing_tds",
-                   "interceptions", "carries", "rushing_yards", "rushing_tds"],
-        "rename": {
-            "completions": "CMP", "attempts": "ATT",
-            "passing_yards": "Pass Yds", "passing_tds": "Pass TD",
-            "interceptions": "INT", "carries": "Rush Att",
-            "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
-        },
-    },
-    "RB": {
-        "cols":   ["Player", "GP", "PPR Pts", "PPG",
-                   "carries", "rushing_yards", "rushing_tds",
-                   "receptions", "targets", "receiving_yards", "receiving_tds"],
-        "rename": {
-            "carries": "Car", "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
-            "receptions": "Rec", "targets": "Tgt",
-            "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
-        },
-    },
-    "WR": {
-        "cols":   ["Player", "GP", "PPR Pts", "PPG",
-                   "targets", "receptions", "receiving_yards", "receiving_tds",
-                   "carries", "rushing_yards"],
-        "rename": {
-            "targets": "Tgt", "receptions": "Rec",
-            "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
-            "carries": "Rush Att", "rushing_yards": "Rush Yds",
-        },
-    },
-    "TE": {
-        "cols":   ["Player", "GP", "PPR Pts", "PPG",
-                   "targets", "receptions", "receiving_yards", "receiving_tds"],
-        "rename": {
-            "targets": "Tgt", "receptions": "Rec",
-            "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
-        },
-    },
-}
-
-if _dc.empty:
-    st.info("Depth chart data not available for this team.")
-else:
-    dc_off = _dc[_dc["side"] == "offense"].copy()
-
-    for pos, label in OFF_POS_GROUPS:
-        pos_df = dc_off[dc_off["position"] == pos].sort_values("depth_order").copy()
-        if pos_df.empty:
-            continue
-
-        pos_df = pos_df.rename(columns={"player_name": "Player"})
-
-        # Merge 2025 season stats from weekly.csv
-        merged = _merge_stats(pos_df)
-
-        cfg  = OFF_STAT_COLS.get(pos, {"cols": ["Player", "GP"], "rename": {}})
-        show = [c for c in cfg["cols"] if c in merged.columns]
-
-        # Round stat columns; keep PPG/PPR Pts as formatted strings
-        for fc in merged.select_dtypes("float").columns:
-            if fc in ("PPG", "PPR Pts"):
-                pass  # handled below
+            if pd.notna(team_score) and pd.notna(opp_score):
+                score_str = f"{int(team_score)}–{int(opp_score)}"
+                if team_score > opp_score:
+                    result, r_color = "W", "#16a34a"
+                elif team_score < opp_score:
+                    result, r_color = "L", "#dc2626"
+                else:
+                    result, r_color = "T", "#6b7280"
             else:
-                merged[fc] = merged[fc].fillna(0).round(0).astype(int, errors="ignore")
-        if "PPG"     in merged.columns:
-            merged["PPG"]     = merged["PPG"].apply(lambda x: f"{x:.1f}" if pd.notna(x) and x != "—" else "—")
-        if "PPR Pts" in merged.columns:
-            merged["PPR Pts"] = merged["PPR Pts"].apply(lambda x: f"{float(x):.1f}" if pd.notna(x) and x != "—" else "—")
+                score_str, result, r_color = "—", "—", "#6b7280"
 
-        disp = merged[show].rename(columns=cfg["rename"])
+            week_val = int(g["week"]) if pd.notna(g["week"]) else "—"
+            gtype    = g.get("game_type", "REG")
+            date_str = g.get("gameday", "") if pd.notna(g.get("gameday", "")) else ""
 
-        st.markdown(f"**{label}**")
-        st.dataframe(
-            disp,
-            hide_index=True,
-            use_container_width=True,
-            column_config={
-                "PPG":     st.column_config.TextColumn("PPG"),
-                "PPR Pts": st.column_config.TextColumn("PPR Pts"),
-                "GP":      st.column_config.NumberColumn("GP", width="small"),
-            },
-        )
-        st.markdown("<br>", unsafe_allow_html=True)
+            sched_html += f"""
+  <tr style="border-bottom:1px solid #e8eaef;">
+    <td style="padding:8px 6px;">{week_val}</td>
+    <td style="padding:8px 6px;">{date_str}</td>
+    <td style="padding:8px 6px;">{gtype}</td>
+    <td style="padding:8px 6px;">{loc} {logo}{opp}</td>
+    <td style="padding:8px 6px;text-align:center;">{score_str}</td>
+    <td style="padding:8px 6px;text-align:center;font-weight:700;color:{r_color};">{result}</td>
+  </tr>"""
+        sched_html += "</tbody></table>"
+        st.markdown(sched_html, unsafe_allow_html=True)
 
-st.markdown("---")
+if IS_ROSTER_YEAR:
+    # ══════════════════════════════════════════════════════════════════════
+    # DEPTH CHART HELPERS
+    # ══════════════════════════════════════════════════════════════════════
 
-# ══════════════════════════════════════════════════════════════════════════════
-# DEFENSIVE DEPTH CHART  (sourced from actual 2025 REG game logs)
-# ══════════════════════════════════════════════════════════════════════════════
-st.markdown("### 🛡️ Defensive Depth Chart")
-st.caption(f"{sel_season} regular season · ranked by games played")
-
-DEF_POS_GROUPS = [
-    ("Defensive Line",  ["DL"]),
-    ("Defensive Backs", ["DB"]),
-]
-
-if _dc.empty:
-    st.info("Depth chart data not available for this team.")
-else:
-    dc_def = _dc[_dc["side"] == "defense"].copy()
-
-    if dc_def.empty:
-        st.info("No defensive data available for this team.")
+    # ── Build detailed stats from weekly for merging into depth chart ──────
+    # Depth chart already has GP + fantasy_pts from the rebuild.
+    # We only need per-stat breakdowns (pass yds, rush yds, targets, etc.) from weekly.
+    _wk = weekly.copy() if not weekly.empty else pd.DataFrame()
+    if not _wk.empty:
+        if "season_type" in _wk.columns:
+            _wk = _wk[_wk["season_type"] == "REG"]
+        _wk_team = _wk[
+            (_wk["recent_team"] == sel_team) & (_wk["season"] == sel_season)
+        ].copy()
+        detail_cols = [
+            "carries", "rushing_yards", "rushing_tds",
+            "receptions", "targets", "receiving_yards", "receiving_tds",
+            "completions", "attempts", "passing_yards", "passing_tds", "interceptions",
+        ]
+        detail_cols = [c for c in detail_cols if c in _wk_team.columns]
+        if not _wk_team.empty and detail_cols:
+            _stats = _wk_team.groupby("player_display_name", as_index=False)[detail_cols].sum()
+        else:
+            _stats = pd.DataFrame()
     else:
-        for group_label, positions in DEF_POS_GROUPS:
-            g_df = dc_def[dc_def["position"].isin(positions)].sort_values("depth_order").copy()
-            if g_df.empty:
+        _wk_team = pd.DataFrame()
+        _stats   = pd.DataFrame()
+
+
+    def _merge_stats(dc_pos_df):
+        """Merge depth chart rows with per-stat breakdowns from weekly.
+        GP, PPR Pts and PPG come from the depth chart rebuild — not re-computed here.
+        """
+        player_col = "Player" if "Player" in dc_pos_df.columns else "player_name"
+
+        # Rename depth chart fantasy_pts → PPR Pts, compute PPG
+        out = dc_pos_df.copy()
+        if "fantasy_pts" in out.columns:
+            out = out.rename(columns={"fantasy_pts": "PPR Pts"})
+        if "GP" in out.columns and "PPR Pts" in out.columns:
+            out["PPG"] = (
+                pd.to_numeric(out["PPR Pts"], errors="coerce") /
+                out["GP"].clip(lower=1)
+            ).round(1)
+
+        if _stats.empty:
+            return out
+
+        merged = out.merge(
+            _stats,
+            left_on=player_col,
+            right_on="player_display_name",
+            how="left",
+        ).drop(columns=["player_display_name"], errors="ignore")
+
+        return merged
+
+
+    # Get team's depth chart rows from nflverse data
+    _dc = depth_charts[(depth_charts["team"] == sel_team)].copy() if not depth_charts.empty else pd.DataFrame()
+
+    # preserve season label for caption
+    if not _dc.empty and "season" in _dc.columns:
+        dc_season = int(_dc["season"].mode()[0])
+    else:
+        dc_season = sel_season
+
+    # ══════════════════════════════════════════════════════════════════════
+    # OFFENSIVE DEPTH CHART
+    # ══════════════════════════════════════════════════════════════════════
+    st.markdown("### 🏈 Offensive Depth Chart")
+    st.caption(f"{sel_season} regular season · ranked by games played & stats · all 32 teams")
+
+    OFF_POS_GROUPS = [
+        ("QB", "Quarterbacks"),
+        ("RB", "Running Backs"),
+        ("WR", "Wide Receivers"),
+        ("TE", "Tight Ends"),
+    ]
+
+    OFF_STAT_COLS = {
+        "QB": {
+            "cols":   ["Player", "GP", "PPR Pts", "PPG",
+                       "completions", "attempts", "passing_yards", "passing_tds",
+                       "interceptions", "carries", "rushing_yards", "rushing_tds"],
+            "rename": {
+                "completions": "CMP", "attempts": "ATT",
+                "passing_yards": "Pass Yds", "passing_tds": "Pass TD",
+                "interceptions": "INT", "carries": "Rush Att",
+                "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
+            },
+        },
+        "RB": {
+            "cols":   ["Player", "GP", "PPR Pts", "PPG",
+                       "carries", "rushing_yards", "rushing_tds",
+                       "receptions", "targets", "receiving_yards", "receiving_tds"],
+            "rename": {
+                "carries": "Car", "rushing_yards": "Rush Yds", "rushing_tds": "Rush TD",
+                "receptions": "Rec", "targets": "Tgt",
+                "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
+            },
+        },
+        "WR": {
+            "cols":   ["Player", "GP", "PPR Pts", "PPG",
+                       "targets", "receptions", "receiving_yards", "receiving_tds",
+                       "carries", "rushing_yards"],
+            "rename": {
+                "targets": "Tgt", "receptions": "Rec",
+                "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
+                "carries": "Rush Att", "rushing_yards": "Rush Yds",
+            },
+        },
+        "TE": {
+            "cols":   ["Player", "GP", "PPR Pts", "PPG",
+                       "targets", "receptions", "receiving_yards", "receiving_tds"],
+            "rename": {
+                "targets": "Tgt", "receptions": "Rec",
+                "receiving_yards": "Rec Yds", "receiving_tds": "Rec TD",
+            },
+        },
+    }
+
+    if _dc.empty:
+        st.info("Depth chart data not available for this team.")
+    else:
+        dc_off = _dc[_dc["side"] == "offense"].copy()
+
+        for pos, label in OFF_POS_GROUPS:
+            pos_df = dc_off[dc_off["position"] == pos].sort_values("depth_order").copy()
+            if pos_df.empty:
                 continue
 
-            show_cols = ["player_name", "GP"] if "GP" in g_df.columns else ["player_name"]
-            disp = g_df[show_cols].rename(columns={"player_name": "Player"})
+            pos_df = pos_df.rename(columns={"player_name": "Player"})
 
-            st.markdown(f"**{group_label}**")
+            # Merge season stats from weekly.csv
+            merged = _merge_stats(pos_df)
+
+            cfg  = OFF_STAT_COLS.get(pos, {"cols": ["Player", "GP"], "rename": {}})
+            show = [c for c in cfg["cols"] if c in merged.columns]
+
+            # Round stat columns; keep PPG/PPR Pts as formatted strings
+            for fc in merged.select_dtypes("float").columns:
+                if fc in ("PPG", "PPR Pts"):
+                    pass  # handled below
+                else:
+                    merged[fc] = merged[fc].fillna(0).round(0).astype(int, errors="ignore")
+            if "PPG"     in merged.columns:
+                merged["PPG"]     = merged["PPG"].apply(lambda x: f"{x:.1f}" if pd.notna(x) and x != "—" else "—")
+            if "PPR Pts" in merged.columns:
+                merged["PPR Pts"] = merged["PPR Pts"].apply(lambda x: f"{float(x):.1f}" if pd.notna(x) and x != "—" else "—")
+
+            disp = merged[show].rename(columns=cfg["rename"])
+
+            st.markdown(f"**{label}**")
             st.dataframe(
                 disp,
                 hide_index=True,
                 use_container_width=True,
-                column_config={"GP": st.column_config.NumberColumn("GP", width="small")},
+                column_config={
+                    "PPG":     st.column_config.TextColumn("PPG"),
+                    "PPR Pts": st.column_config.TextColumn("PPR Pts"),
+                    "GP":      st.column_config.NumberColumn("GP", width="small"),
+                },
             )
             st.markdown("<br>", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # DEFENSIVE DEPTH CHART
+    # ══════════════════════════════════════════════════════════════════════
+    st.markdown("### 🛡️ Defensive Depth Chart")
+    st.caption(f"{sel_season} regular season · ranked by games played")
+
+    DEF_POS_GROUPS = [
+        ("Defensive Line",  ["DL"]),
+        ("Defensive Backs", ["DB"]),
+    ]
+
+    if _dc.empty:
+        st.info("Depth chart data not available for this team.")
+    else:
+        dc_def = _dc[_dc["side"] == "defense"].copy()
+
+        if dc_def.empty:
+            st.info("No defensive data available for this team.")
+        else:
+            for group_label, positions in DEF_POS_GROUPS:
+                g_df = dc_def[dc_def["position"].isin(positions)].sort_values("depth_order").copy()
+                if g_df.empty:
+                    continue
+
+                show_cols = ["player_name", "GP"] if "GP" in g_df.columns else ["player_name"]
+                disp = g_df[show_cols].rename(columns={"player_name": "Player"})
+
+                st.markdown(f"**{group_label}**")
+                st.dataframe(
+                    disp,
+                    hide_index=True,
+                    use_container_width=True,
+                    column_config={"GP": st.column_config.NumberColumn("GP", width="small")},
+                )
+                st.markdown("<br>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 _stats_note = (
