@@ -194,7 +194,7 @@ INJURY_RISK_MAP = {
     "Christian Watson":   "      Yes      ",   # ACL tear (Jan 2025); significant 2026 miss risk
     "Puka Nacua":         "      Yes      ",   # Knee injury (2024); missed majority of season
     "Rashee Rice":        "      Yes      ",   # May-2026 knee surgery + off-field risk (suspension served); full-go for camp
-    "Chris Godwin":       "      Yes      ",   # ACL (2021); ankle dislocation/fracture (Oct 2024); chronic injury profile
+    "Chris Godwin Jr.":   "      Yes      ",   # ACL (2021); ankle dislocation/fracture (Oct 2024); chronic injury profile
     "Stefon Diggs":       "      Yes      ",   # ACL recovery (2024); age 33; team transition adds uncertainty
     "Tyreek Hill":        "      Yes      ",   # Multi-ligament knee injury (ACL+); released by MIA
     "Nico Collins":       "      Yes      ",   # Hamstring tear (2024); missed final 6 games of regular season
@@ -319,7 +319,7 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Bucky Irving":          1.18,   # Mayfield offense leans on dual-threat RB
     "George Pickens":        1.10,   # Dak elevates target quality vs PIT
     "Kyle Pitts":            1.10,   # New HC scheme finally featuring TE
-    "Justin Jefferson":      1.08,   # McCarthy + healthy roster around him
+    "Justin Jefferson":      1.08,   # Kyler Murray (FORCE_INCLUDE_STARTERS MIN QB1) + healthy roster around him
     # ── Veteran decline / age cliffs (0.80–0.92) ───────────────────────────
     "Travis Kelce":          0.82,   # Age 37; route-tree shrinking
     "Mike Evans":            0.80,   # Age 33; SF target competition heavy
@@ -457,7 +457,7 @@ PLAYER_BIRTH_YEARS: dict[str, int] = {
     "Michael Pittman":        1997,
     "DK Metcalf":             1997,
     "A.J. Brown":             1997,
-    "Chris Godwin":           1996,
+    "Chris Godwin Jr.":       1996,
     "Tee Higgins":            1999,
     "Justin Jefferson":       1999,
     "Jaylen Waddle":          1999,
@@ -479,10 +479,10 @@ PLAYER_BIRTH_YEARS: dict[str, int] = {
     "Amon-Ra St. Brown":      1999,
     "Christian Watson":       1999,
     "Jaxon Smith-Njigba":     2002,
-    "Brian Thomas":           2002,
+    "Brian Thomas Jr.":       2002,
     "Emeka Egbuka":           2002,
     "Tetairoa McMillan":      2003,
-    "Marvin Harrison":        2003,
+    "Marvin Harrison Jr.":    2003,
     "Malik Nabers":           2003,
     # ── Tight Ends ────────────────────────────────────────────────────────────
     "Travis Kelce":        1989,
@@ -501,7 +501,7 @@ PLAYER_BIRTH_YEARS: dict[str, int] = {
     "Cole Kmet":           1999,
     "Trey McBride":        2000,
     "Jake Ferguson":       2000,
-    "Chigoziem Okonkwo":   2000,
+    "Chig Okonkwo":        2000,
     "Kyle Pitts":          2000,
     "Isaiah Likely":       2001,
     "Tucker Kraft":        2001,
