@@ -132,6 +132,7 @@ FORCE_INCLUDE_STARTERS = {
     "Matthew Stafford": ("00-0026498", "QB", "LAR", None),   # Returning for 2026 with LAR; find most recent qualifying season
     "Jayden Daniels":   ("00-0039910", "QB", "WAS", None),   # 7 games 2025 (injury); uses 2024 full season (20.93 PPG)
     "Malik Nabers":     ("00-0039337", "WR", "NYG", None),   # 4 games 2025 (ACL); confirmed NYG WR1 for 2026; uses 2024 full season
+    "James Conner":     ("00-0033553", "RB", "ARI", None),   # 3 games 2025 (ankle); reworked deal to stay ARI as backup behind rookie Love; uses 2024 full season
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
@@ -143,6 +144,7 @@ EXPERT_REMOVE = {
     "Stefon Diggs",      # Unsigned FA (2026); no confirmed team — removed pending signing
     "Deebo Samuel Sr.",  # Unsigned FA (2026); no confirmed team — removed pending signing
     "Zach Ertz",         # Unsigned FA (2026); no confirmed team — removed pending signing
+    "Zavier Scott",      # MIN RB4/practice-squad-caliber; buried behind the Jones/Mason committee, not fantasy-relevant
 }
 
 # Injury risk mapping — 2026 season outlook
@@ -248,6 +250,7 @@ EXPERT_TEAM_CORRECTIONS = {
     "Keenan Allen":      "LAC",  # Returns to the Chargers
     "DeAndre Hopkins":   "BAL",  # Signed with Baltimore Ravens; pairs with Lamar
     "Rico Dowdle":       "PIT",  # Signed with Pittsburgh Steelers (was DAL)
+    "Tyler Allgeier":    "ARI",  # Signed 2-yr/$12.25M with Cardinals (was ATL)
     "George Pickens":    "DAL",  # Traded PIT → DAL; pairs with Dak Prescott
     "Tyler Shough":      "NO",   # Confirmed New Orleans Saints starter 2026
     # ── 2026 top-150 audit: wrong-team corrections (moves not in historical data)
@@ -342,7 +345,10 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Michael Wilson":        0.85,   # ARI WR3 behind MHJ + Harrison target share
     "Marvin Harrison Jr.":   0.90,   # ARI target share capped by McBride + rookie WR draft
     "Kimani Vidal":          0.75,   # LAC RB2 behind Hampton
-    "Bam Knight":            0.62,   # ARI depth RB; minimal projected volume
+    "Bam Knight":            0.35,   # 2025 rate (10.3 ppg/9g) came filling in for injured Conner; buried behind Love/Conner/Allgeier in 2026
+    "James Conner":          0.55,   # ARI backup behind rookie Love (reworked deal to stay, but ceded starter role)
+    "Tyler Allgeier":        0.50,   # ARI FA signee into an already-crowded room (Love/Conner ahead of him)
+    "Jeremiyah Love":        1.00,   # ARI RB1 — rookie 3rd overall pick, expected to start immediately Wk1
     "Devin Neal":            0.62,   # NO rookie-year committee, 3rd on depth chart
     "Chimere Dike":          0.75,   # TEN WR in crowded young group
     "Elic Ayomanor":         0.72,   # TEN WR2/3 competing for targets
