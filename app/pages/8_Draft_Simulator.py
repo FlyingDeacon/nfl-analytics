@@ -667,9 +667,9 @@ with left:
     # filter (or scroll) to reach them.
     show = view[["my_rank", "player", "pos", "team", "bye", "vor",
                  "predicted_pts", "proj_games", "espn_overall", "round_grade"]].copy()
-    show.insert(0, "headshot", view["player"].map(_HEADSHOTS).fillna(""))
+    show.insert(1, "headshot", view["player"].map(_HEADSHOTS).fillna(""))
     show["team"] = view["team"].map(_TEAM_LOGOS).fillna("")
-    show.columns = ["Headshot", "My Rank", "Player", "Pos", "Team", "Bye", "VOR",
+    show.columns = ["My Rank", "Headshot", "Player", "Pos", "Team", "Bye", "VOR",
                     "Proj Pts", "Proj G", "ESPN Rank", "Grade"]
     st.dataframe(show, hide_index=True, use_container_width=True, height=430,
                  column_config=_IMG_COLS)
