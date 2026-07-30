@@ -136,11 +136,9 @@ FORCE_INCLUDE_STARTERS = {
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
 EXPERT_REMOVE = {
-    "Kirk Cousins",      # Not a projected 2026 starter
+    "Kirk Cousins",      # Traded to ATL in 2025; now ATL QB3 behind Tua/Penix — not a projected 2026 starter
     "Rob Gronkowski",    # Officially retired March 2026
-    "Michael Penix",     # ACL surgery (Nov 2025); intended ATL starter (~60% Week 1) but removed pending recovery clearance
-    "Tua Tagovailoa",    # ATL backup/placeholder — NOT a 2026 starter; Penix is intended starter
-    "Alvin Kamara",      # Demoted to NO RB2 behind Travis Etienne; also only 11 games in 2025 (below 6-game floor)
+    "Michael Penix",     # ACL surgery (Nov 2025); lost ATL QB battle to newly-traded-in Tua — not the 2026 starter
     "Austin Ekeler",     # Torn Achilles; out for 2026 season
     "Stefon Diggs",      # Unsigned FA (2026); no confirmed team — removed pending signing
     "Deebo Samuel Sr.",  # Unsigned FA (2026); no confirmed team — removed pending signing
@@ -237,6 +235,7 @@ INJURY_RISK_MAP = {
 # Sources: ESPN / NFL.com free agency trackers, March 2026
 EXPERT_TEAM_CORRECTIONS = {
     "Travis Etienne":    "NO",   # Signed with New Orleans Saints (left JAX)
+    "Tua Tagovailoa":    "ATL",  # Traded MIA → ATL; favored to win the QB1 job over Penix
     "Kyler Murray":      "MIN",  # 1-year deal with Vikings
     "Jaylen Waddle":     "DEN",  # Traded MIA → DEN (pairs with Bo Nix)
     "Michael Pittman":   "PIT",  # Traded IND → PIT
@@ -332,7 +331,8 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     # ── Committee / role demotions (0.70–0.85) ─────────────────────────────
     "Tyrone Tracy Jr.":      0.75,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's injury
     # ── 2026 top-150 audit: same-team committee / role cuts ────────────────
-    "Travis Etienne":        0.82,   # NO backfield split w/ Kamara + Devin Neal; no longer bell-cow
+    "Travis Etienne":        1.00,   # Signed big-money deal as NO's clear RB1; Kamara now the RB2 behind him
+    "Alvin Kamara":          0.80,   # NO RB2 behind newly-signed Etienne; age-31 decline also applies via age curve
     "RJ Harvey":             0.72,   # DEN RB committee (Dobbins/Estime); early-down/passing split
     "Rhamondre Stevenson":   0.85,   # NE committee w/ Henderson; goal-line + volume not guaranteed
     "Kyle Monangai":         0.80,   # CHI RB2 behind Swift; spot starter only
