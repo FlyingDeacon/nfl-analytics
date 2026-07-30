@@ -331,8 +331,8 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     # ── Committee / role demotions (0.70–0.85) ─────────────────────────────
     "Tyrone Tracy Jr.":      0.75,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's injury
     # ── 2026 top-150 audit: same-team committee / role cuts ────────────────
-    "Travis Etienne":        1.00,   # Signed big-money deal as NO's clear RB1; Kamara now the RB2 behind him
-    "Alvin Kamara":          0.80,   # NO RB2 behind newly-signed Etienne; age-31 decline also applies via age curve
+    "Travis Etienne":        0.85,   # NO true committee split w/ Kamara — no clear lead back, both share reps
+    "Alvin Kamara":          0.85,   # NO true committee split w/ Etienne — age-31 decline also applies via age curve
     "RJ Harvey":             0.72,   # DEN RB committee (Dobbins/Estime); early-down/passing split
     "Rhamondre Stevenson":   0.85,   # NE committee w/ Henderson; goal-line + volume not guaranteed
     "Kyle Monangai":         0.80,   # CHI RB2 behind Swift; spot starter only
