@@ -554,7 +554,7 @@ _IMG_COLS = {
 _ROSTER_COLS = {
     **_IMG_COLS,
     "Bye":    st.column_config.TextColumn("Bye", width="small"),
-    "Player": st.column_config.TextColumn("Player", width=280),  # "large" (400px) - 30%
+    "Player": st.column_config.TextColumn("Player", width=225),
 }
 
 
