@@ -134,7 +134,12 @@
       "Bash(cd /Users/brw8201/Coding/nfl-analytics grep -n \"build_predictions_core\\\\|ProjectionConfig\\(\" scripts/backtest_model.py)",
       "Bash(cd /Users/brw8201/Coding/nfl-analytics grep -n \"build_config\\(\\\\|name_col=\\\\|COL_CANDIDATES\\\\|resolve_columns\\\\|def load_weekly\" scripts/backtest_model.py)",
       "Bash(.venv/bin/python -m py_compile app/pages/10_Fantasy_Football_League.py app/utils/espn_league.py app/utils/draft_grades.py)",
-      "Bash(pkill -f \"streamlit run app/main.py\")"
+      "Bash(pkill -f \"streamlit run app/main.py\")",
+      "Bash(ls /Users/brw8201/Coding/nfl-analytics/*.py /tmp/*.py)",
+      "Bash(.venv/bin/python /tmp/fd_weakness.py)",
+      "Bash(.venv/bin/python -c \"import ast,sys; ast.parse\\(open\\(''app/pages/8_Draft_Simulator.py''\\).read\\(\\)\\); print\\(''syntax OK''\\)\")",
+      "Bash(lsof -ti:8555)",
+      "Bash(xargs kill:*)"
     ]
   }
 }
