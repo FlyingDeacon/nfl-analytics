@@ -145,6 +145,7 @@ EXPERT_REMOVE = {
     "Deebo Samuel Sr.",  # Unsigned FA (2026); no confirmed team — removed pending signing
     "Zach Ertz",         # Unsigned FA (2026); no confirmed team — removed pending signing
     "Zavier Scott",      # MIN RB4/practice-squad-caliber; buried behind the Jones/Mason committee, not fantasy-relevant
+    "Brandin Cooks",     # Unsigned FA (2026) as of late July; no confirmed team — removed pending signing
 }
 
 # Injury risk mapping — 2026 season outlook
@@ -251,6 +252,8 @@ EXPERT_TEAM_CORRECTIONS = {
     "DeAndre Hopkins":   "BAL",  # Signed with Baltimore Ravens; pairs with Lamar
     "Rico Dowdle":       "PIT",  # Signed with Pittsburgh Steelers (was DAL)
     "Tyler Allgeier":    "ARI",  # Signed 2-yr/$12.25M with Cardinals (was ATL)
+    "Elijah Moore":      "PHI",  # Signed with Eagles (March 2026), after BUF release/DEN practice squad stint
+    "Jalen Tolbert":     "MIA",  # Signed 1-yr FA deal with Dolphins (left DAL); reunites w/ QB Malik Willis
     "George Pickens":    "DAL",  # Traded PIT → DAL; pairs with Dak Prescott
     "Tyler Shough":      "NO",   # Confirmed New Orleans Saints starter 2026
     # ── 2026 top-150 audit: wrong-team corrections (moves not in historical data)
