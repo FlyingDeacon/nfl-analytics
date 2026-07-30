@@ -31,19 +31,42 @@ MODEL_POS = ("QB", "RB", "WR", "TE")
 ESPN_COVERAGE_FLOOR = 0.60
 
 
-@st.cache_data(show_spinner=False)
-def model_projections(season: int) -> pd.DataFrame:
-    """This repo's walk-forward projection for `season`, using only pre-season
-    data. One row per player: name key, position, projected points."""
+def _weekly_and_config():
+    """Load weekly data and build the projection config.
+
+    Deliberately does NOT import scripts/backtest_model, even though it has
+    equivalent helpers: that module imports scipy at module level, and scipy is
+    excluded from requirements.txt on purpose to keep the Streamlit Cloud build
+    reproducible. model/projection.py itself only needs numpy + pandas.
+    """
     import sys
     root = Path(get_base_dir())
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
-    from scripts.backtest_model import build_config, load_weekly, resolve_columns
+    from model.projection import ProjectionConfig
+
+    weekly = pd.read_csv(root / "data" / "raw" / "weekly.csv", low_memory=False)
+    weekly.columns = [c.lower().strip() for c in weekly.columns]
+
+    pick = lambda opts: next((c for c in opts if c in weekly.columns), None)
+    name_col = pick(["player_display_name", "player_name", "name"])
+    pos_col = pick(["position", "pos"])
+    id_col = pick(["player_id", "gsis_id"])
+    config = ProjectionConfig(
+        target_col="fantasy_points_ppr", name_col=name_col, pos_col=pos_col,
+        team_col=pick(["recent_team", "posteam", "team"]),
+        track_col=id_col or name_col,
+    )
+    return weekly, config
+
+
+@st.cache_data(show_spinner=False)
+def model_projections(season: int) -> pd.DataFrame:
+    """This repo's walk-forward projection for `season`, using only pre-season
+    data. One row per player: name key, position, projected points."""
     from model.projection import build_predictions_core
 
-    weekly = load_weekly(root)
-    config = build_config(*resolve_columns(weekly))
+    weekly, config = _weekly_and_config()
     proj, _ = build_predictions_core(weekly, config, as_of_season=season)
     if proj.empty:
         return pd.DataFrame()
@@ -143,19 +166,25 @@ def accuracy(season: int) -> dict:
     Spearman correlation of each side's team ranking against the actual finish
     and against realized points. All three are "1 = best", so a POSITIVE
     correlation means the ranking predicted the outcome well; 0 means no signal.
-    """
-    from scipy.stats import spearmanr
 
+    Computed as Pearson correlation of the ranks, which is exactly Spearman's
+    rho. Neither scipy nor pandas' method="spearman" can be used here: both
+    route through scipy.stats, which is excluded from the Cloud requirements.
+    Re-ranking first also gives ties the average-rank treatment Spearman wants.
+    """
     g = team_draft_grades(season)
     if g.empty or g["Finish"].isna().all():
         return {}
+
+    def rho(a: pd.Series, b: pd.Series) -> float:
+        return float(a.astype(float).rank().corr(b.astype(float).rank()))
 
     out = {}
     for label, col in (("model", "My Rank"), ("espn", "ESPN Rank")):
         if g[col].isna().all() or g[col].nunique() < 2:
             continue
         out[label] = {
-            "vs_finish": round(float(spearmanr(g[col], g["Finish"]).statistic), 3),
-            "vs_points": round(float(spearmanr(g[col], g["Actual Rank"]).statistic), 3),
+            "vs_finish": round(rho(g[col], g["Finish"]), 3),
+            "vs_points": round(rho(g[col], g["Actual Rank"]), 3),
         }
     return out
