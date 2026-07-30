@@ -546,7 +546,7 @@ def _roster_slot_rows(picks_list: list) -> list:
 
 # Shared column_config for any dataframe rendering headshot/team-logo columns.
 _IMG_COLS = {
-    "Headshot": st.column_config.ImageColumn("", width="small"),
+    "Headshot": st.column_config.ImageColumn("📷", width="small"),
     "Team":     st.column_config.ImageColumn("Team", width="small"),
 }
 # Roster tables (right panel + per-team inspector) — squeeze the image/bye
