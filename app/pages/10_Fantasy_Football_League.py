@@ -37,7 +37,7 @@ _IMG_COL = {"Logo": st.column_config.ImageColumn("", width="small")}
 if not espn_configured():
     st.info("This page isn't connected to an ESPN league yet.")
     st.markdown("""
-**To connect your ESPN league, add these to `.streamlit/secrets.toml`:**
+**Running locally?** Add these to `.streamlit/secrets.toml`:
 
 ```toml
 [espn]
@@ -47,11 +47,17 @@ espn_s2 = "..."     # only needed for private leagues
 swid = "{...}"      # only needed for private leagues
 ```
 
+**Deployed on Streamlit Community Cloud?** `.streamlit/secrets.toml` is
+gitignored and never ships with the repo, so the same block has to be pasted
+into the dashboard instead: **share.streamlit.io → your app → ⋮ → Settings →
+Secrets**. The app reboots on save.
+
 - **League ID**: the number in your league's URL
   (`fantasy.espn.com/football/team?leagueId=1234567890`).
 - **espn_s2 / SWID**: cookies from a logged-in browser session at
   fantasy.espn.com — DevTools → Application/Storage → Cookies →
-  `fantasy.espn.com`.
+  `fantasy.espn.com`. Private leagues only, and they expire every few
+  months — refresh them when this page starts 401-ing.
 """)
     st.stop()
 
