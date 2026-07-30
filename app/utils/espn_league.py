@@ -94,6 +94,196 @@ def load_league(_ttl_bucket: int = 0) -> Optional[dict]:
     )
 
 
+@st.cache_data(show_spinner=False, ttl=86400)
+def load_league_season(season: int) -> Optional[dict]:
+    """Full payload for one season, including the draft. Cached for a day —
+    completed seasons are immutable, so there's nothing to re-poll for."""
+    if not espn_configured():
+        return None
+    cfg = st.secrets["espn"]
+    return _get(
+        season, cfg["league_id"], cfg.get("espn_s2", ""), cfg.get("swid", ""),
+        views=["mTeam", "mRoster", "mSettings", "mStandings", "mMatchupScore",
+               "mDraftDetail"],
+    )
+
+
+def previous_seasons(data: dict) -> list:
+    """Completed seasons this league has played, oldest first."""
+    return sorted((data or {}).get("status", {}).get("previousSeasons", []))
+
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def season_players(season: int) -> pd.DataFrame:
+    """Every player ESPN knows about for a season, with the two preseason
+    opinions we care about and what actually happened:
+
+      espn_proj_pts  — ESPN's own preseason projection (statSourceId 1)
+      espn_rank      — ESPN's preseason PPR draft rank
+      actual_pts     — what the player really scored (statSourceId 0)
+
+    Used to name draft picks and to grade past drafts against ESPN.
+    """
+    if not espn_configured():
+        return pd.DataFrame()
+    cfg = st.secrets["espn"]
+    # Must be league-scoped: the generic /players endpoint has no scoring
+    # context, so every appliedTotal comes back null.
+    url = _BASE.format(season=season, league_id=cfg["league_id"]) + "?view=kona_player_info"
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0",
+        "Cookie": f"espn_s2={cfg.get('espn_s2','')}; SWID={cfg.get('swid','')}",
+        "x-fantasy-filter": json.dumps({"players": {
+            "limit": 1500,
+            "sortDraftRanks": {"sortPriority": 100, "sortAsc": True, "value": "PPR"},
+        }}),
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            payload = json.loads(r.read())
+    except Exception as e:
+        st.warning(f"Couldn't load {season} player details from ESPN: {e}")
+        return pd.DataFrame()
+
+    rows = []
+    for item in (payload if isinstance(payload, list) else payload.get("players", [])):
+        p = item.get("player", item)
+        proj = actual = None
+        for s in p.get("stats", []):
+            if s.get("statSplitTypeId") == 0 and s.get("seasonId") == season:
+                if s.get("statSourceId") == 1:
+                    proj = s.get("appliedTotal")
+                elif s.get("statSourceId") == 0:
+                    actual = s.get("appliedTotal")
+        rows.append({
+            "player_id": p.get("id"),
+            "player": p.get("fullName", ""),
+            "pos": POS_ID_MAP.get(p.get("defaultPositionId", 0), ""),
+            "nfl_team": PRO_TEAM_MAP.get(p.get("proTeamId", 0), "FA"),
+            "espn_proj_pts": round(proj, 1) if proj is not None else None,
+            "espn_rank": (p.get("draftRanksByRankType") or {}).get("PPR", {}).get("rank"),
+            "actual_pts": round(actual, 1) if actual is not None else None,
+        })
+    return pd.DataFrame(rows)
+
+
+def final_standings_df(data: dict) -> pd.DataFrame:
+    """Completed-season standings ordered by true final finish.
+
+    ESPN keeps two different ranks: playoffSeed is where a team finished the
+    regular season, rankCalculatedFinal is where it ended up after the
+    playoffs. They often disagree — that gap is the whole story of a season.
+    """
+    if not data:
+        return pd.DataFrame()
+    owners = _owner_names(data)
+    rows = []
+    for t in data.get("teams", []):
+        rec = t.get("record", {}).get("overall", {})
+        rows.append({
+            "Finish": t.get("rankCalculatedFinal") or t.get("playoffSeed"),
+            "Seed": t.get("playoffSeed"),
+            "Logo": t.get("logo", ""),
+            "Team": t.get("name", ""),
+            "Owner": owners.get(t["id"], ""),
+            "W": rec.get("wins", 0),
+            "L": rec.get("losses", 0),
+            "T": rec.get("ties", 0),
+            "PF": round(rec.get("pointsFor", 0.0), 1),
+            "PA": round(rec.get("pointsAgainst", 0.0), 1),
+            "team_id": t["id"],
+        })
+    df = pd.DataFrame(rows)
+    return df.sort_values("Finish").reset_index(drop=True) if not df.empty else df
+
+
+def draft_picks_df(data: dict, season: int) -> pd.DataFrame:
+    """Every pick of a completed draft, with player names resolved."""
+    picks = (data or {}).get("draftDetail", {}).get("picks", [])
+    if not picks:
+        return pd.DataFrame()
+    names = team_names(data)
+    df = pd.DataFrame([{
+        "Rd": p.get("roundId"),
+        "Pick": p.get("roundPickNumber"),
+        "Overall": p.get("overallPickNumber"),
+        "team_id": p.get("teamId"),
+        "Team": names.get(p.get("teamId"), ""),
+        "player_id": p.get("playerId"),
+        "Keeper": bool(p.get("keeper")),
+    } for p in picks])
+
+    pool = season_players(season)
+    if not pool.empty:
+        df = df.merge(
+            pool[["player_id", "player", "pos", "nfl_team",
+                  "espn_proj_pts", "espn_rank", "actual_pts"]],
+            on="player_id", how="left",
+        )
+    return df.sort_values("Overall").reset_index(drop=True)
+
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def all_time_df(seasons: tuple) -> pd.DataFrame:
+    """Franchise history across every completed season, keyed by owner.
+
+    Owners are the stable identity here — team names get renamed most years,
+    so aggregating on them would split one manager into several franchises.
+    """
+    rows = []
+    for season in seasons:
+        data = load_league_season(season)
+        standings = final_standings_df(data)
+        for _, t in standings.iterrows():
+            rows.append({
+                "Owner": t["Owner"], "Season": season, "Team": t["Team"],
+                "Finish": t["Finish"], "W": t["W"], "L": t["L"], "T": t["T"],
+                "PF": t["PF"], "PA": t["PA"],
+            })
+    hist = pd.DataFrame(rows)
+    if hist.empty:
+        return hist
+
+    agg = hist.groupby("Owner", as_index=False).agg(
+        Seasons=("Season", "count"), W=("W", "sum"), L=("L", "sum"), T=("T", "sum"),
+        PF=("PF", "sum"), PA=("PA", "sum"),
+        Best=("Finish", "min"), Worst=("Finish", "max"), AvgFinish=("Finish", "mean"),
+    )
+    agg["Titles"] = agg["Owner"].map(
+        hist[hist["Finish"] == 1].groupby("Owner").size()).fillna(0).astype(int)
+    agg["Win%"] = (agg["W"] / (agg["W"] + agg["L"] + agg["T"]).clip(lower=1)).round(3)
+    agg["AvgFinish"] = agg["AvgFinish"].round(2)
+    agg["PF"] = agg["PF"].round(1)
+    agg["PA"] = agg["PA"].round(1)
+    return agg.sort_values(["Titles", "Win%"], ascending=False).reset_index(drop=True)
+
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def h2h_df(seasons: tuple) -> pd.DataFrame:
+    """All-time head-to-head record between every pair of owners."""
+    tally: dict = {}
+    for season in seasons:
+        data = load_league_season(season)
+        owners = _owner_names(data)
+        for m in (data or {}).get("schedule", []):
+            home, away = m.get("home") or {}, m.get("away") or {}
+            hid, aid = home.get("teamId"), away.get("teamId")
+            winner = m.get("winner", "UNDECIDED")
+            if not hid or not aid or winner == "UNDECIDED":
+                continue
+            ho, ao = owners.get(hid, ""), owners.get(aid, "")
+            if not ho or not ao or ho == ao:
+                continue
+            for a, b, won in ((ho, ao, winner == "HOME"), (ao, ho, winner == "AWAY")):
+                rec = tally.setdefault((a, b), [0, 0])
+                rec[0 if won else 1] += 1
+
+    rows = [{"Owner": a, "Opponent": b, "W": w, "L": l,
+             "Win%": round(w / max(w + l, 1), 3)}
+            for (a, b), (w, l) in tally.items()]
+    return pd.DataFrame(rows)
+
+
 def league_name(data: dict) -> str:
     return (data or {}).get("settings", {}).get("name", "").strip()
 
