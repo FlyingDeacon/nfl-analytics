@@ -12,6 +12,7 @@ import numpy as np
 
 from utils.styles import NFL_CSS
 from utils.nav import render_sidebar_nav
+from utils.data_loader import load_teams, load_weekly, get_logo, get_base_dir, _file_mtime
 
 st.set_page_config(page_title="Draft Simulator · NFL", page_icon="🏈", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
@@ -66,6 +67,35 @@ def _bye_weeks() -> dict:
         missing = sorted(all_weeks - played)
         byes[str(t)] = int(missing[0]) if missing else None
     return byes
+
+
+@st.cache_data(show_spinner=False)
+def _headshots() -> dict:
+    """Map player_display_name → most recent headshot_url (from weekly.csv).
+
+    Rookies with no NFL games yet simply won't have an entry — the image
+    column just renders blank for them.
+    """
+    _base = get_base_dir()
+    wk = load_weekly(_mtime=_file_mtime(_base / "data" / "raw" / "weekly.csv"))
+    if wk.empty or "headshot_url" not in wk.columns:
+        return {}
+    wk = wk.sort_values(["season", "week"])
+    return wk.groupby("player_display_name")["headshot_url"].last().dropna().to_dict()
+
+
+@st.cache_data(show_spinner=False)
+def _team_logos() -> dict:
+    """Map team abbreviation → logo URL."""
+    _base = get_base_dir()
+    teams_df = load_teams(_mtime=_file_mtime(_base / "data" / "raw" / "teams.csv"))
+    abbr_col = "team_abbr" if "team_abbr" in teams_df.columns else "team"
+    logos: dict = {}
+    for t in teams_df[abbr_col].dropna().unique():
+        url = get_logo(t, teams_df)
+        if url:
+            logos[str(t)] = url
+    return logos
 
 
 def _team_bye(team: str, byes: dict) -> int | None:
@@ -219,12 +249,14 @@ if not settings_locked:
         st.session_state.dr_drafted = {}          # player -> team slot
         st.session_state.dr_picks = []            # list of pick dicts
         st.session_state.dr_pick_idx = 0
+        st.session_state.pop("ds_roster_view", None)
         st.rerun()
     st.stop()
 
 if creset.button("🔄 Reset Draft", use_container_width=True, key="ds_reset"):
     for k in ("dr_started", "dr_order", "dr_board", "dr_drafted",
-              "dr_picks", "dr_pick_idx", "dr_manual", "dr_robot_sigma"):
+              "dr_picks", "dr_pick_idx", "dr_manual", "dr_robot_sigma",
+              "ds_roster_view"):
         st.session_state.pop(k, None)
     st.rerun()
 
@@ -244,6 +276,11 @@ manual = st.session_state.get("dr_manual", False)
 _BYES = _bye_weeks()
 board["bye"] = board["team"].map(lambda t: _team_bye(t, _BYES))
 _BYE_BY_PLAYER = dict(zip(board["player"], board["bye"]))
+
+# Player headshots + team logos, used to replace name-only / abbreviation-only
+# columns with images throughout the board and roster tables.
+_HEADSHOTS = _headshots()
+_TEAM_LOGOS = _team_logos()
 
 
 def _bye_label(player: str) -> str:
@@ -477,6 +514,21 @@ def _advance_robots() -> None:
 _VOR_BY_PLAYER = dict(zip(board["player"], board["vor"]))
 
 
+def _roster_row(slot_name: str, p: dict | None) -> dict:
+    """One roster-table row: slot, headshot, player, position, team logo, bye."""
+    if p is None:
+        return {"Slot": slot_name, "Headshot": "", "Player": "—", "Pos": "",
+                "Team": "", "Bye": ""}
+    return {
+        "Slot": slot_name,
+        "Headshot": _HEADSHOTS.get(p["player"], ""),
+        "Player": p["player"],
+        "Pos": p["pos"],
+        "Team": _TEAM_LOGOS.get(p.get("team_abbr", ""), ""),
+        "Bye": _bye_label(p["player"]),
+    }
+
+
 def _roster_slot_rows(picks_list: list) -> list:
     """Greedy starter fill (QB/RB×2/WR×2/TE/FLEX/K), remainder to bench (BE)."""
     remaining = list(picks_list)
@@ -486,12 +538,17 @@ def _roster_slot_rows(picks_list: list) -> list:
         take = next((p for p in remaining if p["pos"] in allowed), None)
         if take:
             remaining.remove(take)
-            rows.append((slot_name, f'{take["player"]} ({take["pos"]})', _bye_label(take["player"])))
-        else:
-            rows.append((slot_name, "—", ""))
+        rows.append(_roster_row(slot_name, take))
     for p in remaining:
-        rows.append(("BE", f'{p["player"]} ({p["pos"]})', _bye_label(p["player"])))
+        rows.append(_roster_row("BE", p))
     return rows
+
+
+# Shared column_config for any dataframe rendering headshot/team-logo columns.
+_IMG_COLS = {
+    "Headshot": st.column_config.ImageColumn("", width="small"),
+    "Team":     st.column_config.ImageColumn("Team", width="small"),
+}
 
 
 def _lineup_value(slot: int) -> dict:
@@ -571,9 +628,6 @@ done = pick_idx >= total_picks
 # Team currently on the clock (always the user in standard mode after robots
 # advance; any team in manual mode). This is who the pick UI drafts for.
 active_slot = None if done else order[pick_idx]
-# Which team's roster the right panel shows: the on-clock team in manual mode,
-# otherwise always the user.
-roster_slot = active_slot if (manual and active_slot is not None) else user_slot
 
 # ── Header status ────────────────────────────────────────────────────────────
 if done:
@@ -606,9 +660,12 @@ with left:
     # filter (or scroll) to reach them.
     show = view[["my_rank", "player", "pos", "team", "bye", "vor",
                  "predicted_pts", "proj_games", "espn_overall", "round_grade"]].copy()
-    show.columns = ["My Rank", "Player", "Pos", "Team", "Bye", "VOR",
+    show.insert(0, "headshot", view["player"].map(_HEADSHOTS).fillna(""))
+    show["team"] = view["team"].map(_TEAM_LOGOS).fillna("")
+    show.columns = ["Headshot", "My Rank", "Player", "Pos", "Team", "Bye", "VOR",
                     "Proj Pts", "Proj G", "ESPN Rank", "Grade"]
-    st.dataframe(show, hide_index=True, use_container_width=True, height=430)
+    st.dataframe(show, hide_index=True, use_container_width=True, height=430,
+                 column_config=_IMG_COLS)
 
     if not done:
         counts = _pos_counts(active_slot)
@@ -659,14 +716,25 @@ with left:
 
 # ── Your roster + recent picks ───────────────────────────────────────────────
 with right:
-    roster_hdr = (f"#### 🧢 Team {roster_slot} Roster"
-                  if manual and roster_slot != user_slot else "#### 🧢 Your Roster")
-    st.markdown(roster_hdr)
+    rhdr, rsel = st.columns([2, 1])
+    with rsel:
+        # Defaults to your own team; use the dropdown to inspect anyone else's
+        # roster (most useful in manual mode, where you pick for every team).
+        roster_slot = st.selectbox(
+            "View roster", list(range(1, teams + 1)),
+            index=user_slot - 1,
+            format_func=lambda s: f"You (Team {s})" if s == user_slot else f"Team {s}",
+            key="ds_roster_view", label_visibility="collapsed",
+        )
+    with rhdr:
+        st.markdown("#### 🧢 Your Roster" if roster_slot == user_slot
+                    else f"#### 🧢 Team {roster_slot} Roster")
     my_picks = [p for p in st.session_state.dr_picks if p["team"] == roster_slot]
 
     st.dataframe(
-        pd.DataFrame(_roster_slot_rows(my_picks), columns=["Slot", "Player", "Bye"]),
+        pd.DataFrame(_roster_slot_rows(my_picks)),
         hide_index=True, use_container_width=True, height=340,
+        column_config=_IMG_COLS,
     )
 
     _still_need = _needed_positions(roster_slot)
@@ -727,8 +795,9 @@ vcol1, vcol2 = st.columns(2)
 with vcol1:
     st.caption("Starting lineup")
     st.dataframe(
-        pd.DataFrame(_roster_slot_rows(sel_picks), columns=["Slot", "Player", "Bye"]),
+        pd.DataFrame(_roster_slot_rows(sel_picks)),
         hide_index=True, use_container_width=True,
+        column_config=_IMG_COLS,
     )
 with vcol2:
     st.caption("Picks in order")
