@@ -26,6 +26,7 @@ def render_sidebar_nav(current_page: str = ""):
     st.sidebar.page_link("pages/4_Historical.py",      label="Historical Trends",icon="📈")
     st.sidebar.page_link("pages/5_Fantasy.py",         label="Fantasy Football", icon="🏆")
     st.sidebar.page_link("pages/8_Draft_Simulator.py", label="Draft Simulator",  icon="🏈")
+    st.sidebar.page_link("pages/10_Fantasy_Football_League.py", label="My League", icon="👑")
 
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
