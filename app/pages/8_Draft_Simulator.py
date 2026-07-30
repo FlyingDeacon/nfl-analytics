@@ -13,6 +13,7 @@ import numpy as np
 from utils.styles import NFL_CSS
 from utils.nav import render_sidebar_nav
 from utils.data_loader import load_teams, load_weekly, get_logo, get_base_dir, _file_mtime
+from utils.espn_league import espn_configured, load_league, draft_setup
 
 st.set_page_config(page_title="Draft Simulator · NFL", page_icon="🏈", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
@@ -180,20 +181,58 @@ _ROBOT_SIGMA_BY_STYLE = {"Chalk (strict ADP)": 0.0, "Realistic": 6.0, "Wild": 12
 
 settings_locked = st.session_state.get("dr_started", False)
 
-with st.expander("⚙️ Draft Settings", expanded=not settings_locked):
-    c1, c2, c3 = st.columns(3)
-    scoring = c1.selectbox("Scoring", SCORING_FORMATS, index=0,
-                           disabled=settings_locked, key="ds_scoring")
-    teams = c2.selectbox("Teams", [8, 9, 10, 11, 12, 13, 14], index=4,
-                         disabled=settings_locked, key="ds_teams")
-    rounds = c3.selectbox("Rounds", list(range(10, 21)), index=6,
-                          disabled=settings_locked, key="ds_rounds")
+# Real-league setup (team names, pick order, roster size, scoring) so a mock can
+# mirror your actual draft instead of using generic "Team 1..N" placeholders.
+_league_setup = None
+if espn_configured():
+    _lg_data = load_league()
+    if _lg_data:
+        _league_setup = draft_setup(_lg_data)
 
-    c4, c5 = st.columns(2)
-    slot = c4.selectbox("Your draft slot", list(range(1, teams + 1)), index=min(5, teams - 1),
-                        disabled=settings_locked, key="ds_slot")
-    order_type = c5.radio("Draft order", ["Snake", "Linear"], horizontal=True,
-                          disabled=settings_locked, key="ds_order_type")
+with st.expander("⚙️ Draft Settings", expanded=not settings_locked):
+    league_opts = ["Custom mock"]
+    if _league_setup:
+        league_opts.append(_league_setup["league_name"] or "My ESPN league")
+    league_choice = st.selectbox(
+        "League", league_opts, index=len(league_opts) - 1,
+        disabled=settings_locked or len(league_opts) == 1, key="ds_league",
+        help="Pick your ESPN league to inherit its real team names, draft order, "
+             "roster size and scoring. Custom mock lets you set everything by hand.",
+    )
+    use_league = _league_setup is not None and league_choice != "Custom mock"
+
+    if use_league:
+        _s = _league_setup
+        teams, rounds, scoring = _s["teams"], _s["rounds"], _s["scoring"]
+        order_type = "Snake" if _s["snake"] else "Linear"
+        st.caption(
+            f"**{teams} teams** · **{rounds} rounds** · **{order_type}** · "
+            f"**{scoring}** — pulled live from ESPN."
+        )
+        slot = st.selectbox(
+            "Your draft slot", list(range(1, teams + 1)),
+            index=(_s["my_slot"] or 1) - 1, disabled=settings_locked, key="ds_slot_lg",
+            format_func=lambda x: f"{x}. {_s['slot_names'].get(x, '')}"
+                                  + ("  ← you" if x == _s["my_slot"] else ""),
+            help="Defaults to your real slot in the league's pick order — change it "
+                 "to practice drafting from somewhere else.",
+        )
+        slot_names = dict(_s["slot_names"])
+    else:
+        c1, c2, c3 = st.columns(3)
+        scoring = c1.selectbox("Scoring", SCORING_FORMATS, index=0,
+                               disabled=settings_locked, key="ds_scoring")
+        teams = c2.selectbox("Teams", [8, 9, 10, 11, 12, 13, 14], index=4,
+                             disabled=settings_locked, key="ds_teams")
+        rounds = c3.selectbox("Rounds", list(range(10, 21)), index=6,
+                              disabled=settings_locked, key="ds_rounds")
+
+        c4, c5 = st.columns(2)
+        slot = c4.selectbox("Your draft slot", list(range(1, teams + 1)), index=min(5, teams - 1),
+                            disabled=settings_locked, key="ds_slot")
+        order_type = c5.radio("Draft order", ["Snake", "Linear"], horizontal=True,
+                              disabled=settings_locked, key="ds_order_type")
+        slot_names = {}
 
     draft_mode = st.radio(
         "Draft mode",
@@ -241,6 +280,7 @@ if not settings_locked:
         st.session_state.dr_teams = teams
         st.session_state.dr_rounds = rounds
         st.session_state.dr_slot = slot
+        st.session_state.dr_team_names = slot_names
         st.session_state.dr_manual = draft_mode.startswith("Manual")
         st.session_state.dr_robot_sigma = _ROBOT_SIGMA_BY_STYLE[robot_style]
         st.session_state.dr_snake = (order_type == "Snake")
@@ -256,7 +296,7 @@ if not settings_locked:
 if creset.button("🔄 Reset Draft", use_container_width=True, key="ds_reset"):
     for k in ("dr_started", "dr_order", "dr_board", "dr_drafted",
               "dr_picks", "dr_pick_idx", "dr_manual", "dr_robot_sigma",
-              "ds_roster_view"):
+              "dr_team_names", "ds_roster_view"):
         st.session_state.pop(k, None)
     st.rerun()
 
@@ -269,6 +309,15 @@ total_picks = len(order)
 board = pd.DataFrame(st.session_state.dr_board)
 drafted = st.session_state.dr_drafted
 manual = st.session_state.get("dr_manual", False)
+team_names_by_slot = st.session_state.get("dr_team_names", {})
+
+
+def _team_label(slot: int, short: bool = False) -> str:
+    """Real league team name when the mock is league-backed, else 'Team N'."""
+    name = team_names_by_slot.get(slot)
+    if not name:
+        return f"T{slot}" if short else f"Team {slot}"
+    return name[:14] if short else name
 
 # Attach each player's 2026 bye week (from the schedule) to the board so it can
 # be shown and factored into suggestions. Recomputed per rerun since dr_board is
@@ -643,12 +692,13 @@ else:
     cur_round = pick_idx // teams + 1
     on_clock = active_slot
     if manual:
-        who = f"🟠 **Manual mode** — you're picking for **Team {on_clock}**"
+        who = f"🟠 **Manual mode** — you're picking for **{_team_label(on_clock)}**"
     else:
-        who = "🟢 **You're on the clock!**" if on_clock == user_slot else f"Team {on_clock} is picking…"
+        who = ("🟢 **You're on the clock!**" if on_clock == user_slot
+               else f"{_team_label(on_clock)} is picking…")
     st.markdown(
         f"**Pick {pick_idx + 1} / {total_picks}**  ·  Round {cur_round}  ·  "
-        f"Your slot: **{user_slot}**  ·  {who}"
+        f"Your slot: **{user_slot}** ({_team_label(user_slot)})  ·  {who}"
     )
 
 left, right = st.columns([1.4, 1])
@@ -678,7 +728,7 @@ with left:
         counts = _pos_counts(active_slot)
         needed = _needed_positions(active_slot)
         must = _is_must_fill(active_slot)
-        who_txt = "Team " + str(active_slot) if manual and active_slot != user_slot else "you"
+        who_txt = _team_label(active_slot) if manual and active_slot != user_slot else "you"
 
         # Selectable pool = available players this team can still roster (caps).
         pool = avail[avail["pos"].apply(lambda p: counts.get(p, 0) < POS_CAPS.get(p, 99))].copy()
@@ -710,7 +760,7 @@ with left:
             default_idx = pick_opts.index(sug["player"]) if sug and sug["player"] in pick_opts else 0
             # Pick-scoped keys so a stale selection can never carry across picks
             # (which previously let a non-required player slip through the guard).
-            pick_label = "Make your pick" if not manual else f"Make Team {active_slot}'s pick"
+            pick_label = "Make your pick" if not manual else f"Make {_team_label(active_slot)}'s pick"
             choice = fcol2.selectbox(pick_label, pick_opts, index=default_idx,
                                      format_func=lambda p: labels.get(p, p),
                                      key=f"ds_user_choice_{pick_idx}")
@@ -730,12 +780,12 @@ with right:
         roster_slot = st.selectbox(
             "View roster", list(range(1, teams + 1)),
             index=user_slot - 1,
-            format_func=lambda s: f"You (Team {s})" if s == user_slot else f"Team {s}",
+            format_func=lambda s: f"You — {_team_label(s)}" if s == user_slot else _team_label(s),
             key="ds_roster_view", label_visibility="collapsed",
         )
     with rhdr:
         st.markdown("#### 🧢 Your Roster" if roster_slot == user_slot
-                    else f"#### 🧢 Team {roster_slot} Roster")
+                    else f"#### 🧢 {_team_label(roster_slot)}")
     my_picks = [p for p in st.session_state.dr_picks if p["team"] == roster_slot]
 
     st.dataframe(
@@ -755,7 +805,7 @@ with right:
     if recent:
         rdf = pd.DataFrame([{
             "Pk": p["overall"],
-            "Team": ("You" if p["is_user"] else f'T{p["team"]}'),
+            "Team": ("You" if p["is_user"] else _team_label(p["team"], short=True)),
             "Player": f'{p["player"]} ({p["pos"]})',
         } for p in recent])
         st.dataframe(rdf, hide_index=True, use_container_width=True, height=300)
@@ -778,7 +828,7 @@ gtable = []
 for s in range(1, teams + 1):
     v = grades[s]["lv"]
     gtable.append({
-        "Team": f"You (Team {s})" if s == user_slot else f"Team {s}",
+        "Team": f"You — {_team_label(s)}" if s == user_slot else _team_label(s),
         "Grade": grades[s]["grade"],
         "Starter VOR": round(v["starter"], 1),
         "Bench VOR": round(v["bench"], 1),
@@ -791,11 +841,11 @@ st.dataframe(gdf, hide_index=True, use_container_width=True)
 sel = st.selectbox(
     "Inspect a team's picks", list(range(1, teams + 1)),
     index=user_slot - 1,
-    format_func=lambda s: f"You (Team {s})" if s == user_slot else f"Team {s}",
+    format_func=lambda s: f"You — {_team_label(s)}" if s == user_slot else _team_label(s),
     key="ds_team_view",
 )
 sel_picks = [p for p in st.session_state.dr_picks if p["team"] == sel]
-who = "You" if sel == user_slot else f"Team {sel}"
+who = "You" if sel == user_slot else _team_label(sel)
 st.markdown(f"**{who} — Draft Grade: {grades[sel]['grade']}**")
 
 vcol1, vcol2 = st.columns(2)

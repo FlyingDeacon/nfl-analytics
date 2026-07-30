@@ -172,6 +172,54 @@ def roster_df(data: dict, team_id: int) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _scoring_format(settings: dict) -> str:
+    """PPR / Half PPR / Standard, read off the league's points-per-reception rule."""
+    items = settings.get("scoringSettings", {}).get("scoringItems", [])
+    ppr = next((i.get("points", 0.0) for i in items if i.get("statId") == 53), 0.0)
+    if ppr >= 1.0:
+        return "PPR"
+    return "Half PPR" if ppr > 0 else "Standard"
+
+
+def draft_setup(data: dict) -> Optional[dict]:
+    """League facts the practice draft simulator needs to mirror the real draft:
+    team count, rounds, snake vs linear, per-slot team names, scoring format and
+    the logged-in user's own draft slot.
+
+    Slots are 1-based positions in ESPN's draftSettings.pickOrder (a list of
+    team ids), so slot 1 is whoever holds the first overall pick.
+    """
+    if not data:
+        return None
+    settings = data.get("settings", {})
+    draft = settings.get("draftSettings", {})
+    names = team_names(data)
+
+    order = [tid for tid in draft.get("pickOrder", []) if tid in names]
+    if not order:  # order isn't published until the commissioner sets it
+        order = sorted(names)
+    slot_names = {i: names.get(tid, f"Team {i}") for i, tid in enumerate(order, start=1)}
+
+    # Each roster spot is one draft round, except IR (slot 21), which isn't drafted.
+    counts = settings.get("rosterSettings", {}).get("lineupSlotCounts", {})
+    rounds = sum(int(v) for k, v in counts.items() if str(k) != "21")
+
+    my_swid = st.secrets["espn"].get("swid", "")
+    my_team = next(
+        (t["id"] for t in data.get("teams", []) if my_swid in t.get("owners", [])), None
+    )
+
+    return {
+        "league_name": league_name(data),
+        "teams": len(order),
+        "rounds": rounds,
+        "snake": draft.get("type", "SNAKE") == "SNAKE",
+        "slot_names": slot_names,
+        "my_slot": order.index(my_team) + 1 if my_team in order else None,
+        "scoring": _scoring_format(settings),
+    }
+
+
 def matchups_df(data: dict) -> pd.DataFrame:
     """One row per matchup across the whole season schedule."""
     if not data:
