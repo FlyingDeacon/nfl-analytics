@@ -549,6 +549,13 @@ _IMG_COLS = {
     "Headshot": st.column_config.ImageColumn("", width="small"),
     "Team":     st.column_config.ImageColumn("Team", width="small"),
 }
+# Roster tables (right panel + per-team inspector) — squeeze the image/bye
+# columns down to their minimum width and give the freed-up space to Player.
+_ROSTER_COLS = {
+    **_IMG_COLS,
+    "Bye":    st.column_config.TextColumn("Bye", width="small"),
+    "Player": st.column_config.TextColumn("Player", width="large"),
+}
 
 
 def _lineup_value(slot: int) -> dict:
@@ -734,7 +741,7 @@ with right:
     st.dataframe(
         pd.DataFrame(_roster_slot_rows(my_picks)),
         hide_index=True, use_container_width=True, height=340,
-        column_config=_IMG_COLS,
+        column_config=_ROSTER_COLS,
     )
 
     _still_need = _needed_positions(roster_slot)
@@ -797,7 +804,7 @@ with vcol1:
     st.dataframe(
         pd.DataFrame(_roster_slot_rows(sel_picks)),
         hide_index=True, use_container_width=True,
-        column_config=_IMG_COLS,
+        column_config=_ROSTER_COLS,
     )
 with vcol2:
     st.caption("Picks in order")
