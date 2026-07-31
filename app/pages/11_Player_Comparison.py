@@ -376,6 +376,24 @@ def _weekly_log(scoring: str, mtime: float) -> pd.DataFrame:
     )
 
 
+@st.cache_data(show_spinner=False)
+def _season_totals(scoring: str, mtime: float) -> pd.DataFrame:
+    """Regular-season fantasy point totals for the last three seasons."""
+    wk = load_weekly(_mtime=mtime)
+    if wk.empty:
+        return pd.DataFrame()
+    df = wk[
+        (wk["season"].between(LAST_SEASON - 2, LAST_SEASON))
+        & (wk["season_type"] == "REG")
+    ].copy()
+    col = SCORING_COL[scoring]
+    if col == "__half":
+        df["__half"] = (df["fantasy_points"] + df["fantasy_points_ppr"]) / 2
+    out = df.groupby(["player_display_name", "season"])[col].sum().round(1).reset_index()
+    out["name_key"] = out["player_display_name"].map(_normalize_name)
+    return out.rename(columns={col: "pts"})
+
+
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 sel_scoring = st.sidebar.radio("Scoring Format", SCORING_FORMATS, key="pc_scoring")
 POSITIONS = ["All", "QB", "RB", "WR", "TE", "K", "DEF"]
@@ -804,3 +822,57 @@ if not log_a.empty or not log_b.empty:
         hovermode="x unified",
     )
     st.plotly_chart(trend, use_container_width=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SEASON ARC — three years of production into the 2026 projection
+# ══════════════════════════════════════════════════════════════════════════════
+
+PROJ_SEASON = LAST_SEASON + 1
+totals = _season_totals(sel_scoring, _weekly_mtime)
+
+if not totals.empty:
+    st.markdown(f"#### Season Totals & {PROJ_SEASON} Projection")
+    st.caption(
+        "Solid lines are actual finished seasons; the dotted leg is my model's "
+        f"{PROJ_SEASON} expectation."
+    )
+
+    arc = go.Figure()
+    for row, nm, color in ((A, p1, LC), (B, p2, RC)):
+        hist = totals[totals["name_key"] == row["name_key"]].sort_values("season")
+        seasons = hist["season"].tolist()
+        pts = hist["pts"].tolist()
+        proj = _num(row.get("predicted_pts"))
+
+        if seasons:
+            arc.add_trace(go.Scatter(
+                x=seasons, y=pts, mode="lines+markers", name=nm,
+                line=dict(color=color, width=2.6),
+                marker=dict(size=9, color=color, line=dict(color="#fff", width=1.5)),
+                hovertemplate=f"<b>{nm}</b><br>%{{x}}: %{{y:.1f}} pts<extra></extra>",
+            ))
+        if proj is not None:
+            arc.add_trace(go.Scatter(
+                x=(seasons[-1:] + [PROJ_SEASON]),
+                y=(pts[-1:] + [proj]),
+                mode="lines+markers",
+                name=nm if not seasons else f"{nm} projected",
+                showlegend=not seasons,
+                line=dict(color=color, width=2.6, dash="dot"),
+                marker=dict(size=11, color="#fff", symbol="circle",
+                            line=dict(color=color, width=2.5)),
+                hovertemplate=f"<b>{nm}</b><br>%{{x}}: %{{y:.1f}} pts<extra></extra>",
+            ))
+
+    arc.update_layout(
+        **PLOTLY_LAYOUT,
+        title="",
+        height=380,
+        xaxis_title="Season", yaxis_title=f"Fantasy Points ({sel_scoring})",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+        hovermode="x unified",
+    )
+    arc.update_xaxes(tickmode="array",
+                     tickvals=list(range(LAST_SEASON - 2, PROJ_SEASON + 1)))
+    st.plotly_chart(arc, use_container_width=True)
