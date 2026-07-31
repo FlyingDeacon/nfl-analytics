@@ -139,7 +139,8 @@
       "Bash(.venv/bin/python /tmp/fd_weakness.py)",
       "Bash(.venv/bin/python -c \"import ast,sys; ast.parse\\(open\\(''app/pages/8_Draft_Simulator.py''\\).read\\(\\)\\); print\\(''syntax OK''\\)\")",
       "Bash(lsof -ti:8555)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(python -c \"import ast,sys; ast.parse\\(open\\(''app/pages/11_Player_Comparison.py''\\).read\\(\\)\\)\")"
     ]
   }
 }

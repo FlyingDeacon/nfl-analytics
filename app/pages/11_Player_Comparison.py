@@ -788,9 +788,10 @@ radar.update_layout(
     plot_bgcolor="rgba(0,0,0,0)",
     font=PLOTLY_LAYOUT["font"],
     hoverlabel=PLOTLY_LAYOUT["hoverlabel"],
-    margin=dict(l=60, r=60, t=40, b=40),
-    height=430,
+    margin=dict(l=90, r=90, t=96, b=70),
+    height=560,
     polar=dict(
+        domain=dict(x=[0.06, 0.94], y=[0.0, 0.92]),
         bgcolor="rgba(255,255,255,0.55)",
         radialaxis=dict(visible=True, range=[0, 100], gridcolor="#e2e5ef",
                         tickvals=[25, 50, 75, 100], ticksuffix="",
@@ -798,7 +799,9 @@ radar.update_layout(
         angularaxis=dict(gridcolor="#e2e5ef",
                          tickfont=dict(size=11, color="#4a4e69")),
     ),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+    legend=dict(orientation="h", yanchor="bottom", y=1.06, xanchor="center", x=0.5,
+                font=dict(size=13), itemsizing="constant", itemwidth=40,
+                bgcolor="rgba(255,255,255,0.65)", borderwidth=0),
 )
 st.plotly_chart(radar, use_container_width=True)
 
