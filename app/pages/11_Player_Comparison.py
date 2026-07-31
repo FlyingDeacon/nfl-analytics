@@ -378,9 +378,7 @@ def _weekly_log(scoring: str, mtime: float) -> pd.DataFrame:
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 sel_scoring = st.sidebar.radio("Scoring Format", SCORING_FORMATS, key="pc_scoring")
-pos_filter = st.sidebar.selectbox(
-    "Filter Player List", ["All", "QB", "RB", "WR", "TE", "K", "DEF"], key="pc_pos_filter"
-)
+POSITIONS = ["All", "QB", "RB", "WR", "TE", "K", "DEF"]
 
 board_path = _ensure_board(sel_scoring)
 if board_path is None:
@@ -397,24 +395,35 @@ data = board.merge(
 )
 
 # ── Player pickers ───────────────────────────────────────────────────────────
-pool = data if pos_filter == "All" else data[data["pos"] == pos_filter]
-names = pool.sort_values("model_rank")["player"].tolist()
+def _names_for(pos: str) -> list[str]:
+    pool = data if pos == "All" else data[data["pos"] == pos]
+    return pool.sort_values("model_rank")["player"].tolist()
 
-if len(names) < 2:
-    st.info("Not enough players in this filter to compare.")
-    st.stop()
 
 pick1, pick_mid, pick2 = st.columns([5, 1, 5])
 with pick1:
-    p1 = st.selectbox("Player A", names, index=0, key=f"pc_p1_{pos_filter}")
+    pos1 = st.selectbox("Position A", POSITIONS, key="pc_pos1")
+    names1 = _names_for(pos1)
 with pick_mid:
     st.markdown(
-        "<div style='text-align:center;padding-top:1.9rem;font-weight:800;"
+        "<div style='text-align:center;padding-top:4.7rem;font-weight:800;"
         "color:var(--muted);letter-spacing:0.1em;font-size:0.8rem;'>VS</div>",
         unsafe_allow_html=True,
     )
 with pick2:
-    p2 = st.selectbox("Player B", names, index=min(1, len(names) - 1), key=f"pc_p2_{pos_filter}")
+    pos2 = st.selectbox("Position B", POSITIONS, key="pc_pos2")
+    names2 = _names_for(pos2)
+
+if not names1 or not names2:
+    st.info("No players available for one of the selected positions.")
+    st.stop()
+
+with pick1:
+    p1 = st.selectbox("Player A", names1, index=0, key=f"pc_p1_{pos1}")
+with pick2:
+    p2 = st.selectbox(
+        "Player B", names2, index=min(1, len(names2) - 1), key=f"pc_p2_{pos2}"
+    )
 
 A = data[data["player"] == p1].iloc[0]
 B = data[data["player"] == p2].iloc[0]
