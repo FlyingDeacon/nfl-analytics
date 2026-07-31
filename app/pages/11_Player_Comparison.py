@@ -400,6 +400,13 @@ def _names_for(pos: str) -> list[str]:
     return pool.sort_values("model_rank")["player"].tolist()
 
 
+RANK_BY_PLAYER = dict(zip(data["player"], data["model_rank"]))
+
+
+def _label(name: str) -> str:
+    return f"#{RANK_BY_PLAYER[name]} {name}"
+
+
 pick1, pick_mid, pick2 = st.columns([5, 1, 5])
 with pick1:
     pos1 = st.selectbox("Position A", POSITIONS, key="pc_pos1")
@@ -419,10 +426,13 @@ if not names1 or not names2:
     st.stop()
 
 with pick1:
-    p1 = st.selectbox("Player A", names1, index=0, key=f"pc_p1_{pos1}")
+    p1 = st.selectbox(
+        "Player A", names1, index=0, format_func=_label, key=f"pc_p1_{pos1}"
+    )
 with pick2:
     p2 = st.selectbox(
-        "Player B", names2, index=min(1, len(names2) - 1), key=f"pc_p2_{pos2}"
+        "Player B", names2, index=min(1, len(names2) - 1),
+        format_func=_label, key=f"pc_p2_{pos2}",
     )
 
 A = data[data["player"] == p1].iloc[0]
