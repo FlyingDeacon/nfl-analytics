@@ -327,9 +327,23 @@ def _last_season_stats(scoring: str, mtime: float) -> pd.DataFrame:
         "boom":      g["__boom"].sum(),
         "bust":      g["__bust"].sum(),
         "headshot":  g["headshot_url"].last(),
+        "__att":     g["attempts"].sum(),
+        "__carries": g["carries"].sum(),
+        "__targets": g["targets"].sum(),
     }).reset_index().rename(columns={"player_display_name": "player"})
 
     out["last_ppg"] = (out["last_pts"] / out["games"].replace(0, np.nan)).round(1)
+
+    # Opportunities per game — the workload a player is actually handed. Passers
+    # are measured on dropbacks + runs, everyone else on targets + carries, so
+    # the number means "chances to score" in both cases.
+    opps = np.where(
+        out["position"] == "QB",
+        out["__att"] + out["__carries"],
+        out["__targets"] + out["__carries"],
+    )
+    out["opp_pg"] = (opps / out["games"].replace(0, np.nan)).round(1)
+    out = out.drop(columns=["__att", "__carries", "__targets"])
 
     # Consistency 0–100: how little a player's weekly output swings around his own
     # average (100 = identical every week). Needs a real sample to mean anything.
@@ -547,6 +561,7 @@ GROUPS = [
         ("Positional Finish", "pos_finish",    False, _fmt_rank),
         ("Total Points",      "last_pts",      True,  _fmt_1),
         ("Points Per Game",   "last_ppg",      True,  _fmt_1),
+        ("Opportunities/Game", "opp_pg",       True,  _fmt_1),
         ("Games Played",      "games",         True,  _fmt_int),
         ("Best Week",         "best",          True,  _fmt_1),
     ]),
@@ -730,6 +745,7 @@ st.markdown(_flat(rows_html), unsafe_allow_html=True)
 
 RADAR_AXES = [
     ("Projection",  "predicted_pts", True),
+    ("Volume",      "opp_pg",        True),
     ("Efficiency",  "pred_ppg",      True),
     ("Availability", "proj_games",   True),
     ("Scarcity Value", "vor",        True),
