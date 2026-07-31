@@ -263,12 +263,16 @@ def draft_picks_df(data: dict, season: int) -> pd.DataFrame:
     return df.sort_values("Overall").reset_index(drop=True)
 
 
-@st.cache_data(show_spinner=False, ttl=86400)
 def all_time_df(seasons: tuple) -> pd.DataFrame:
     """Franchise history across every completed season, keyed by owner.
 
     Owners are the stable identity here — team names get renamed most years,
     so aggregating on them would split one manager into several franchises.
+
+    Deliberately uncached: it's pure arithmetic over already-cached season
+    payloads, and caching it meant edits to OWNER_NAMES / CO_CHAMPIONS were
+    invisible for a day (st.cache_data only invalidates on changes to the
+    decorated function itself, not to the helpers it calls).
     """
     rows = []
     for season in seasons:
@@ -298,9 +302,12 @@ def all_time_df(seasons: tuple) -> pd.DataFrame:
     return agg.sort_values(["Titles", "Win%"], ascending=False).reset_index(drop=True)
 
 
-@st.cache_data(show_spinner=False, ttl=86400)
 def h2h_df(seasons: tuple) -> pd.DataFrame:
-    """All-time head-to-head record between every pair of owners."""
+    """All-time head-to-head record between every pair of owners.
+
+    Uncached for the same reason as all_time_df — the season payloads it reads
+    are cached, so recomputing costs nothing.
+    """
     tally: dict = {}
     for season in seasons:
         data = load_league_season(season)
