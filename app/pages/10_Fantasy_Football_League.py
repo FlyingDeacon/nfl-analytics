@@ -135,9 +135,11 @@ if view != f"{season} (current)":
         if fs.empty:
             st.info("No standings for this season.")
         else:
-            champ = fs.iloc[0]
-            st.success(f"🏆 **{yr} champion: {champ['Team']}** ({champ['Owner']}) "
-                       f"— {champ['W']}-{champ['L']}, {champ['PF']:g} PF")
+            champs = fs[fs["Finish"] == fs["Finish"].min()]
+            label = "co-champions" if len(champs) > 1 else "champion"
+            st.success(f"🏆 **{yr} {label}:** " + "  ·  ".join(
+                f"**{c['Team']}** ({c['Owner']}) — {c['W']}-{c['L']}, {c['PF']:g} PF"
+                for _, c in champs.iterrows()))
             st.dataframe(fs[["Finish", "Seed", "Logo", "Team", "Owner",
                              "W", "L", "T", "PF", "PA"]],
                          hide_index=True, use_container_width=True, column_config=_IMG_COL)

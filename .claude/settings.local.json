@@ -143,7 +143,8 @@
       "Bash(python -c \"import ast,sys; ast.parse\\(open\\(''app/pages/11_Player_Comparison.py''\\).read\\(\\)\\)\")",
       "Bash(ls /Users/brw8201/Coding/nfl-analytics/.venv/bin/python*)",
       "Bash(perl -pi -e 's/\\\\Qt.get\\(\"\"logo\"\", \"\"\"\"\\)\\\\E/_logo\\(t\\)/g' app/utils/espn_league.py)",
-      "Bash(.venv/bin/python -c \"import ast; ast.parse\\(open\\(''app/utils/espn_league.py''\\).read\\(\\)\\)\")"
+      "Bash(.venv/bin/python -c \"import ast; ast.parse\\(open\\(''app/utils/espn_league.py''\\).read\\(\\)\\)\")",
+      "Bash(.venv/bin/python -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in [''app/utils/espn_league.py'',''app/pages/10_Fantasy_Football_League.py'']]\")"
     ]
   }
 }

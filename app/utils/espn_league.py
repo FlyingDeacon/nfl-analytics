@@ -66,6 +66,14 @@ def _real_name(display_name: str) -> str:
     return OWNER_NAMES.get(display_name.strip().lower(), display_name)
 
 
+# Results the league settled outside ESPN's bracket. rankCalculatedFinal has room
+# for exactly one champion, so a shared title shows the co-champ as runner-up
+# forever — including in the all-time title count. Keyed by owner real name.
+CO_CHAMPIONS = {
+    2022: {"Stephen"},   # season cut short by the Damar Hamlin game; title shared
+}
+
+
 def espn_configured() -> bool:
     """True once league_id / season / espn_s2 / swid are present in secrets."""
     try:
@@ -218,7 +226,15 @@ def final_standings_df(data: dict) -> pd.DataFrame:
             "team_id": t["id"],
         })
     df = pd.DataFrame(rows)
-    return df.sort_values("Finish").reset_index(drop=True) if not df.empty else df
+    if df.empty:
+        return df
+
+    co = CO_CHAMPIONS.get(int(data.get("seasonId") or 0), set())
+    if co:
+        df.loc[df["Owner"].isin(co), "Finish"] = 1
+
+    return (df.sort_values(["Finish", "PF"], ascending=[True, False])
+              .reset_index(drop=True))
 
 
 def draft_picks_df(data: dict, season: int) -> pd.DataFrame:
