@@ -11,6 +11,7 @@ Public leagues work with just a league_id + season.
 """
 from __future__ import annotations
 
+import base64
 import json
 import urllib.error
 import urllib.request
@@ -206,7 +207,7 @@ def final_standings_df(data: dict) -> pd.DataFrame:
         rows.append({
             "Finish": t.get("rankCalculatedFinal") or t.get("playoffSeed"),
             "Seed": t.get("playoffSeed"),
-            "Logo": t.get("logo", ""),
+            "Logo": _logo(t),
             "Team": t.get("name", ""),
             "Owner": owners.get(t["id"], ""),
             "W": rec.get("wins", 0),
@@ -325,9 +326,39 @@ def _owner_names(data: dict) -> dict:
     return out
 
 
+# Host ESPN serves user-uploaded team logos from. Unlike the stock logo packs on
+# g.espncdn.com, it 401s without the league cookies — and a browser won't attach
+# those to a cross-site <img> request, so those logos silently break.
+_UPLOAD_HOST = "mystique-api.fantasy.espn.com"
+
+
+@st.cache_data(show_spinner=False, ttl=86400)
+def _logo_data_uri(url: str) -> str:
+    """Fetch an authenticated custom logo here and inline it as a data URI."""
+    cfg = st.secrets["espn"]
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0",
+        "Cookie": f"espn_s2={cfg.get('espn_s2', '')}; SWID={cfg.get('swid', '')}",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            mime = r.headers.get("Content-Type", "image/png").split(";")[0].strip()
+            if mime == "image/jpg":
+                mime = "image/jpeg"
+            return f"data:{mime};base64," + base64.b64encode(r.read()).decode()
+    except Exception:
+        return ""
+
+
+def _logo(team: dict) -> str:
+    """Team logo URL, with custom uploads inlined so they actually render."""
+    url = team.get("logo", "") or ""
+    return _logo_data_uri(url) if _UPLOAD_HOST in url else url
+
+
 def team_logos(data: dict) -> dict:
     """team_id -> logo URL."""
-    return {t["id"]: t.get("logo", "") for t in (data or {}).get("teams", [])}
+    return {t["id"]: _logo(t) for t in (data or {}).get("teams", [])}
 
 
 def team_names(data: dict) -> dict:
@@ -347,7 +378,7 @@ def standings_df(data: dict) -> pd.DataFrame:
         streak_type = rec.get("streakType", "NONE")
         rows.append({
             "team_id": t["id"],
-            "Logo": t.get("logo", ""),
+            "Logo": _logo(t),
             "Team": t.get("name", ""),
             "Owner": owners.get(t["id"], ""),
             "W": rec.get("wins", 0),

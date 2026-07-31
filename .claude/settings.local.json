@@ -140,7 +140,10 @@
       "Bash(.venv/bin/python -c \"import ast,sys; ast.parse\\(open\\(''app/pages/8_Draft_Simulator.py''\\).read\\(\\)\\); print\\(''syntax OK''\\)\")",
       "Bash(lsof -ti:8555)",
       "Bash(xargs kill:*)",
-      "Bash(python -c \"import ast,sys; ast.parse\\(open\\(''app/pages/11_Player_Comparison.py''\\).read\\(\\)\\)\")"
+      "Bash(python -c \"import ast,sys; ast.parse\\(open\\(''app/pages/11_Player_Comparison.py''\\).read\\(\\)\\)\")",
+      "Bash(ls /Users/brw8201/Coding/nfl-analytics/.venv/bin/python*)",
+      "Bash(perl -pi -e 's/\\\\Qt.get\\(\"\"logo\"\", \"\"\"\"\\)\\\\E/_logo\\(t\\)/g' app/utils/espn_league.py)",
+      "Bash(.venv/bin/python -c \"import ast; ast.parse\\(open\\(''app/utils/espn_league.py''\\).read\\(\\)\\)\")"
     ]
   }
 }
