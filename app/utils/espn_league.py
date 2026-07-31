@@ -42,6 +42,29 @@ PRO_TEAM_MAP = {
 }
 
 
+# Real managers behind ESPN's display names. Keyed on displayName rather than
+# team name because teams get renamed most seasons while the account behind them
+# doesn't — and Owner is what the all-time history aggregates on.
+# Anyone missing here falls through to their ESPN handle.
+OWNER_NAMES = {
+    "flying deacon":     "Blake",
+    "soypapad":          "Doug",
+    "espnfan6929404931": "Cameron",
+    "ayweav":            "Alaina",
+    "milesiscool":       "Miles",
+    "adeselms":          "Alyse",
+    "meggie jeffreys":   "Meggie",
+    "espnfan1656601808": "Alyssa",
+    "compgeek52":        "Stephen",
+    "espnfan7346069141": "Kristen",
+    "espnfan5882418016": "James",
+}
+
+
+def _real_name(display_name: str) -> str:
+    return OWNER_NAMES.get(display_name.strip().lower(), display_name)
+
+
 def espn_configured() -> bool:
     """True once league_id / season / espn_s2 / swid are present in secrets."""
     try:
@@ -293,7 +316,8 @@ def draft_completed(data: dict) -> bool:
 
 
 def _owner_names(data: dict) -> dict:
-    members = {m["id"]: m.get("displayName", "") for m in data.get("members", [])}
+    members = {m["id"]: _real_name(m.get("displayName", ""))
+               for m in data.get("members", [])}
     out = {}
     for t in data.get("teams", []):
         names = [members.get(o, "") for o in t.get("owners", [])]
