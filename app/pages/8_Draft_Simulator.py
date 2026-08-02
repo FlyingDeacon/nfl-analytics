@@ -363,23 +363,51 @@ def _is_must_fill(slot: int) -> bool:
     return picks_left <= unmet
 
 
-# Suggestion-engine weights (in VOR points). Tuned so a full starting lineup
-# (QB/RB×2/WR×2/TE/FLEX/K) gets built at sensible times: RB/WR early, a QB and
-# TE mid-draft, FLEX/bench with best value, and the kicker in the final rounds.
-_NEED_BONUS  = 30.0   # lift for a player who fills an open STARTING slot
-_FLEX_BONUS  = 14.0   # lift for filling the FLEX once core RB/WR/TE are set
-_STACK_PEN   = 45.0   # push down QB2 / TE2 / K2 taken before you need depth
-_K_PRIORITY  = 500.0  # once it's the kicker's turn, lift it above bench value
-                      # (K's VOR is deeply negative, so the need bonus alone
-                      # can't out-rank a high-VOR bench player) — beats any
-                      # realistic VOR gap but stays below _BLOCK
-_BYE_PEN     = 12.0   # nudge down a depth pick that shares a bye with a player
-                      # already at that position — keeps starters/backups from
-                      # being off the same week. Deliberately small (in VOR
-                      # points) so a clearly superior player overrides it, and
-                      # only applied to non-starter-need picks so it mostly
-                      # shapes bench/FLEX choices, not required starters
-_BLOCK       = 1e6    # effectively removes a player from consideration
+# ══════════════════════════════════════════════════════════════════════════════
+# SUGGESTION ENGINE
+# ══════════════════════════════════════════════════════════════════════════════
+# The engine answers "who would I most regret losing?", not "who is best?".
+# Every input collapses into a single score:
+#
+#   score = VOR
+#         + _VONA_W × (VOR − expected best at that position at your next pick)
+#         + roster-construction bonuses, each sized to the live VOR spread
+#
+# The middle term is what makes this more than a sorted list. The robots pick by
+# ESPN rank plus gaussian noise (see _robot_pick), so the picks between now and
+# your next turn can be *simulated* rather than guessed at. That yields both the
+# odds each player survives and how much value is left at his position when you
+# are back on the clock — which is why a player the field ranks far below you
+# stops looking like a bargain: he'll still be sitting there next turn.
+
+# Bonus weights, expressed as MULTIPLES of the live VOR spread rather than as
+# absolute points. A flat "+30 VOR" bonus is a rounding error in round 1 and a
+# landslide in round 12, when the whole remaining board sits within a few
+# points; scaling keeps each nudge worth the same *relative* amount throughout.
+_NEED_W  = 0.90   # fills an open STARTING slot
+_FLEX_W  = 0.42   # fills the FLEX once core RB/WR/TE are set
+_STACK_W = 1.35   # QB2 / TE2 / K2 taken before you need the depth
+_BYE_W   = 0.35   # bye-week congestion, per colliding player
+_RUN_W   = 0.60   # position coming off the board faster than expected
+_TIER_W  = 0.50   # last player left in his tier
+_CORR_W  = 0.15   # pass-catcher stacked with your QB (or vice versa)
+_CUFF_W  = 0.35   # handcuff behind an RB you already roster
+_AVAIL_W = 0.12   # projected-games nudge — VOR already prices games, so this
+                  # only ever acts as a tiebreaker between similar players
+_REACH_W = 0.24   # per round, for taking your first QB/TE before its window
+
+_VONA_W  = 0.65   # weight on scarcity vs raw value. Drafting on pure scarcity
+                  # over-corrects and grabs mediocre players from thin
+                  # positions, so raw value keeps the larger share.
+_K_PRIORITY = 500.0  # once it's the kicker's turn, lift it above bench value
+                     # (K/DEF VOR is deeply negative, so the need bonus alone
+                     # can't out-rank a high-VOR bench player) — beats any
+                     # realistic VOR gap but stays below _BLOCK
+_BLOCK      = 1e6    # effectively removes a player from consideration
+_MIN_SCALE  = 8.0    # floor under the VOR spread, so the bonuses don't vanish
+                     # once the late-round board flattens out
+_SURVIVAL_SIMS = 400
+_TIER_MIN_GAP  = 6.0 # VOR points — the smallest gap that may start a new tier
 
 # Positional draft windows distilled from recent (2023-24) championship-roster
 # ADP trends: title teams anchored rounds 1-3 with elite RB/WR, built RB/WR
@@ -390,7 +418,130 @@ _BLOCK       = 1e6    # effectively removes a player from consideration
 # elite player (huge VOR) can still beat the penalty, but the engine won't burn
 # a premium pick on a replaceable starter at a scarce single-slot position.
 _REACH_ROUND = {"QB": 4, "TE": 3}   # earliest round to prioritize QB1 / TE1
-_REACH_PEN   = 8.0                   # per-round penalty for reaching early
+
+
+def _vor_scale(avail: pd.DataFrame) -> float:
+    """Spread of the talent still on the board — the unit every bonus is in."""
+    v = avail["vor"].to_numpy(dtype=float)
+    if v.size == 0:
+        return _MIN_SCALE
+    top = np.sort(v)[::-1][: max(12, 3 * teams)]
+    return max(float(top.std()), _MIN_SCALE)
+
+
+def _picks_until_next(slot: int, idx: int) -> int:
+    """How many picks other teams make before this slot is back on the clock."""
+    for n, s in enumerate(order[idx + 1:], start=1):
+        if s == slot:
+            return n - 1
+    return 0
+
+
+def _survival(avail: pd.DataFrame, n_picks: int) -> np.ndarray:
+    """P(each available player is still there at your next pick).
+
+    The robots' selection rule is known exactly — ESPN overall rank plus
+    gaussian noise — so rather than guessing at ADP we simulate that same rule.
+    Each trial draws one noisy ranking of the board and assumes the next
+    `n_picks` selections come off the top of it; a player survives when he falls
+    outside that cut. K/DEF sit at rank 1e9 and so always survive, matching how
+    the robots actually defer them. Seeded on the pick index so the number a
+    user sees doesn't flicker between Streamlit reruns of the same pick.
+    """
+    n = len(avail)
+    if n == 0:
+        return np.zeros(0)
+    if n_picks <= 0:
+        return np.ones(n)
+    if n_picks >= n:
+        return np.zeros(n)
+    espn = pd.to_numeric(avail["espn_overall"], errors="coerce").fillna(1e9).to_numpy(dtype=float)
+    sigma = float(st.session_state.get("dr_robot_sigma", 6.0))
+    if sigma <= 0:                       # chalk mode: the cut is deterministic
+        return (np.argsort(np.argsort(espn)) >= n_picks).astype(float)
+    rng = np.random.default_rng(1_000 * int(st.session_state.dr_pick_idx) + n_picks)
+    noisy = espn[None, :] + rng.normal(0.0, sigma, size=(_SURVIVAL_SIMS, n))
+    cut = np.partition(noisy, n_picks - 1, axis=1)[:, n_picks - 1]
+    return (noisy > cut[:, None]).mean(axis=0)
+
+
+def _next_turn_replacement(avail: pd.DataFrame, surv: np.ndarray) -> dict:
+    """Expected VOR of the best player left at each position at your next pick.
+
+    Walks each position best-first and accumulates
+    ``Σ vor_i · P(i survives) · Π_{j<i} P(j is gone)`` — the expected value of
+    whoever is still on top of that position when you pick again. Subtracting it
+    from a candidate's VOR gives his value over *next-turn* replacement, i.e.
+    what taking him now actually buys you over waiting.
+    """
+    out = {}
+    v_all = avail["vor"].to_numpy(dtype=float)
+    pos_all = avail["pos"].to_numpy()
+    for p in POSITIONS:
+        idx = np.flatnonzero(pos_all == p)
+        if idx.size == 0:
+            out[p] = 0.0
+            continue
+        idx = idx[np.argsort(v_all[idx])[::-1]]
+        v, s = v_all[idx], surv[idx]
+        gone = np.concatenate(([1.0], np.cumprod(1.0 - s)[:-1]))
+        out[p] = float((v * s * gone).sum())
+    return out
+
+
+def _position_tiers(avail: pd.DataFrame) -> dict:
+    """Group each position's remaining players into tiers → {player: (tier, size, cliff)}.
+
+    Drafters think in tiers, not on a continuous ladder: six WRs within four
+    points are interchangeable, so the right move is to take the lone RB sitting
+    above a 40-point drop. A tier break is a player-to-player gap that is
+    unusually large *for that position right now*, which adapts to both the
+    scoring format and how picked-over the position already is.
+    """
+    out: dict = {}
+    v_all = avail["vor"].to_numpy(dtype=float)
+    pos_all = avail["pos"].to_numpy()
+    names = avail["player"].to_numpy()
+    for p in POSITIONS:
+        idx = np.flatnonzero(pos_all == p)
+        if idx.size == 0:
+            continue
+        idx = idx[np.argsort(v_all[idx])[::-1]]
+        v = v_all[idx]
+        gaps = -np.diff(v)
+        thresh = max(_TIER_MIN_GAP, 2.0 * float(np.median(gaps))) if gaps.size else np.inf
+        tier = np.zeros(v.size, dtype=int)
+        for b in np.flatnonzero(gaps > thresh):
+            tier[b + 1:] += 1
+        for t in range(int(tier.max()) + 1):
+            members = np.flatnonzero(tier == t)
+            below = np.flatnonzero(tier == t + 1)
+            floor_v = float(v[below[0]]) if below.size else 0.0
+            for m in members:
+                out[names[idx[m]]] = (t + 1, int(members.size), float(v[m] - floor_v))
+    return out
+
+
+def _run_heat(avail: pd.DataFrame) -> dict:
+    """How much faster than expected each position is coming off the board.
+
+    ESPN rank — which the survival model runs on — is a static pre-draft view
+    and cannot see a live positional run. Comparing the last round of actual
+    picks against the composition of the players who *should* have gone next
+    catches the case where RBs are flying and the cliff arrives early.
+    """
+    look = max(6, teams)
+    recent = st.session_state.dr_picks[-look:]
+    if len(recent) < look:
+        return {p: 0.0 for p in POSITIONS}
+    espn = pd.to_numeric(avail["espn_overall"], errors="coerce").fillna(1e9).to_numpy(dtype=float)
+    expected_pool = avail.iloc[np.argsort(espn)[:look]]["pos"]
+    return {
+        p: float(np.clip(
+            (sum(1 for r in recent if r["pos"] == p) / look) - float((expected_pool == p).mean()),
+            0.0, 0.25) / 0.25)
+        for p in POSITIONS
+    }
 
 
 def _roster_state(slot: int) -> dict:
@@ -405,90 +556,133 @@ def _roster_state(slot: int) -> dict:
             "starters_left": starters_left, "picks_left": picks_left}
 
 
-def _suggest_pick(slot: int, avail: pd.DataFrame) -> dict | None:
-    """Roster-aware value-based recommendation.
+def _suggest_pick(slot: int, pool: pd.DataFrame, top_n: int = 3) -> list:
+    """Scarcity- and roster-aware recommendations, best first.
 
-    Scores every available player as VOR plus roster-construction adjustments:
-      • bonus for filling an open starting slot (or the FLEX once core is set)
-      • penalty for stacking single-slot positions (QB2/TE2/K2) before you need
-        bench depth
-      • the kicker (a required starter) is held back until it's the last starter
-        to fill or the draft is running tight, then surfaced like any other need
-      • positional timing from recent championship rosters: reaching for your
-        first QB/TE before its draft window is penalized (elite VOR can override)
-      • when remaining picks equal remaining starter slots, only starter-filling
-        players are considered so you never miss a required position
+    On top of the value/scarcity core described above, the score carries:
+      • a bonus for filling an open starting slot (or the FLEX once core is set)
+      • a penalty for stacking single-slot positions (QB2/TE2/K2) too early
+      • a "last man in his tier" bonus, and urgency when that position is on a run
+      • bye-week congestion, counted across the whole roster rather than just
+        within the position, since four starters idle in week 9 is the real pain
+      • QB↔pass-catcher stacks and RB handcuffs, for bench picks only
+      • K/DEF held back until they're the last starters to fill
+      • a hard block on non-starters once remaining picks equal remaining
+        starter slots, so a legal lineup is always reachable
     """
-    if avail.empty:
-        return None
+    if pool.empty:
+        return []
     st_ = _roster_state(slot)
     c, core = st_["c"], st_["core"]
     flex_filled, picks_left = st_["flex_filled"], st_["picks_left"]
     force = picks_left <= st_["starters_left"]
     others_done = all(core[p] == 0 for p in ("QB", "RB", "WR", "TE")) and flex_filled
     cur_round = rounds - picks_left + 1
+    late_time = others_done or picks_left <= max(2, st_["starters_left"])
 
-    # Bye weeks already on this roster, per position — used to avoid stacking
-    # depth at a position that would all sit out the same week.
-    team_byes: dict = {}
-    for p in st.session_state.dr_picks:
-        if p["team"] == slot:
-            b = _BYE_BY_PLAYER.get(p["player"])
-            if b is not None and not pd.isna(b):
-                team_byes.setdefault(p["pos"], set()).add(int(b))
+    # Scarcity is modelled over the WHOLE remaining board, not just the players
+    # this roster may legally take — the robots are under no such restriction.
+    full = board[~board["player"].isin(drafted.keys())]
+    gap = _picks_until_next(slot, st.session_state.dr_pick_idx)
+    surv = _survival(full, gap)
+    surv_by_player = dict(zip(full["player"], surv))
+    repl = _next_turn_replacement(full, surv)
+    tiers = _position_tiers(full)
+    heat = _run_heat(full)
+    scale = _vor_scale(full)
+
+    mine = [p for p in st.session_state.dr_picks if p["team"] == slot]
+    qb_teams = {p["team_abbr"] for p in mine if p["pos"] == "QB"}
+    catcher_teams = {p["team_abbr"] for p in mine if p["pos"] in ("WR", "TE")}
+    rb_teams = {p["team_abbr"] for p in mine if p["pos"] == "RB"}
+    bye_load: dict = {}
+    for p in mine:
+        b = _BYE_BY_PLAYER.get(p["player"])
+        if b is not None and not pd.isna(b):
+            bye_load[int(b)] = bye_load.get(int(b), 0) + 1
 
     def _score(row) -> float:
-        pos = row["pos"]
-        s = float(row["vor"])
+        pos, name = row["pos"], row["player"]
         core_need = core[pos] > 0
-        flex_ok = (not core_need) and (pos in FLEX_POS) and (not flex_filled)
+        depth = not core_need
+        flex_ok = depth and pos in FLEX_POS and not flex_filled
+        # Scarcity only counts where the roster can still use it. A picked-over
+        # TE room is no reason to take a second TE you'll never start, so VONA is
+        # damped (not zeroed — bench depth is still injury insurance) once the
+        # position has no starting or FLEX slot left to fill.
+        vona = _VONA_W * (float(row["vor"]) - repl.get(pos, 0.0))
+        s = float(row["vor"]) + (vona if (core_need or flex_ok) else 0.30 * vona)
+
         if core_need:
-            s += _NEED_BONUS
+            s += _NEED_W * scale
         elif flex_ok:
-            s += _FLEX_BONUS
+            s += _FLEX_W * scale
         if pos in ("QB", "TE", "K", "DEF") and c[pos] >= STARTER_TARGET[pos]:
-            s -= _STACK_PEN
-        # Bye-week fit: only for depth picks (not an open starting need), nudge
-        # down a player who'd share a bye with someone already at that position.
-        # Small enough that a high-VOR player still wins the slot.
-        if not core_need:
-            b = _BYE_BY_PLAYER.get(row["player"])
-            if b is not None and not pd.isna(b) and int(b) in team_byes.get(pos, set()):
-                s -= _BYE_PEN
-        # Winning-strategy timing: don't reach for your first QB/TE too early.
+            s -= _STACK_W * scale
+
+        tier, tier_size, cliff = tiers.get(name, (1, 99, 0.0))
+        if tier_size == 1 and cliff >= 0.5 * scale:
+            s += _TIER_W * scale
+        s += _RUN_W * scale * heat.get(pos, 0.0)
+
+        # Bye congestion: a depth piece sharing its starter's week off, plus a
+        # roster-wide penalty once a single week claims four or more players.
+        b = _BYE_BY_PLAYER.get(name)
+        if b is not None and not pd.isna(b):
+            b = int(b)
+            same_pos = any(_BYE_BY_PLAYER.get(p["player"]) == b
+                           for p in mine if p["pos"] == pos)
+            pen = (0.6 if (depth and same_pos) else 0.0)
+            pen += 0.6 * max(0, bye_load.get(b, 0) + 1 - 3)
+            s -= _BYE_W * scale * pen
+
+        # Correlation and handcuffs only make sense once starters are covered.
+        if depth:
+            abbr = row.get("team", "")
+            if (pos in ("WR", "TE") and abbr in qb_teams) or (pos == "QB" and abbr in catcher_teams):
+                s += _CORR_W * scale
+            if pos == "RB" and abbr in rb_teams:
+                s += _CUFF_W * scale
+
+        # Availability tiebreaker only — proj_games is already inside VOR.
+        g = float(row.get("proj_games") or 0.0)
+        if g:
+            s += _AVAIL_W * scale * float(np.clip((g - 15.5) / 3.0, -1.0, 1.0))
+
         if pos in _REACH_ROUND and core_need:
             early = _REACH_ROUND[pos] - cur_round
             if early > 0:
-                s -= _REACH_PEN * early
-        # Kicker and defense are required starters but streamed last: surface
-        # them once they're the final starters to fill (skill positions + FLEX
-        # all set) or the draft is running tight — the same "fill your starter"
-        # logic that promotes QB, just later.
-        late_time = others_done or picks_left <= max(2, st_["starters_left"])
+                s -= _REACH_W * scale * early
         if pos in ("K", "DEF") and core_need:
-            if not late_time:
-                s -= _BLOCK           # hold K/DEF until it's their turn
-            else:
-                s += _K_PRIORITY      # their turn: rank ahead of bench depth
-                                      # (K/DEF VOR is deeply negative, so lift it)
+            s += -_BLOCK if not late_time else _K_PRIORITY
         if force and not core_need:
-            s -= _BLOCK               # must fill a required starter now
+            s -= _BLOCK
         return s
 
-    scored = avail.assign(_score=avail.apply(_score, axis=1))
-    scored = scored.sort_values(["_score", "vor"], ascending=[False, False])
-    best = scored.iloc[0]
-    pos = best["pos"]
+    scored = pool.assign(_score=pool.apply(_score, axis=1))
+    scored = scored.sort_values(["_score", "vor"], ascending=[False, False]).head(top_n)
 
-    if force and core[pos] > 0:
-        reason = f"required — you must fill {pos} to ice a legal starting lineup"
-    elif core[pos] > 0:
-        reason = f"best value at {pos}, an open starting spot on your roster"
-    elif pos in FLEX_POS and not flex_filled:
-        reason = f"fills your FLEX with the best remaining {pos} value"
-    else:
-        reason = "best value available for your bench (VOR)"
-    return {"player": best["player"], "pos": pos, "reason": reason}
+    out = []
+    for _, row in scored.iterrows():
+        pos, name = row["pos"], row["player"]
+        if force and core[pos] > 0:
+            bits = [f"required — you must fill {pos} to ice a legal lineup"]
+        elif core[pos] > 0:
+            bits = [f"best value at {pos}, an open starting spot"]
+        elif pos in FLEX_POS and not flex_filled:
+            bits = [f"fills your FLEX with the best remaining {pos}"]
+        else:
+            bits = ["best value left for your bench"]
+        tier, tier_size, cliff = tiers.get(name, (1, 99, 0.0))
+        if tier_size == 1 and cliff >= 0.5 * scale:
+            bits.append(f"last {pos} in tier {tier} — the next one is {cliff:.0f} VOR worse")
+        if gap > 0:
+            bits.append(f"{surv_by_player.get(name, 1.0) * 100:.0f}% to survive "
+                        f"the {gap} picks until your next turn")
+        if heat.get(pos, 0.0) > 0.35:
+            bits.append(f"{pos} run underway")
+        out.append({"player": name, "pos": pos, "reason": "; ".join(bits)})
+    return out
 
 
 def _robot_pick(slot: int) -> dict | None:
@@ -741,10 +935,14 @@ with left:
                     "Only those positions are selectable so the roster finishes with a full lineup."
                 )
 
-        # Suggestion is computed over the full legal pool (roster-aware).
-        sug = _suggest_pick(active_slot, pool)
+        # Suggestions are computed over the full legal pool (roster-aware).
+        sugs = _suggest_pick(active_slot, pool)
+        sug = sugs[0] if sugs else None
         if sug is not None:
             st.info(f"💡 **Suggested pick:** {sug['player']} ({sug['pos']}) — {sug['reason']}")
+        if len(sugs) > 1:
+            st.caption("**Also considered** — " + "  ·  ".join(
+                f"{s['player']} ({s['pos']}): {s['reason']}" for s in sugs[1:]))
 
         # Apply the position filter, but never let it push outside the legal pool.
         pool_view = pool if pos_filter == "All" else pool[pool["pos"] == pos_filter]

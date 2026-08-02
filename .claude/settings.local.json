@@ -161,7 +161,13 @@
       "WebFetch(domain:bleacherreport.com)",
       "WebFetch(domain:www.ourlads.com)",
       "Bash(.venv/bin/python scripts/build_big_boards.py)",
-      "Bash(ls -la data/derived/big_board_*.parquet)"
+      "Bash(ls -la data/derived/big_board_*.parquet)",
+      "Bash(for s:*)",
+      "Bash(do .venv/bin/python /tmp/ds_sim.py $s quiet)",
+      "Bash(done)",
+      "Bash(rm /tmp/ds_sim.py)",
+      "Bash(lsof -ti:8502)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:8502/Draft_Simulator\")"
     ]
   }
 }
