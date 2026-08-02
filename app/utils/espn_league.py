@@ -13,9 +13,7 @@ from __future__ import annotations
 
 import base64
 import json
-import re
 import urllib.error
-import urllib.parse
 import urllib.request
 from typing import Optional
 
@@ -140,170 +138,6 @@ def load_league_season(season: int) -> Optional[dict]:
         views=["mTeam", "mRoster", "mSettings", "mStandings", "mMatchupScore",
                "mDraftDetail"],
     )
-
-
-def _quiet_get(season: int, league_id, views: list, timeout: int = 10) -> Optional[dict]:
-    """Same request as _get(), but silent on failure.
-
-    Everything on the live-draft path uses this instead of _get(): a poller that
-    calls st.error() on each transient timeout paints the screen red mid-draft
-    and buries the pick feed. Callers hold their last good state and surface
-    staleness themselves.
-    """
-    if not espn_configured():
-        return None
-    cfg = st.secrets["espn"]
-    url = _BASE.format(season=season, league_id=league_id)
-    params = "&".join(f"view={v}" for v in views)
-    req = urllib.request.Request(f"{url}?{params}", headers={
-        "User-Agent": "Mozilla/5.0",
-        "Cookie": f"espn_s2={cfg.get('espn_s2','')}; SWID={cfg.get('swid','')}",
-    })
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read())
-    except Exception:
-        return None
-
-
-@st.cache_data(show_spinner=False, ttl=3)
-def live_draft(league_id=None, season=None) -> Optional[dict]:
-    """A draft's draftDetail — the feed a live draft is watched through.
-
-    Deliberately narrower than load_league(): only mDraftDetail, because the
-    full payload drags every roster and matchup along with it and this gets
-    polled every few seconds. The short TTL lets repeat calls inside one poll
-    tick share a single fetch.
-
-    Defaults to the league in secrets; pass a league_id to follow one of the
-    user's other leagues or a throwaway practice draft.
-
-    Shape matches load_league_season(...)["draftDetail"], so completed seasons
-    and a live one can be replayed through exactly the same code.
-    """
-    if not espn_configured():
-        return None
-    cfg = st.secrets["espn"]
-    data = _quiet_get(season or cfg["season"], league_id or cfg["league_id"],
-                      ["mDraftDetail"], timeout=6)
-    return None if data is None else data.get("draftDetail", {})
-
-
-@st.cache_data(show_spinner=False, ttl=20)
-def draft_league(league_id, season: int) -> Optional[dict]:
-    """Everything needed to *connect* to an arbitrary draft, in one fetch.
-
-    Same shape load_league() returns, so draft_setup() and the replay path work
-    on it unchanged — the simulator doesn't care whether it's mirroring the
-    league in secrets, another of the user's leagues, or a practice draft.
-    """
-    return _quiet_get(season, league_id, ["mTeam", "mSettings", "mDraftDetail"])
-
-
-def draft_progress(data: dict) -> dict:
-    """How far along a draft is: picks made out of total slots, plus the clock.
-
-    ESPN pre-creates every slot with playerId -1 before anyone picks, so the
-    length of the picks array is the *size* of the draft, not its progress.
-    Only filled slots count — see draft_live.pick_made for why the test has to
-    be an exact -1 match rather than a positive check.
-    """
-    from utils.draft_live import pick_made      # local: avoids an import cycle
-
-    picks = ((data or {}).get("draftDetail") or {}).get("picks") or []
-    made = sum(1 for p in picks if pick_made(p))
-    slots = len(picks)
-    settings = (data or {}).get("settings", {}).get("draftSettings", {})
-    return {
-        "made": made,
-        "slots": slots,
-        "clock": settings.get("timePerSelection"),
-        "complete": bool(((data or {}).get("draftDetail") or {}).get("drafted")),
-        "in_progress": bool(((data or {}).get("draftDetail") or {}).get("inProgress")),
-    }
-
-
-_FAN_API = "https://fan.api.espn.com/apis/v2/fans/{swid}?context=fantasy&content=leagues"
-
-# ESPN's game ids across all its fantasy sports. 1 is football; the fan feed
-# also carries basketball, baseball and hockey entries for the same account.
-_FFL_GAME_ID = 1
-
-
-@st.cache_data(show_spinner=False, ttl=120)
-def my_leagues(season: int) -> list:
-    """Every football league this account belongs to, newest-season first.
-
-    ESPN's fan feed already carries draft state per league, so discovering the
-    leagues and knowing which one is drafting is a single request — no fan-out
-    across league ids. That's what makes "find my draft" fast enough to be
-    worth a button.
-
-    Practice drafts are *not* here: they're spun up on demand, get a fresh
-    league id each time and 404 the moment they end. Those still need the id
-    from the browser URL.
-    """
-    if not espn_configured():
-        return []
-    cfg = st.secrets["espn"]
-    swid = cfg.get("swid", "")
-    # The SWID is brace-wrapped ({...}), which ESPN rejects unencoded in a path.
-    url = _FAN_API.format(swid=urllib.parse.quote(swid, safe=""))
-    req = urllib.request.Request(url, headers={
-        "User-Agent": "Mozilla/5.0",
-        "Cookie": f"espn_s2={cfg.get('espn_s2','')}; SWID={swid}",
-    })
-    try:
-        with urllib.request.urlopen(req, timeout=10) as r:
-            payload = json.loads(r.read())
-    except Exception:
-        return []
-
-    out = []
-    for pref in payload.get("preferences", []):
-        entry = (pref.get("metaData") or {}).get("entry") or {}
-        if entry.get("gameId") != _FFL_GAME_ID or entry.get("seasonId") != season:
-            continue
-        meta = entry.get("entryMetadata") or {}
-        for group in entry.get("groups", []):
-            out.append({
-                "league_id": group.get("groupId"),
-                "name": (group.get("groupName") or "").strip(),
-                "teams": group.get("groupSize"),
-                "team_id": entry.get("entryId"),
-                "in_progress": bool(meta.get("draftInProgress")),
-                "complete": bool(meta.get("draftComplete")),
-            })
-    return out
-
-
-def parse_league_id(text: str) -> Optional[int]:
-    """Pull a league id out of whatever the user pasted.
-
-    Accepts a bare id or any ESPN URL carrying one — the draft room, the league
-    page, fantasycast. Practice drafts can only be reached this way, and at
-    draft time the user is copying from the address bar under a running clock,
-    so anything recognisable should work rather than one exact format.
-    """
-    if not text:
-        return None
-    s = str(text).strip()
-    m = re.search(r"leagueId[=/](\d+)", s, re.I) or re.fullmatch(r"(\d+)", s)
-    return int(m.group(1)) if m else None
-
-
-def parse_team_id(text: str) -> Optional[int]:
-    """The teamId an ESPN draft-room link was opened as, if it carries one.
-
-    Worth reading because draft_setup() finds "your" team by looking for the
-    SWID in each team's owners list, and a practice draft doesn't always record
-    ownership that way. The link the user pasted says outright which seat is
-    theirs, and getting that wrong would aim every suggestion at the wrong team.
-    """
-    if not text:
-        return None
-    m = re.search(r"teamId[=/](\d+)", str(text), re.I)
-    return int(m.group(1)) if m else None
 
 
 def previous_seasons(data: dict) -> list:
@@ -649,7 +483,6 @@ def draft_setup(data: dict) -> Optional[dict]:
         "rounds": rounds,
         "snake": draft.get("type", "SNAKE") == "SNAKE",
         "slot_names": slot_names,
-        "pick_order": order,        # team ids, index 0 = slot 1
         "my_slot": order.index(my_team) + 1 if my_team in order else None,
         "scoring": _scoring_format(settings),
     }

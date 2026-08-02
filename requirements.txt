@@ -4,9 +4,7 @@
 # scikit-learn, psycopg2, etc.) are intentionally excluded so the cloud build
 # stays reproducible on modern Python — install them locally when running
 # the data/back-test scripts.
-# 1.37 is the floor for st.rerun(scope="app"), which the live draft poller uses
-# to escalate a fragment tick into a full redraw only when a pick actually lands.
-streamlit>=1.37.0
+streamlit>=1.35.0
 pandas>=2.0
 numpy>=1.26
 plotly>=5.0
