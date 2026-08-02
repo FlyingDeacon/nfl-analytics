@@ -14,9 +14,10 @@ import numpy as np
 from utils.styles import NFL_CSS
 from utils.nav import render_sidebar_nav
 from utils.data_loader import load_teams, load_weekly, get_logo, get_base_dir, _file_mtime
-from utils.espn_league import (espn_configured, load_league, draft_setup, live_draft,
-                               load_league_season, previous_seasons, season_players,
-                               team_names)
+from utils.espn_league import (espn_configured, load_league, draft_league, draft_progress,
+                               draft_setup, live_draft, load_league_season, my_leagues,
+                               parse_league_id, parse_team_id, previous_seasons,
+                               season_players, team_names)
 from utils.draft_live import (resolve_players, replay, available, id_to_player,
                               normalize_pos, pick_made)
 
@@ -239,18 +240,70 @@ with st.expander("⚙️ Draft Settings", expanded=not settings_locked):
                               disabled=settings_locked, key="ds_order_type")
         slot_names = {}
 
-    # Live mirrors the real draft, so it only makes sense against a real league.
+    # Live mirrors a real ESPN draft, so it needs credentials — but not
+    # necessarily *this* league, since practice drafts live under their own ids.
     _mode_opts = ["Standard (robots auto-draft)", "Manual (you pick for every team)"]
-    if use_league:
+    if espn_configured():
         _mode_opts.append("Live (mirror my real ESPN draft)")
     draft_mode = st.radio(
         "Draft mode", _mode_opts,
         horizontal=True, disabled=settings_locked, key="ds_mode",
         help="Manual lets you make every team's selection yourself — useful for "
              "running a mock where you control the whole room. Live stops "
-             "simulating entirely and follows your real ESPN draft pick by pick, "
+             "simulating entirely and follows a real ESPN draft pick by pick, "
              "so the board and the suggestions track the actual room.",
     )
+
+    # Which draft to follow. This is where the clock bites: a practice draft
+    # gives you 30 seconds a pick, so anything you have to look up and type once
+    # it's underway has already cost you a round. ESPN's fan feed knows every
+    # league this account belongs to, so those need no typing at all — they're
+    # already in the list, flagged with whether they're drafting right now.
+    live_league_id = live_team_id = None
+    if draft_mode.startswith("Live"):
+        _mine = my_leagues(DRAFT_SEASON)
+        _PASTE = 0                       # sentinel: not a real ESPN league id
+        _labels = {_PASTE: "🔗 Practice draft (paste the link)"}
+        for _l in _mine:
+            _tag = (" — 🔴 drafting now" if _l["in_progress"]
+                    else " — ✅ already drafted" if _l["complete"] else "")
+            _labels[_l["league_id"]] = f"{_l['name']} ({_l['teams']} teams){_tag}"
+        _choices = [_l["league_id"] for _l in _mine] + [_PASTE]
+        # Default to whichever league is actually drafting, so on draft day the
+        # right one is already selected and connecting is a single click.
+        _default = next((_l["league_id"] for _l in _mine if _l["in_progress"]),
+                        _choices[0])
+        _pick = st.selectbox(
+            "Draft to follow", _choices, index=_choices.index(_default),
+            format_func=lambda x: _labels[x], disabled=settings_locked,
+            key="ds_live_league",
+            help="Your real leagues are discovered automatically. Practice drafts "
+                 "aren't — ESPN creates them on demand under a throwaway league "
+                 "id, so paste the draft-room link for those.",
+        )
+        if _pick == _PASTE:
+            _pasted = st.text_input(
+                "Practice draft link or league id", disabled=settings_locked,
+                key="ds_live_url", placeholder="https://fantasy.espn.com/football/draft?leagueId=…",
+                help="Copy the address bar from the draft room. Do it while the "
+                     "lobby is still filling — the link works before the first "
+                     "pick, and a practice draft's id dies with the draft. The "
+                     "whole URL is better than the bare id: it also says which "
+                     "team is yours.",
+            )
+            live_league_id = parse_league_id(_pasted)
+            live_team_id = parse_team_id(_pasted)
+            if _pasted and live_league_id is None:
+                st.warning("Couldn't find a league id in that — paste the whole "
+                           "draft-room URL, or just the number after `leagueId=`.")
+        else:
+            live_league_id = _pick
+            live_team_id = next((_l["team_id"] for _l in _mine
+                                 if _l["league_id"] == _pick), None)
+        if live_league_id:
+            st.caption("Team count, rounds, scoring, draft order and your seat are "
+                       "all read from this draft on connect — the settings above "
+                       "don't apply in Live mode.")
 
     robot_style = st.radio(
         "Robot draft style",
@@ -396,6 +449,43 @@ if not settings_locked:
              else "manual" if draft_mode.startswith("Manual") else "robots")
     if cstart.button("🔴 Connect Live Draft" if _mode == "live" else "🚀 Start Draft",
                      type="primary", use_container_width=True, key="ds_start"):
+        snake = order_type == "Snake"
+        poll_secs = 4
+        if _mode == "live":
+            if not live_league_id:
+                st.error("Pick a league to follow, or paste your practice-draft link.")
+                st.stop()
+            # Every setting comes from the draft we're actually mirroring, not
+            # from the sidebar: a practice draft can be a different size and
+            # scoring than your home league, and guessing wrong would put the
+            # whole board out of step with the room.
+            _lg = draft_league(live_league_id, DRAFT_SEASON)
+            _s = draft_setup(_lg) if _lg else None
+            if _s is None:
+                st.error(
+                    f"Couldn't open league {live_league_id}. Practice drafts only "
+                    "exist while they're running — once one ends ESPN deletes it "
+                    "and its link stops working."
+                )
+                st.stop()
+            scoring, teams, rounds = _s["scoring"], _s["teams"], _s["rounds"]
+            snake = _s["snake"]
+            slot_names = dict(_s["slot_names"])
+            # Mirroring your own draft from somebody else's seat is meaningless,
+            # so which team is yours is read from the draft, not the sidebar.
+            # The team id we arrived with is the better answer: draft_setup()
+            # has to infer ownership from the SWID, which a practice draft
+            # doesn't always record.
+            _order = _s["pick_order"]
+            slot = ((_order.index(live_team_id) + 1) if live_team_id in _order
+                    else _s["my_slot"] or min(slot, teams))
+            _prog = draft_progress(_lg)
+            # Poll about twice a pick. Practice drafts run a 30s clock, where a
+            # 4s poll can leave you looking at a board two picks stale as your
+            # turn arrives; league drafts give 90s and don't need the traffic.
+            _clock = _prog.get("clock") or 90
+            poll_secs = 2 if _clock <= 45 else 4
+
         path = _ensure_board(scoring)
         if path is None:
             st.error(
@@ -405,18 +495,16 @@ if not settings_locked:
             st.stop()
         board = _load_board(str(path), path.stat().st_mtime)
 
-        dr_order = _snake_order(teams, rounds, order_type == "Snake")
+        dr_order = _snake_order(teams, rounds, snake)
         live_slots: dict = {}
         if _mode == "live":
             # ESPN publishes every pick slot with its owning team before anyone
             # picks, so take the running order straight from that instead of
             # re-deriving snake/linear here. Theirs already accounts for traded
             # picks and any custom order the commissioner set.
-            _detail = live_draft()
-            _slots = sorted((_detail or {}).get("picks", []),
+            _slots = sorted(((_lg.get("draftDetail") or {}).get("picks") or []),
                             key=lambda p: p.get("overallPickNumber") or 0)
-            live_slots = {tid: i for i, tid
-                          in enumerate(_league_setup["pick_order"], start=1)}
+            live_slots = {tid: i for i, tid in enumerate(_s["pick_order"], start=1)}
             _seq = [live_slots.get(p.get("teamId")) for p in _slots]
             if not _seq or any(s is None for s in _seq):
                 st.error(
@@ -437,13 +525,15 @@ if not settings_locked:
         st.session_state.dr_team_names = slot_names
         st.session_state.dr_mode = _mode
         st.session_state.dr_robot_sigma = _ROBOT_SIGMA_BY_STYLE[robot_style]
-        st.session_state.dr_snake = (order_type == "Snake")
+        st.session_state.dr_snake = snake
         st.session_state.dr_order = dr_order
         st.session_state.dr_board = board.to_dict("records")
         st.session_state.dr_drafted = {}          # player -> team slot
         st.session_state.dr_picks = []            # list of pick dicts
         st.session_state.dr_pick_idx = 0
         st.session_state.dr_live_slots = live_slots   # ESPN team id -> draft slot
+        st.session_state.dr_live_league = live_league_id  # draft being mirrored
+        st.session_state.dr_live_poll = poll_secs     # seconds between ESPN polls
         st.session_state.dr_live_seen = -1            # picks seen on the last sync
         st.session_state.dr_live_at = 0.0             # time of last good sync
         st.session_state.pop("ds_roster_view", None)
@@ -453,8 +543,9 @@ if not settings_locked:
 if creset.button("🔄 Reset Draft", use_container_width=True, key="ds_reset"):
     for k in ("dr_started", "dr_order", "dr_board", "dr_drafted",
               "dr_picks", "dr_pick_idx", "dr_mode", "dr_robot_sigma",
-              "dr_team_names", "ds_roster_view", "dr_live_slots",
-              "dr_live_seen", "dr_live_at", "dr_live_stale", "dr_live_complete"):
+              "dr_team_names", "ds_roster_view", "dr_live_slots", "dr_live_league",
+              "dr_live_poll", "dr_live_seen", "dr_live_at", "dr_live_stale",
+              "dr_live_complete"):
         st.session_state.pop(k, None)
     st.rerun()
 
@@ -921,7 +1012,7 @@ def _sync_live() -> bool:
 
     Returns True when the pick count moved, so the caller knows to redraw.
     """
-    detail = live_draft()
+    detail = live_draft(st.session_state.get("dr_live_league"), DRAFT_SEASON)
     if detail is None:
         # Hold the last good state. A failed poll must never look like an empty
         # draft, or the board would spring back to full mid-round.
@@ -973,8 +1064,7 @@ def _sync_live() -> bool:
     return True
 
 
-@st.fragment(run_every="4s")
-def _live_poll() -> None:
+def _live_poll_body() -> None:
     """Poll ESPN on a timer without redrawing the page for nothing.
 
     The fragment reruns by itself every few seconds; only an actual change in
@@ -983,6 +1073,17 @@ def _live_poll() -> None:
     """
     if _sync_live():
         st.rerun(scope="app")
+
+
+def _live_poll() -> None:
+    """Run the poller at whatever interval this draft's clock warrants.
+
+    The fragment is built per rerun rather than decorated once, because
+    run_every is fixed at decoration time and the right interval isn't known
+    until we've connected and seen the room's clock.
+    """
+    secs = st.session_state.get("dr_live_poll", 4)
+    st.fragment(run_every=f"{secs}s")(_live_poll_body)()
 
 
 def _advance_robots() -> None:
@@ -1163,7 +1264,8 @@ if live and not done:
             "have probably expired."
         )
     else:
-        st.caption("🔴 Live — following your ESPN draft room, refreshing every 4s.")
+        st.caption(f"🔴 Live — following your ESPN draft room, refreshing every "
+                   f"{st.session_state.get('dr_live_poll', 4)}s.")
 
 left, right = st.columns([1.4, 1])
 
