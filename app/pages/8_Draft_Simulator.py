@@ -715,12 +715,12 @@ with left:
     # Show the full available board (scrollable). Capping at the top 50 by VOR
     # hid every kicker, since their VOR ranks them ~150+ — use the "K" position
     # filter (or scroll) to reach them.
-    show = view[["my_rank", "player", "pos", "team", "bye", "vor",
-                 "predicted_pts", "proj_games", "espn_overall", "round_grade"]].copy()
-    show.insert(1, "headshot", view["player"].map(_HEADSHOTS).fillna(""))
+    show = view[["my_rank", "espn_overall", "player", "pos", "team", "bye", "vor",
+                 "predicted_pts", "proj_games", "round_grade"]].copy()
+    show.insert(2, "headshot", view["player"].map(_HEADSHOTS).fillna(""))
     show["team"] = view["team"].map(_TEAM_LOGOS).fillna("")
-    show.columns = ["My Rank", "Headshot", "Player", "Pos", "Team", "Bye", "VOR",
-                    "Proj Pts", "Proj G", "ESPN Rank", "Grade"]
+    show.columns = ["My Rank", "ESPN Rank", "Headshot", "Player", "Pos", "Team", "Bye",
+                    "VOR", "Proj Pts", "Proj G", "Grade"]
     st.dataframe(show, hide_index=True, use_container_width=True, height=430,
                  column_config=_IMG_COLS)
 
