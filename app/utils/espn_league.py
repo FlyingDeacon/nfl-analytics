@@ -140,6 +140,37 @@ def load_league_season(season: int) -> Optional[dict]:
     )
 
 
+@st.cache_data(show_spinner=False, ttl=3)
+def live_draft() -> Optional[dict]:
+    """Current season's draftDetail — the feed a live draft is watched through.
+
+    Deliberately narrower and quieter than load_league():
+
+    * only mDraftDetail, because the full payload drags every roster and matchup
+      along with it and this gets polled every few seconds;
+    * short TTL so repeat calls inside one poll tick share a single fetch;
+    * failures return None instead of calling st.error(), since a poller that
+      shouts on every transient timeout is unusable during a draft. Callers
+      hold their last good state and show staleness instead.
+
+    Shape matches load_league_season(...)["draftDetail"], so completed seasons
+    and a live one can be replayed through exactly the same code.
+    """
+    if not espn_configured():
+        return None
+    cfg = st.secrets["espn"]
+    url = _BASE.format(season=cfg["season"], league_id=cfg["league_id"]) + "?view=mDraftDetail"
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0",
+        "Cookie": f"espn_s2={cfg.get('espn_s2','')}; SWID={cfg.get('swid','')}",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=6) as r:
+            return json.loads(r.read()).get("draftDetail", {})
+    except Exception:
+        return None
+
+
 def previous_seasons(data: dict) -> list:
     """Completed seasons this league has played, oldest first."""
     return sorted((data or {}).get("status", {}).get("previousSeasons", []))
@@ -483,6 +514,7 @@ def draft_setup(data: dict) -> Optional[dict]:
         "rounds": rounds,
         "snake": draft.get("type", "SNAKE") == "SNAKE",
         "slot_names": slot_names,
+        "pick_order": order,        # team ids, index 0 = slot 1
         "my_slot": order.index(my_team) + 1 if my_team in order else None,
         "scoring": _scoring_format(settings),
     }
