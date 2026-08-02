@@ -142,10 +142,12 @@ EXPERT_REMOVE = {
     "Michael Penix",     # ACL surgery (Nov 2025); lost ATL QB battle to newly-traded-in Tua — not the 2026 starter
     "Austin Ekeler",     # Torn Achilles; out for 2026 season
     "Stefon Diggs",      # Unsigned FA (2026); no confirmed team — removed pending signing
-    "Deebo Samuel Sr.",  # Unsigned FA (2026); no confirmed team — removed pending signing
     "Zach Ertz",         # Unsigned FA (2026); no confirmed team — removed pending signing
     "Zavier Scott",      # MIN RB4/practice-squad-caliber; buried behind the Jones/Mason committee, not fantasy-relevant
     "Brandin Cooks",     # Unsigned FA (2026) as of late July; no confirmed team — removed pending signing
+    "Ricky Pearsall",    # OUT FOR 2026 — PCL surgery announced Aug 2026 (chronic since Wk4 2025)
+    "Jonnu Smith",       # Released by PIT (Mar 2026); unsigned FA with no confirmed team
+    "Darren Waller",     # Not expected back with MIA; no confirmed 2026 team
 }
 
 # Injury risk mapping — 2026 season outlook
@@ -221,9 +223,9 @@ INJURY_RISK_MAP = {
 
     # ── TIGHT ENDS ───────────────────────────────────────────────────────────
     # Returning from significant 2024/2025 injury
-    "George Kittle":      "      Yes      ",   # Achilles injury (Jan 2026); age 33; recovery timeline uncertain
+    "George Kittle":      "      Yes      ",   # Torn Achilles (Jan 2026); opened camp on Active/PUP, Reserve/PUP still possible
     "Sam LaPorta":        "      Yes      ",   # Back surgery (Nov 2024); recurring back injury risk
-    "Brock Bowers":       "      Yes      ",   # PCL injury (Week 1 2025); may miss early 2026
+    "Tucker Kraft":       "      Yes      ",   # ACL (2025); activated off PUP Jul-2026 but carries ramp-up risk
     "T.J. Hockenson":     "      Yes      ",   # ACL tear (2023); missed entire 2024 season; returning in 2026
 
     # Chronic / recurring history
@@ -263,7 +265,17 @@ EXPERT_TEAM_CORRECTIONS = {
     "Kenneth Gainwell":  "TB",   # Signed with Tampa Bay Buccaneers (left PIT)
     "Romeo Doubs":       "NE",   # Signed with New England Patriots (left GB)
     "Chris Rodriguez":   "JAX",  # Signed with Jacksonville Jaguars (left WAS)
-    "Jauan Jennings":    "MIN",  # Traded SF → Minnesota Vikings
+    "Jauan Jennings":    "MIN",  # Signed with Minnesota Vikings (left SF)
+    "Deebo Samuel":      "SF",   # Re-signed with the 49ers (Aug 2026, 1 yr)
+    # ── 2026 TE audit: wrong-team corrections ──────────────────────────────
+    "Isaiah Likely":     "NYG",  # Signed 3-yr/$40M with the Giants — follows John Harbaugh, projected TE1
+    "Chig Okonkwo":      "WAS",  # Signed 3-yr/$27M with Washington — TE1 replacing Zach Ertz
+    "David Njoku":       "LAC",  # Signed 1-yr/$8M with the Chargers (left CLE)
+    "Charlie Kolar":     "LAC",  # Signed 3-yr/$24.3M with the Chargers (left BAL)
+    "Noah Fant":         "NO",   # Signed with New Orleans — TE2 behind Juwan Johnson
+    "Austin Hooper":     "ATL",  # Returns to Atlanta as TE2/3 behind Pitts
+    "Daniel Bellinger":  "TEN",  # Signed with Tennessee (left NYG)
+    "Johnny Mundt":      "PHI",  # Signed with Philadelphia as TE2 (left JAX)
 }
 
 # ── NEW HEAD COACH PENALTY ───────────────────────────────────────────────────
@@ -360,7 +372,6 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Quentin Johnston":      0.85,   # LAC WR2 behind McConkey; heavy TD-dependence in 2025 = regression risk
     "Courtland Sutton":      1.00,   # DEN clear WR1 (2025 WR14 finish); Waddle competition already priced into base
     "Travis Hunter":         0.78,   # JAX two-way snap load caps offensive volume
-    "Theo Johnson":          0.85,   # NYG TE in low-volume passing offense
     "DeMario Douglas":       0.78,   # NE slot; target share diluted by roster adds
     # ── 2026 top-150 audit: departure boosts (target share vacated) ────────
     "Rome Odunze":           1.12,   # CHI WR1 role solidified after D.J. Moore departure
@@ -373,6 +384,23 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Chris Godwin Jr.":      0.88,   # TB ankle recovery (PUP watch), ramp-up expected
     "Alec Pierce":           0.90,   # IND ankle; deep-role volatility
     "Zach Charbonnet":       0.65,   # SEA ACL recovery; limited early-season role
+    # ── 2026 TE audit: role changes from free agency / depth-chart moves ────
+    "Isaiah Likely":         1.50,   # NYG TE1 on a 3-yr/$40M deal — base rate is a career of ~40% snaps behind Andrews
+    "Chig Okonkwo":          1.12,   # WAS TE1 (3-yr/$27M) inheriting the Ertz target share
+    "Mark Andrews":          1.35,   # BAL role expands with Likely gone; re-signed 3-yr/$39.2M
+    "Darnell Washington":    1.50,   # PIT starter after a 4-yr/$42M extension; base is a career of rotational snaps
+    "Pat Freiermuth":        0.78,   # PIT TE2 behind Washington after the extension
+    "Theo Johnson":          0.55,   # NYG TE2 behind Likely — lost the starting job
+    "Jake Tonges":           0.60,   # SF TE2 again once Kittle returns; 2025 rate came from Kittle's absence
+    "Oronde Gadsden II":     0.80,   # LAC 3-way TE split w/ Njoku + Kolar under new OC
+    "David Njoku":           0.72,   # LAC committee TE; no longer a featured TE1
+    "Charlie Kolar":         0.70,   # LAC TE3 in a crowded room
+    "Noah Fant":             0.70,   # NO TE2 behind Juwan Johnson
+    "Austin Hooper":         0.62,   # ATL TE2/3 behind Kyle Pitts
+    "Mason Taylor":          0.85,   # NYJ co-starter after Sadiq went 16th overall
+    "Colby Parkinson":       0.75,   # LAR 5-deep TE committee
+    "Tyler Higbee":          0.72,   # LAR committee; age-33 snap management
+    "Terrance Ferguson":     0.75,   # LAR committee; no clear lead role
 }
 
 # ── PLAYER BIRTH YEARS ───────────────────────────────────────────────────────
@@ -653,8 +681,8 @@ PROJ_GAMES_OVERRIDES = {
     "Jayden Daniels":   14,   # 7 games 2025 (knee/hamstring/elbow); aggressive rushing profile (WAS)
     "Puka Nacua":       15,   # Elite when active but recurring lower-body history (2024 knee, 2025 ankle) (LAR)
     # 2026 top-150 audit — offseason injuries the prior game count understates
-    "George Kittle":    14,   # Lower-body/age-33 durability; SF manages his snaps
-    "Tucker Kraft":     15,   # ACL recovery; expected back but ramp risk (GB)
+    "George Kittle":    13,   # Torn Achilles Jan-2026; opened camp Active/PUP, Reserve/PUP would cost 4 games (SF)
+    "Tucker Kraft":     16,   # Activated off PUP Jul-2026; on track for Week 1 (GB)
     "Chris Godwin Jr.": 13,   # Ankle PUP watch; slow start likely (TB)
     "Jordan Addison":   14,   # 3-game suspension to open 2026 (MIN)
     "Alec Pierce":      14,   # Ankle; deep-threat availability risk (IND)

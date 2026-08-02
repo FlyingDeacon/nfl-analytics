@@ -144,7 +144,24 @@
       "Bash(ls /Users/brw8201/Coding/nfl-analytics/.venv/bin/python*)",
       "Bash(perl -pi -e 's/\\\\Qt.get\\(\"\"logo\"\", \"\"\"\"\\)\\\\E/_logo\\(t\\)/g' app/utils/espn_league.py)",
       "Bash(.venv/bin/python -c \"import ast; ast.parse\\(open\\(''app/utils/espn_league.py''\\).read\\(\\)\\)\")",
-      "Bash(.venv/bin/python -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in [''app/utils/espn_league.py'',''app/pages/10_Fantasy_Football_League.py'']]\")"
+      "Bash(.venv/bin/python -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in [''app/utils/espn_league.py'',''app/pages/10_Fantasy_Football_League.py'']]\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8502)",
+      "WebFetch(domain:www.fantasypoints.com)",
+      "WebFetch(domain:www.spotrac.com)",
+      "WebFetch(domain:www.cbssports.com)",
+      "WebFetch(domain:www.si.com)",
+      "WebFetch(domain:sicscore.com)",
+      "WebFetch(domain:www.nfl.com)",
+      "WebFetch(domain:sports.yahoo.com)",
+      "WebFetch(domain:www.nbcsports.com)",
+      "WebFetch(domain:athlonsports.com)",
+      "WebFetch(domain:www.yardbarker.com)",
+      "WebFetch(domain:uthdynasty.com)",
+      "WebFetch(domain:lastwordonsports.com)",
+      "WebFetch(domain:bleacherreport.com)",
+      "WebFetch(domain:www.ourlads.com)",
+      "Bash(.venv/bin/python scripts/build_big_boards.py)",
+      "Bash(ls -la data/derived/big_board_*.parquet)"
     ]
   }
 }
