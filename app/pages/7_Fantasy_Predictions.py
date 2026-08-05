@@ -114,6 +114,11 @@ SCORING_REPLACEMENT_LEVELS = {
 # LEAGUE SIZE — used to derive round grades from model rank (picks per round = league size)
 LEAGUE_SIZE = 10
 
+# Rank shown on the big board for players a source never ranked. Streamlit sorts
+# nulls first on ascending, so a real value past every board length is what keeps
+# them below rank 1 when the column header is clicked.
+UNRANKED_SORT_VALUE = 999
+
 POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
                    "WR": "Wide Receivers",  "TE": "Tight Ends", "K": "Kickers",
                    "DEF": "Defenses"}
@@ -1560,8 +1565,9 @@ preds["rookie_tag"] = _rookie_col.fillna(False).map(lambda x: "R" if bool(x) els
 # Look up each player's global ESPN overall value, then re-rank WITHIN the
 # current (position-filtered, top-N) view so the column renumbers 1..N by ESPN
 # order — exactly like the model's own Rank column re-bases when a position is
-# selected. Players ESPN never ranked stay NA: they render blank and sort to the
-# bottom. Nullable Int64 keeps the sort numeric rather than lexicographic.
+# selected. Players ESPN never ranked stay NA here and are parked at
+# UNRANKED_SORT_VALUE at render time. Nullable Int64 keeps the sort numeric
+# rather than lexicographic.
 _espn_map = load_espn_ranks()
 _espn_overall = pd.to_numeric(
     preds[name_col].map(lambda n: _espn_map.get(_norm_name(n))), errors="coerce"
@@ -1571,8 +1577,9 @@ preds["espn_rank"] = _espn_overall.rank(method="first", ascending=True).astype("
 # 2025 final finish (actual prior-season result shown beside the projections).
 # Re-ranked WITHIN the current position-filtered, top-N view by 2025 total
 # fantasy points — exactly like the ESPN and model Rank columns — so it
-# renumbers 1..N. Rookies and players with no 2025 production stay NA: they
-# render blank and sort to the bottom. Nullable Int64 keeps the sort numeric.
+# renumbers 1..N. Rookies and players with no 2025 production stay NA here and
+# are parked at UNRANKED_SORT_VALUE at render time. Nullable Int64 keeps the
+# sort numeric.
 _last_pts = pd.to_numeric(preds["last_season_pts"], errors="coerce")
 _no_2025 = _rookie_col.fillna(False).to_numpy() | (_last_pts <= 0)
 preds["finish_2025"] = _last_pts.mask(_no_2025).rank(method="first", ascending=False).astype("Int64")
@@ -1678,6 +1685,12 @@ disp = preds[board_cols].copy()
 # Ensure injury_risk never shows "None" — blank for non-risk players
 if "injury_risk" in disp.columns:
     disp["injury_risk"] = disp["injury_risk"].fillna("").replace({None: "", "None": ""})
+# Streamlit sorts nulls to the *top* on ascending, so clicking "ESPN" or
+# "2025 Finish" buried #1 underneath every unranked player. Park the blanks at
+# 999 (well past any board length) so the headers sort the way the columns read.
+for _c in ("espn_rank", "finish_2025"):
+    if _c in disp.columns:
+        disp[_c] = disp[_c].fillna(UNRANKED_SORT_VALUE).astype(int)
 for c in disp.select_dtypes("float").columns:
     if c != "change_pct":
         disp[c] = disp[c].round(1)
@@ -1689,13 +1702,13 @@ column_config_dict = {
                       label="ESPN", width="small", format="%d",
                       help="ESPN's 2026 PPR draft rank (Mike Clay), re-based to the current "
                            "position filter so it renumbers 1..N alongside this model's own Rank. "
-                           "Blank = outside ESPN's ranked pool (sorts to the bottom)."),
+                           f"{UNRANKED_SORT_VALUE} = outside ESPN's ranked pool."),
     "2025 Finish": st.column_config.NumberColumn(
                       label="2025 Finish", width="small", format="%d",
                       help="Where the player actually finished in 2025 fantasy scoring "
                            "(this scoring format), re-based to the current position filter so it "
                            "renumbers 1..N alongside ESPN and this model's Rank. "
-                           "Blank = no 2025 production (rookies / non-qualifiers), sorts to the bottom."),
+                           f"{UNRANKED_SORT_VALUE} = no 2025 production (rookies / non-qualifiers)."),
     "Rk": st.column_config.TextColumn(
                       label="Rk", width="small",
                       help="R = 2026 rookie. Rookies have no NFL history, so they are "
