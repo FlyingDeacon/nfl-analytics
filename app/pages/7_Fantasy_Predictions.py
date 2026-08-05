@@ -17,6 +17,8 @@ from model.projection import (
     ProjectionConfig, build_predictions_core,
     NFL_GAMES, POSITION_FEATURES, MIN_GAMES_BY_POS,
     RIDGE_ALPHA, DECAY, PPG_BLEND_WEIGHT, PPG_BASELINE_GAMES,
+    _weighted_durability, _expected_games,
+    AVAIL_SHRINK, AVAIL_GAMES_FLOOR, AVAIL_GAMES_CEILING, AVAIL_RECENCY_WEIGHTS,
 )
 
 st.set_page_config(page_title="Fantasy Predictions · NFL", page_icon="🔮", layout="wide")
@@ -61,7 +63,7 @@ SCORING_TARGET_COLS = {
 # and POSITION_FEATURES now live in model/projection.py (imported above) — that module
 # is the single source of truth so the Streamlit page and scripts/backtest_model.py can
 # never drift apart on the projection engine's own constants.
-MAX_PROJ_GAMES = 16       # conservative ceiling (no one is guaranteed 17) — force-include-only
+MAX_PROJ_GAMES = 16       # conservative ceiling (no one is guaranteed 17) — K/DEF + fallback
 
 # ── Sanity guards on the final per-game rate ────────────────────────────────
 # Two conservative corrections applied AFTER every contextual multiplier, using
@@ -133,15 +135,16 @@ FORCE_INCLUDE_STARTERS = {
     "Jayden Daniels":   ("00-0039910", "QB", "WAS", None),   # 7 games 2025 (injury); uses 2024 full season (20.93 PPG)
     "Malik Nabers":     ("00-0039337", "WR", "NYG", None),   # 4 games 2025 (ACL); confirmed NYG WR1 for 2026; uses 2024 full season
     "James Conner":     ("00-0033553", "RB", "ARI", None),   # 3 games 2025 (ankle); reworked deal to stay ARI as backup behind rookie Love; uses 2024 full season
+    "Joe Burrow":       ("00-0036442", "QB", "CIN", None),   # 8 games 2025 (turf toe); healthy CIN QB1, consensus QB4 — uses 2024 full season
+    "Brock Purdy":      ("00-0037834", "QB", "SF",  None),   # 11 games 2025 (toe/shoulder); confirmed SF QB1 — uses 2024 season
+    "Kirk Cousins":     ("00-0029604", "QB", "LV",  None),   # 10 games 2025; named LV QB1 to open camp over rookie Mendoza — uses 2024 season
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
 EXPERT_REMOVE = {
-    "Kirk Cousins",      # Traded to ATL in 2025; now ATL QB3 behind Tua/Penix — not a projected 2026 starter
     "Rob Gronkowski",    # Officially retired March 2026
     "Michael Penix",     # ACL surgery (Nov 2025); lost ATL QB battle to newly-traded-in Tua — not the 2026 starter
     "Austin Ekeler",     # Torn Achilles; out for 2026 season
-    "Stefon Diggs",      # Unsigned FA (2026); no confirmed team — removed pending signing
     "Zach Ertz",         # Unsigned FA (2026); no confirmed team — removed pending signing
     "Zavier Scott",      # MIN RB4/practice-squad-caliber; buried behind the Jones/Mason committee, not fantasy-relevant
     "Brandin Cooks",     # Unsigned FA (2026) as of late July; no confirmed team — removed pending signing
@@ -165,6 +168,9 @@ INJURY_RISK_MAP = {
     "C.J. Stroud":        "      Yes      ",   # Burner/nerve injury (2024); missed games; shoulder/nerve recurrence risk
     "Jalen Hurts":        "      Yes      ",   # Shoulder injuries (2022); missed games (2024); recurring soft-tissue profile
     "Dak Prescott":       "      Yes      ",   # Achilles tear (2020, missed season); hamstring 2023; chronic injury profile
+    "Daniel Jones":       "      Yes      ",   # Torn Achilles Wk14 2025; confirmed IND starter but Wk1 availability uncertain
+    "Joe Burrow":         "      Yes      ",   # Turf toe surgery (2025, 8 games); wrist 2023 — recurring availability risk
+    "Brock Purdy":        "      Yes      ",   # Toe/shoulder (2025); missed 6 games
 
     # ── RUNNING BACKS ────────────────────────────────────────────────────────
     # Returning from significant 2024/2025 injury
@@ -199,7 +205,7 @@ INJURY_RISK_MAP = {
     "Puka Nacua":         "      Yes      ",   # Knee injury (2024); missed majority of season
     "Rashee Rice":        "      Yes      ",   # May-2026 knee surgery + off-field risk (suspension served); full-go for camp
     "Chris Godwin Jr.":   "      Yes      ",   # ACL (2021); ankle dislocation/fracture (Oct 2024); chronic injury profile
-    "Stefon Diggs":       "      Yes      ",   # ACL recovery (2024); age 33; team transition adds uncertainty
+    "Stefon Diggs":       "      Yes      ",   # ACL (2024, 8 games); played full 2025, but age 33 + Aug-2026 signing = zero camp ramp with WAS
     "Tyreek Hill":        "      Yes      ",   # Multi-ligament knee injury (ACL+); released by MIA
     "Nico Collins":       "      Yes      ",   # Hamstring tear (2024); missed final 6 games of regular season
 
@@ -276,6 +282,9 @@ EXPERT_TEAM_CORRECTIONS = {
     "Austin Hooper":     "ATL",  # Returns to Atlanta as TE2/3 behind Pitts
     "Daniel Bellinger":  "TEN",  # Signed with Tennessee (left NYG)
     "Johnny Mundt":      "PHI",  # Signed with Philadelphia as TE2 (left JAX)
+    # ── Aug-2026 audit: late free-agency moves ─────────────────────────────
+    "Stefon Diggs":      "WAS",  # Signed 1-yr/up-to-$12M with Washington (Aug 5, 2026) — WR2 opposite McLaurin
+    "Kirk Cousins":      "LV",   # Named Raiders QB1 to open camp over rookie Mendoza
 }
 
 # ── NEW HEAD COACH PENALTY ───────────────────────────────────────────────────
@@ -336,20 +345,20 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Jaxon Smith-Njigba":    1.18,   # Target share trending past Lockett/Metcalf
     "Bucky Irving":          1.18,   # Mayfield offense leans on dual-threat RB
     "George Pickens":        1.10,   # Dak elevates target quality vs PIT
-    "Kyle Pitts":            1.10,   # New HC scheme finally featuring TE
-    "Justin Jefferson":      1.08,   # Kyler Murray (FORCE_INCLUDE_STARTERS MIN QB1) + healthy roster around him
+    "Kyle Pitts":            1.00,   # Franchise-tagged then 3-yr/$53M to stay ATL, but QB instability caps him; consensus TE7 vs model TE3
+    "Justin Jefferson":      1.20,   # Still a 28.5% target share; model had him WR16 vs consensus WR6 — QB upgrade in MIN
     # ── Veteran decline / age cliffs (0.80–0.92) ───────────────────────────
-    "Travis Kelce":          0.82,   # Age 37; route-tree shrinking
-    "Mike Evans":            0.80,   # Age 33; SF target competition heavy
+    "Travis Kelce":          0.95,   # Age 37 but re-signed KC 1-yr/$12M and remains the TE1; consensus TE10, model had him TE~20
+    "Mike Evans":            1.05,   # Age 33 and SF competition, but consensus WR19 — model buried him at WR~50
     "Christian McCaffrey":   0.92,   # Coming off Achilles + age-29 curve
     # ── Injury / suspension cuts (0.70–0.92) ───────────────────────────────
     "Rashee Rice":           0.92,   # Suspension served; mild haircut for May-2026 knee surgery + off-field risk
     "Patrick Mahomes":       0.92,   # OL concerns + WR group still maturing
-    "Malik Nabers":          0.90,   # Confirmed NYG WR1, but ACL tear Oct-2025 — mild haircut for camp ramp-up/re-injury risk
+    "Malik Nabers":          0.85,   # ACL + meniscus, then a 2nd cleanup surgery Apr-2026; NYG say "no target date" for Wk1
     # ── Committee / role demotions (0.70–0.85) ─────────────────────────────
     "Tyrone Tracy Jr.":      0.75,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's injury
     # ── 2026 top-150 audit: same-team committee / role cuts ────────────────
-    "Travis Etienne":        0.85,   # NO true committee split w/ Kamara — no clear lead back, both share reps
+    "Travis Etienne":        0.95,   # NO committee w/ Kamara, but the 4-yr/$52M deal implies more lead-back volume than a pure split
     "Alvin Kamara":          0.85,   # NO true committee split w/ Etienne — age-31 decline also applies via age curve
     "RJ Harvey":             0.72,   # DEN RB committee (Dobbins/Estime); early-down/passing split
     "Rhamondre Stevenson":   0.85,   # NE committee w/ Henderson; goal-line + volume not guaranteed
@@ -362,8 +371,8 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Kimani Vidal":          0.75,   # LAC RB2 behind Hampton
     "Bam Knight":            0.35,   # 2025 rate (10.3 ppg/9g) came filling in for injured Conner; buried behind Love/Conner/Allgeier in 2026
     "James Conner":          0.55,   # ARI backup behind rookie Love (reworked deal to stay, but ceded starter role)
-    "Tyler Allgeier":        0.50,   # ARI FA signee into an already-crowded room (Love/Conner ahead of him)
-    "Jeremiyah Love":        1.00,   # ARI RB1 — rookie 3rd overall pick, expected to start immediately Wk1
+    "Tyler Allgeier":        0.65,   # ARI room is crowded, but he opened camp atop the first depth chart ahead of Love
+    "Jeremiyah Love":        1.20,   # ARI rookie 3rd overall; real 1A/1B split w/ Allgeier caps him, but consensus RB13-16 vs model RB25
     "Devin Neal":            0.62,   # NO rookie-year committee, 3rd on depth chart
     "Chimere Dike":          0.75,   # TEN WR in crowded young group
     "Elic Ayomanor":         0.72,   # TEN WR2/3 competing for targets
@@ -374,10 +383,10 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Travis Hunter":         0.78,   # JAX two-way snap load caps offensive volume
     "DeMario Douglas":       0.78,   # NE slot; target share diluted by roster adds
     # ── 2026 top-150 audit: departure boosts (target share vacated) ────────
-    "Rome Odunze":           1.12,   # CHI WR1 role solidified after D.J. Moore departure
+    "Rome Odunze":           1.00,   # CHI WR1 after D.J. Moore left, but rookie Luther Burden III eats into the vacated share
     "Emeka Egbuka":          1.12,   # TB target share up with Mike Evans gone to SF
     "Josh Downs":            1.10,   # IND slot volume up after Pittman departure
-    "Brock Bowers":          1.08,   # LV featured TE, healthy, elite target profile
+    "Brock Bowers":          1.25,   # LV featured TE; "100%" after the 2025 PCL/bone bruise, new OC Kubiak building around him — consensus TE1
     "DeVonta Smith":         1.10,   # PHI WR1 target share up after A.J. Brown departure
     "Matthew Golden":        1.08,   # GB target share up after Romeo Doubs departure
     # ── 2026 top-150 audit: injury haircuts (paired w/ games override) ─────
@@ -397,10 +406,44 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Charlie Kolar":         0.70,   # LAC TE3 in a crowded room
     "Noah Fant":             0.70,   # NO TE2 behind Juwan Johnson
     "Austin Hooper":         0.62,   # ATL TE2/3 behind Kyle Pitts
-    "Mason Taylor":          0.85,   # NYJ co-starter after Sadiq went 16th overall
+    "Mason Taylor":          0.65,   # NYJ TE2, not co-starter — ADP fell from ~150 to past 250 once Sadiq went 16th overall
     "Colby Parkinson":       0.75,   # LAR 5-deep TE committee
     "Tyler Higbee":          0.72,   # LAR committee; age-33 snap management
-    "Terrance Ferguson":     0.75,   # LAR committee; no clear lead role
+    "Terrance Ferguson":     0.60,   # LAR room jammed w/ Higbee, Parkinson, Klare — not draftable in most formats
+
+    # ══ AUG-2026 SOFT AUDIT (top-25 per position vs camp reporting / consensus) ══
+    # ── QB ─────────────────────────────────────────────────────────────────
+    "Lamar Jackson":         1.25,   # Model had him QB16; consensus QB2, healthy, confirmed starter. Biggest QB miss on the board
+    "Dak Prescott":          1.10,   # Model QB19 vs consensus QB8; healthy and confirmed
+    "Fernando Mendoza":      0.35,   # NOT the LV starter — Kubiak named Cousins QB1; GM wants the rookie to sit year one
+    "Kyler Murray":          0.80,   # Genuine open MIN competition w/ J.J. McCarthy; reps split roughly evenly in early August
+    # Shough and Willis are deliberately NOT listed. Their old QB4/QB14 placements were
+    # an artefact of force-includes being handed a flat 16 games; the availability fix in
+    # _force_include_proj_games now sits them on the positional centre, which lands both
+    # at consensus (~QB21/QB22) on its own. A multiplier here would double-count.
+    # ── RB ─────────────────────────────────────────────────────────────────
+    "Kenneth Walker III":    1.35,   # SB LX MVP, signed KC 3-yr/$45M as the lead back; consensus RB9-12 vs model RB~30
+    "Rico Dowdle":           1.15,   # Taking PIT first-team RB1 reps ahead of Warren
+    "Jaylen Warren":         0.72,   # Now the PIT 1B behind Dowdle, not the lead back
+    "Kenneth Gainwell":      0.55,   # TB pass-down back only; Irving owns the carries. Model had him RB19, ESPN has him ~101
+    "Javonte Williams":      0.80,   # Model RB6 vs ESPN 41 — largest unsupported RB spike on the board
+    "D'Andre Swift":         0.85,   # Kyle Monangai is a real committee partner in CHI; model RB9 vs ESPN 69
+    "Ashton Jeanty":         1.15,   # Consensus RB6-7 vs model RB13; market is buying the Year-2 breakout
+    # ── WR ─────────────────────────────────────────────────────────────────
+    "Stefon Diggs":          0.85,   # WAS WR2 opposite McLaurin; real target volume, but Daniels is run-first and he has zero camp ramp
+    "Terry McLaurin":        1.20,   # WAS alpha, healthy and signed long-term; consensus WR23 vs model WR~40. Trimmed slightly for Diggs
+    "Jaylen Waddle":         1.25,   # Consensus WR16 in DEN alongside Nix; model had him WR~30
+    "DJ Moore":              1.25,   # Consensus WR24 after the trade to BUF; model had him WR~45
+    "Tetairoa McMillan":     1.12,   # Consensus WR13 vs model WR19
+    "Jameson Williams":      0.80,   # DET WR2 behind St. Brown; model WR11 vs consensus WR26
+    "Wan'Dale Robinson":     0.75,   # Slot-only, and TEN drafted Carnell Tate; model WR22 vs ESPN 106
+    "Chris Olave":           0.92,   # NO camp reports flag ongoing availability concerns despite the extension
+    "Davante Adams":         0.92,   # Age 33/34 behind Nacua in LAR; consensus WR28
+    # ── TE ─────────────────────────────────────────────────────────────────
+    "T.J. Hockenson":        1.20,   # Restructured to stay MIN and remains the lead TE; consensus TE19 vs model TE~35
+    "Kenyon Sadiq":          1.30,   # NYJ traded up to take him 16th overall; immediate lead TE, consensus TE22
+    "Colston Loveland":      1.15,   # Was CHI's de facto No. 1 target late in 2025 (10+ targets in each of the last four games)
+    "Gunnar Helm":           1.10,   # TEN TE room is his alone now that Okonkwo left for WAS
 }
 
 # ── PLAYER BIRTH YEARS ───────────────────────────────────────────────────────
@@ -673,7 +716,7 @@ RUSHING_OFFENSE_TIERS = {
 PROJ_GAMES_OVERRIDES = {
     # 2025 suspension served; healthy for 2026 (ready for camp per Jul-2026 reporting),
     # projected as a full-season starter. Prior-year 8-game total understates his role.
-    "Rashee Rice":      16,
+    "Rashee Rice":      15,
     # Carry-over / offseason injuries the prior-season game count understates
     "Patrick Mahomes":  14,   # ACL recovery; Week 1 availability uncertain
     "Daniel Jones":     13,   # Torn Achilles Wk14 2025; 6–8mo recovery, Wk1 uncertain (IND)
@@ -682,12 +725,19 @@ PROJ_GAMES_OVERRIDES = {
     "Puka Nacua":       15,   # Elite when active but recurring lower-body history (2024 knee, 2025 ankle) (LAR)
     # 2026 top-150 audit — offseason injuries the prior game count understates
     "George Kittle":    13,   # Torn Achilles Jan-2026; opened camp Active/PUP, Reserve/PUP would cost 4 games (SF)
-    "Tucker Kraft":     16,   # Activated off PUP Jul-2026; on track for Week 1 (GB)
+    "Tucker Kraft":     14,   # Off PUP but practicing limited (individual/walkthrough only); Wk1 is a target, not a lock (GB)
     "Chris Godwin Jr.": 13,   # Ankle PUP watch; slow start likely (TB)
     "Jordan Addison":   14,   # 3-game suspension to open 2026 (MIN)
-    "Alec Pierce":      14,   # Ankle; deep-threat availability risk (IND)
+    "Alec Pierce":      12,   # Opened camp on PUP after Apr-2026 ankle surgery; recovery behind schedule (IND)
     "Zach Charbonnet":  8,    # ACL recovery; limited early-season availability (SEA)
-    "Malik Nabers":     15,   # ACL tear Oct-2025; confirmed NYG WR1, ~11mo out by Wk1 but mild ramp risk (NYG)
+    "Malik Nabers":     12,   # 2nd cleanup surgery Apr-2026; NYG say there is "no target date" for a return (NYG)
+    # ── Aug-2026 soft audit ────────────────────────────────────────────────
+    "Stefon Diggs":     15,   # Signed with WAS Aug 5 with no camp ramp; slow September likely
+    "Brock Bowers":     16,   # "100%" after the 2025 PCL/bone bruise; full speed through OTAs and minicamp (LV)
+    "Cam Skattebo":     16,   # Fully cleared and a full participant; camp reports have him as the NYG RB1
+    "Omarion Hampton":  16,   # Healthy and named the LAC "clear-cut featured back"
+    "Quinshon Judkins": 16,   # Full medical clearance; CLE staff say he can play all three downs
+    "Josh Jacobs":      13,   # Brown County investigation still open (Jul-2026); Personal Conduct suspension risk (GB)
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1010,6 +1060,46 @@ if not rookie_preds.empty:
     all_preds_raw = pd.concat([all_preds_raw, rookie_preds], ignore_index=True)
 
 
+def _force_include_proj_games(pos: str, player_name: str, reg_w: pd.DataFrame,
+                               use_durability: bool = True) -> float:
+    """Expected 2026 games for a force-included starter.
+
+    Force-included players are here precisely BECAUSE their recent seasons were
+    injury-shortened, so handing them a flat full-season count inverted the board:
+    fragile players (Shough, Willis) outranked durable ones (Allen, Lamar) purely on
+    an assumed availability edge they hadn't earned. Instead run them through the same
+    availability model as everyone else — recency-weighted durability regressed toward
+    the position's starter-cohort mean, centred on PPG_BASELINE_GAMES.
+
+    Pass use_durability=False for career backups turned starter. Their thin game logs
+    reflect ROLE, not fragility, so reading them as a durability signal would penalise
+    a player for having been a backup; the positional centre is the honest answer.
+    """
+    base_g = float(PPG_BASELINE_GAMES.get(pos, MAX_PROJ_GAMES))
+    pos_rows = reg_w[reg_w[pos_col] == pos]
+    if pos_rows.empty or not use_durability:
+        return base_g
+
+    games = pos_rows.groupby([name_col, "season"])[TARGET_COL].count()
+    by_player: dict[str, dict[int, float]] = {}
+    for (nm, szn), g in games.items():
+        by_player.setdefault(nm, {})[int(szn)] = float(g)
+    durab = {nm: _weighted_durability(h, AVAIL_RECENCY_WEIGHTS) for nm, h in by_player.items()}
+
+    # Centre on the same cohort build_predictions_core uses: players who posted a
+    # qualifying (starter-level) season in the most recent year of data. Averaging over
+    # every player at the position would drag the mean down with backups and inflate
+    # everyone measured against it.
+    min_g   = MIN_GAMES_BY_POS.get(pos, 6)
+    latest  = int(max(s for h in by_player.values() for s in h))
+    cohort  = [nm for nm, h in by_player.items() if h.get(latest, 0) >= min_g]
+    vals    = [durab[nm] for nm in cohort if np.isfinite(durab.get(nm, np.nan))]
+    pop_mean = float(np.mean(vals)) if vals else base_g
+
+    return round(_expected_games(durab.get(player_name, float("nan")), pop_mean, base_g,
+                                 AVAIL_SHRINK, AVAIL_GAMES_FLOOR, AVAIL_GAMES_CEILING), 1)
+
+
 def apply_expert_adjustments(df: pd.DataFrame,
                               raw_weekly: pd.DataFrame | None = None) -> pd.DataFrame:
     """Apply NFL Expert 2026 roster corrections on top of the statistical model."""
@@ -1043,7 +1133,11 @@ def apply_expert_adjustments(df: pd.DataFrame,
                 # Player has no qualifying historical season (e.g. career backup turned starter).
                 # Use the expert-supplied PPG directly with a full projected-games estimate.
                 ppg      = float(manual_ppg)
-                proj_g   = float(MAX_PROJ_GAMES)   # assume full-season starter
+                # Career backup: the thin game log is a role artefact, not fragility,
+                # so sit them on the positional centre rather than either assuming a
+                # full season or punishing them for the backup years.
+                proj_g   = _force_include_proj_games(pos, player_name, reg_w,
+                                                     use_durability=False)
                 proj_pts = round(ppg * proj_g, 1)
                 games_2025 = int(p_data[p_data["season"] == PREDICTION_YEAR - 1][TARGET_COL].count()
                                  if not p_data.empty else 0)
@@ -1083,10 +1177,11 @@ def apply_expert_adjustments(df: pd.DataFrame,
 
                 games_2025 = int(p_seas[p_seas["season"] == PREDICTION_YEAR - 1]["games"].sum()
                                  if (PREDICTION_YEAR - 1) in p_seas["season"].values else 0)
-                # Conservative default games for confirmed starters; players with a
-                # specific 2026 injury/availability situation (e.g. Kyler Murray,
-                # Jayden Daniels) are refined below via PROJ_GAMES_OVERRIDES.
-                proj_g    = float(MAX_PROJ_GAMES)
+                # Same availability model as the rest of the board — their recent
+                # missed time is real injury signal and should count against them.
+                # Players with a specific 2026 situation (e.g. Kyler Murray, Jayden
+                # Daniels) are still refined below via PROJ_GAMES_OVERRIDES.
+                proj_g    = _force_include_proj_games(pos, player_name, reg_w)
                 proj_pts  = round(ppg * proj_g, 1)
                 actual_2025   = float(p_data[p_data["season"] == PREDICTION_YEAR - 1][TARGET_COL].sum())
                 display_games = games_2025 if games_2025 > 0 else float(best["games"])
