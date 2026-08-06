@@ -391,16 +391,12 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "James Conner":          0.55,   # ARI backup behind rookie Love (reworked deal to stay, but ceded starter role)
     "Tyler Allgeier":        0.65,   # ARI room is crowded, but he opened camp atop the first depth chart ahead of Love
     "Jeremiyah Love":        1.20,   # ARI rookie 3rd overall; real 1A/1B split w/ Allgeier caps him, but consensus RB13-16 vs model RB25
-    "Bhayshul Tuten":        1.15,   # JAX RB1 on the 2026 depth chart; base rate is a rookie-year committee (88 carries),
-                                     # so the promotion is invisible to the engine. Rodriguez Jr. is a real 1B — hence 1.15 not higher
     "Devin Neal":            0.62,   # NO rookie-year committee, 3rd on depth chart
     "Chimere Dike":          0.75,   # TEN WR in crowded young group
     "Elic Ayomanor":         0.72,   # TEN WR2/3 competing for targets
     "Khalil Shakir":         0.88,   # BUF slot but target share diluted by additions
     "Troy Franklin":         0.88,   # DEN WR3 (2025 WR31 finish) but Waddle arrival caps ceiling
     "Quentin Johnston":      0.85,   # LAC WR2 behind McConkey; heavy TD-dependence in 2025 = regression risk
-    "Romeo Doubs":           0.88,   # NE WR2 behind A.J. Brown — the GB→NE move gets a team tier, but not the
-                                     # target-share dilution of sitting behind an alpha WR1 (cf. Johnston/Franklin)
     "Courtland Sutton":      1.00,   # DEN clear WR1 (2025 WR14 finish); Waddle competition already priced into base
     "Travis Hunter":         0.78,   # JAX two-way snap load caps offensive volume
     "DeMario Douglas":       0.78,   # NE slot; target share diluted by roster adds
@@ -1308,14 +1304,12 @@ def apply_expert_adjustments(df: pd.DataFrame,
     #    other contextual adjustment (team tier, HC, age). Keeps the methodology
     #    caption (Gibbs 1.22×, JSN 1.18×, Kelce 0.82×, etc.) honest by actually
     #    APPLYING the values it advertises.
-    out["_player_mult"] = 1.0
     if name_col and PLAYER_MULTIPLIERS:
         player_mults = out[name_col].map(
             lambda n: PLAYER_MULTIPLIERS.get(str(n), 1.0)
         ).astype(float)
         out["predicted_pts"] = (out["predicted_pts"] * player_mults).round(1)
         out["pred_ppg"]      = (out["pred_ppg"]      * player_mults).round(2)
-        out["_player_mult"]  = player_mults
 
     # 9. Sanity guards on the final per-game rate — applied last, over each
     #    player's real game history: cap at their own ceiling, then regress
@@ -1338,19 +1332,16 @@ def apply_expert_adjustments(df: pd.DataFrame,
                     .groupby(name_col)["ppg"].max().to_dict())
 
         # (a) Cap each player with real history at 105% of their best season.
-        #     A hand-entered PLAYER_MULTIPLIERS boost is an explicit statement that
-        #     the player's role changed, which is precisely the case where their own
-        #     past peak is NOT a valid ceiling (a promoted backup has never produced
-        #     at the new level). So the cap is scaled by the multiplier rather than
-        #     silently discarding it — a ceiling still applies, just the intended one.
+        #     Deliberately applied AFTER the multipliers: a hand-entered boost is a
+        #     hypothesis about role, but year-over-year regression toward a player's
+        #     own demonstrated level is the stronger force, so the peak wins the tie.
+        #     A multiplier pinned at this cap is a signal the boost is too aggressive.
         def _cap_ppg(row):
             ppg = float(row["pred_ppg"])
             if row["_curated_ppg"]:
                 return ppg  # trust the expert-supplied rate as-is
             pk = peak_ppg.get(str(row[name_col]))
-            if pk is None:
-                return ppg
-            return min(ppg, pk * PEAK_CAP_MULT * max(float(row["_player_mult"]), 1.0))
+            return min(ppg, pk * PEAK_CAP_MULT) if pk is not None else ppg
         out["pred_ppg"] = out.apply(_cap_ppg, axis=1).round(2)
 
         # (b) Regress low-sample players toward a typical established starter at
@@ -1380,7 +1371,7 @@ def apply_expert_adjustments(df: pd.DataFrame,
         if "proj_games" in out.columns:
             out["predicted_pts"] = (out["pred_ppg"] * out["proj_games"]).round(1)
 
-    return out.drop(columns=["_curated_ppg", "_player_mult"], errors="ignore").reset_index(drop=True)
+    return out.drop(columns=["_curated_ppg"], errors="ignore").reset_index(drop=True)
 
 
 all_preds = apply_expert_adjustments(all_preds_raw, weekly)
