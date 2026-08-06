@@ -198,14 +198,25 @@ def build_predictions_core(weekly_df: pd.DataFrame, config: ProjectionConfig,
     # ── Season aggregates ────────────────────────────────────────────────────
     all_feat_cols = list({c for feats in position_features.values() for c in feats})
     stat_cols     = [target_col] + [c for c in all_feat_cols if c in reg.columns]
+    # Team is deliberately NOT a group key: a mid-season trade would otherwise
+    # split one season into two partial rows, which corrupts every downstream
+    # consumer (games counts, training targets, durability, latest-season pick).
+    # One row per player-season; the team is attached afterwards.
     group_keys    = [track_col, name_col, pos_col, "season"]
-    if team_col:
-        group_keys.append(team_col)
 
     agg = reg.groupby(group_keys, as_index=False)[stat_cols].sum()
     gp  = reg.groupby(group_keys, as_index=False)[target_col].count()
     gp.rename(columns={target_col: "games"}, inplace=True)
     agg = agg.merge(gp, on=group_keys, how="left")
+
+    # Final team of the season — the roster the player actually ended on, which
+    # is the better carry-forward for next-year context. Downstream
+    # EXPERT_TEAM_CORRECTIONS still overrides this for offseason moves.
+    if team_col:
+        last_team = (reg.sort_values("week")
+                        .groupby([track_col, "season"], as_index=False)[team_col]
+                        .last())
+        agg = agg.merge(last_team, on=[track_col, "season"], how="left")
 
     # Per-game rates (the core features the model trains on)
     for c in stat_cols:

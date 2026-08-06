@@ -114,10 +114,23 @@ SCORING_REPLACEMENT_LEVELS = {
 # LEAGUE SIZE — used to derive round grades from model rank (picks per round = league size)
 LEAGUE_SIZE = 10
 
-# Rank shown on the big board for players a source never ranked. Streamlit sorts
-# nulls first on ascending, so a real value past every board length is what keeps
-# them below rank 1 when the column header is clicked.
-UNRANKED_SORT_VALUE = 999
+# Marker shown on the big board for players a source never ranked.
+UNRANKED_MARK = "\u2014"
+
+
+def rank_display(s: pd.Series) -> pd.Series:
+    """Format a rank column so clicking its header sorts the way it reads.
+
+    Streamlit sorts a *numeric* column's blanks to the top on ascending, which
+    buries rank 1 under every unranked player. Text columns sort by collation
+    instead, so render the ranks right-aligned to a fixed width: the padding
+    keeps 10 after 9 (plain text would give 1, 10, 2), and the one extra space
+    guarantees every number leads with whitespace, which the collator orders
+    ahead of the em dash. Unranked players therefore land at the bottom.
+    """
+    nums = pd.to_numeric(s, errors="coerce")
+    width = (len(str(int(nums.max()))) + 1) if nums.notna().any() else 2
+    return nums.map(lambda v: UNRANKED_MARK if pd.isna(v) else f"{int(v):{width}d}")
 
 POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
                    "WR": "Wide Receivers",  "TE": "Tight Ends", "K": "Kickers",
@@ -378,12 +391,16 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "James Conner":          0.55,   # ARI backup behind rookie Love (reworked deal to stay, but ceded starter role)
     "Tyler Allgeier":        0.65,   # ARI room is crowded, but he opened camp atop the first depth chart ahead of Love
     "Jeremiyah Love":        1.20,   # ARI rookie 3rd overall; real 1A/1B split w/ Allgeier caps him, but consensus RB13-16 vs model RB25
+    "Bhayshul Tuten":        1.15,   # JAX RB1 on the 2026 depth chart; base rate is a rookie-year committee (88 carries),
+                                     # so the promotion is invisible to the engine. Rodriguez Jr. is a real 1B — hence 1.15 not higher
     "Devin Neal":            0.62,   # NO rookie-year committee, 3rd on depth chart
     "Chimere Dike":          0.75,   # TEN WR in crowded young group
     "Elic Ayomanor":         0.72,   # TEN WR2/3 competing for targets
     "Khalil Shakir":         0.88,   # BUF slot but target share diluted by additions
     "Troy Franklin":         0.88,   # DEN WR3 (2025 WR31 finish) but Waddle arrival caps ceiling
     "Quentin Johnston":      0.85,   # LAC WR2 behind McConkey; heavy TD-dependence in 2025 = regression risk
+    "Romeo Doubs":           0.88,   # NE WR2 behind A.J. Brown — the GB→NE move gets a team tier, but not the
+                                     # target-share dilution of sitting behind an alpha WR1 (cf. Johnston/Franklin)
     "Courtland Sutton":      1.00,   # DEN clear WR1 (2025 WR14 finish); Waddle competition already priced into base
     "Travis Hunter":         0.78,   # JAX two-way snap load caps offensive volume
     "DeMario Douglas":       0.78,   # NE slot; target share diluted by roster adds
@@ -1291,12 +1308,14 @@ def apply_expert_adjustments(df: pd.DataFrame,
     #    other contextual adjustment (team tier, HC, age). Keeps the methodology
     #    caption (Gibbs 1.22×, JSN 1.18×, Kelce 0.82×, etc.) honest by actually
     #    APPLYING the values it advertises.
+    out["_player_mult"] = 1.0
     if name_col and PLAYER_MULTIPLIERS:
         player_mults = out[name_col].map(
             lambda n: PLAYER_MULTIPLIERS.get(str(n), 1.0)
         ).astype(float)
         out["predicted_pts"] = (out["predicted_pts"] * player_mults).round(1)
         out["pred_ppg"]      = (out["pred_ppg"]      * player_mults).round(2)
+        out["_player_mult"]  = player_mults
 
     # 9. Sanity guards on the final per-game rate — applied last, over each
     #    player's real game history: cap at their own ceiling, then regress
@@ -1319,12 +1338,19 @@ def apply_expert_adjustments(df: pd.DataFrame,
                     .groupby(name_col)["ppg"].max().to_dict())
 
         # (a) Cap each player with real history at 105% of their best season.
+        #     A hand-entered PLAYER_MULTIPLIERS boost is an explicit statement that
+        #     the player's role changed, which is precisely the case where their own
+        #     past peak is NOT a valid ceiling (a promoted backup has never produced
+        #     at the new level). So the cap is scaled by the multiplier rather than
+        #     silently discarding it — a ceiling still applies, just the intended one.
         def _cap_ppg(row):
             ppg = float(row["pred_ppg"])
             if row["_curated_ppg"]:
                 return ppg  # trust the expert-supplied rate as-is
             pk = peak_ppg.get(str(row[name_col]))
-            return min(ppg, pk * PEAK_CAP_MULT) if pk is not None else ppg
+            if pk is None:
+                return ppg
+            return min(ppg, pk * PEAK_CAP_MULT * max(float(row["_player_mult"]), 1.0))
         out["pred_ppg"] = out.apply(_cap_ppg, axis=1).round(2)
 
         # (b) Regress low-sample players toward a typical established starter at
@@ -1354,7 +1380,7 @@ def apply_expert_adjustments(df: pd.DataFrame,
         if "proj_games" in out.columns:
             out["predicted_pts"] = (out["pred_ppg"] * out["proj_games"]).round(1)
 
-    return out.drop(columns=["_curated_ppg"], errors="ignore").reset_index(drop=True)
+    return out.drop(columns=["_curated_ppg", "_player_mult"], errors="ignore").reset_index(drop=True)
 
 
 all_preds = apply_expert_adjustments(all_preds_raw, weekly)
@@ -1685,12 +1711,11 @@ disp = preds[board_cols].copy()
 # Ensure injury_risk never shows "None" — blank for non-risk players
 if "injury_risk" in disp.columns:
     disp["injury_risk"] = disp["injury_risk"].fillna("").replace({None: "", "None": ""})
-# Streamlit sorts nulls to the *top* on ascending, so clicking "ESPN" or
-# "2025 Finish" buried #1 underneath every unranked player. Park the blanks at
-# 999 (well past any board length) so the headers sort the way the columns read.
+# Clicking "ESPN" or "2025 Finish" ascending used to put the unranked players
+# on top of rank 1 — see rank_display for why these render as padded text.
 for _c in ("espn_rank", "finish_2025"):
     if _c in disp.columns:
-        disp[_c] = disp[_c].fillna(UNRANKED_SORT_VALUE).astype(int)
+        disp[_c] = rank_display(disp[_c])
 for c in disp.select_dtypes("float").columns:
     if c != "change_pct":
         disp[c] = disp[c].round(1)
@@ -1698,17 +1723,18 @@ for c in disp.select_dtypes("float").columns:
 # Add logo URLs for team column if it exists
 teams_df = load_teams()
 column_config_dict = {
-    "ESPN": st.column_config.NumberColumn(
-                      label="ESPN", width="small", format="%d",
+    "ESPN": st.column_config.TextColumn(
+                      label="ESPN", width="small",
                       help="ESPN's 2026 PPR draft rank (Mike Clay), re-based to the current "
                            "position filter so it renumbers 1..N alongside this model's own Rank. "
-                           f"{UNRANKED_SORT_VALUE} = outside ESPN's ranked pool."),
-    "2025 Finish": st.column_config.NumberColumn(
-                      label="2025 Finish", width="small", format="%d",
+                           f"{UNRANKED_MARK} = outside ESPN's ranked pool (sorts to the bottom)."),
+    "2025 Finish": st.column_config.TextColumn(
+                      label="2025 Finish", width="small",
                       help="Where the player actually finished in 2025 fantasy scoring "
                            "(this scoring format), re-based to the current position filter so it "
                            "renumbers 1..N alongside ESPN and this model's Rank. "
-                           f"{UNRANKED_SORT_VALUE} = no 2025 production (rookies / non-qualifiers)."),
+                           f"{UNRANKED_MARK} = no 2025 production (rookies / non-qualifiers), "
+                           "sorts to the bottom."),
     "Rk": st.column_config.TextColumn(
                       label="Rk", width="small",
                       help="R = 2026 rookie. Rookies have no NFL history, so they are "
