@@ -14,19 +14,35 @@ NFL_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
 
 /* ── Hide ALL Streamlit chrome (toolbar, header, footer, deploy, profile) ── */
-[data-testid="stToolbar"],
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
-[data-testid="stHeader"],
-[data-testid="stAppHeader"],
 [data-testid="stMetaDatas"],
 [data-testid="stDeployLogsButton"],
+[data-testid="stToolbarActions"],
+[data-testid="stMainMenu"],
+[data-testid="stAppDeployButton"],
 footer,
 #MainMenu,
-.stAppHeader,
 .stDeployButton,
-header[data-testid],
+.stAppDeployButton,
 [data-testid="stBottom"] > div:empty { display: none !important; }
+
+/* The header itself must stay in the layout: Streamlit puts the "expand
+   sidebar" button inside it, so display:none here makes collapsing the sidebar
+   a one-way trip. Flatten it to a transparent, zero-height, click-through
+   strip instead, then let just that one button take clicks again. */
+[data-testid="stHeader"],
+[data-testid="stAppHeader"],
+.stAppHeader,
+header[data-testid] {
+    background: transparent !important;
+    box-shadow: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    pointer-events: none !important;
+}
+[data-testid="stToolbar"] { pointer-events: none !important; }
+[data-testid="stExpandSidebarButton"] { pointer-events: auto !important; }
 
 :root {
     --bg:         #f5f6fa;
@@ -62,7 +78,10 @@ html, body,
     border-right: 1px solid var(--border) !important;
     box-shadow: 2px 0 12px rgba(0,0,0,0.03) !important;
 }
-[data-testid="stSidebar"] * {
+/* Material icons render as ligatures, so forcing Inter on them would print
+   the raw glyph name ("keyboard_double_arrow_left") instead of the icon —
+   exempt them from the blanket sidebar font override. */
+[data-testid="stSidebar"] *:not([data-testid="stIconMaterial"]) {
     color: var(--text) !important;
     font-family: 'Inter', sans-serif !important;
 }
@@ -287,17 +306,16 @@ hr {
     font-weight: 600 !important;
 }
 
-/* Hide the Streamlit sidebar collapse label / keyboard shortcut text */
-[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] span,
-[data-testid="stSidebarCollapsedControl"] span {
+/* Hide the collapse control's text label / keyboard-shortcut hint, but NOT the
+   chevron itself — the icon lives in a nested span, so a bare `span` selector
+   here swallows it and leaves no way to collapse the sidebar. */
+[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] span:not([data-testid="stIconMaterial"]),
+[data-testid="stSidebarCollapsedControl"] span:not([data-testid="stIconMaterial"]) {
     font-size: 0 !important;
-    visibility: hidden !important;
-    width: 0 !important;
-    overflow: hidden !important;
 }
-[data-testid="stSidebarCollapseButton"],
-[data-testid="stSidebarCollapsedControl"] {
-    overflow: hidden !important;
+[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] span[data-testid="stIconMaterial"],
+[data-testid="stSidebarCollapsedControl"] span[data-testid="stIconMaterial"] {
+    font-size: 20px !important;
 }
 /* Also target any stray tooltip/title text in the sidebar header area */
 [data-testid="stSidebar"] > div:first-child > div:first-child > span,
@@ -440,8 +458,13 @@ hr {
         transform: translateX(0) !important;
         box-shadow: 4px 0 24px rgba(0,0,0,0.25) !important;
     }
-    /* Hide Streamlit's own sidebar toggle — we use our filter button */
-    [data-testid="stSidebarCollapsedControl"] {
+    /* Hide Streamlit's own sidebar toggles — we use our filter button. The
+       off-canvas rules above are driven by the .sidebar-open class, so
+       Streamlit's own collapse state has no effect here and its buttons would
+       just be dead controls. */
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stExpandSidebarButton"],
+    [data-testid="stSidebarCollapseButton"] {
         display: none !important;
     }
 }
