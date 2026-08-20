@@ -964,6 +964,12 @@ with left:
     show["espn_overall"] = rank_display(show["espn_overall"])
     show.columns = ["My Rank", "ESPN Rank", "Headshot", "Player", "Pos", "Team", "Bye",
                     "VOR", "Proj Pts", "Proj G", "Grade"]
+    # Streamlit's row-selection column is glide-data-grid's built-in row marker,
+    # which has no settable header — so the checkbox sits under a blank column
+    # with nothing naming it. Label it here instead, directly above the board.
+    if not done:
+        st.markdown("**☑️ Draft** — tick the box on any player's row to draft them.")
+
     # Click-to-draft: the board IS the pick control, so there's no separate list
     # of buttons to keep in sync with it. Keyed on pick_idx so the selection is
     # cleared every pick — a selection that survived the rerun would re-fire and
@@ -975,10 +981,6 @@ with left:
     )
 
     if not done:
-        # Streamlit's row selection is driven by the checkbox column only —
-        # clicking a cell just focuses it — so point at the checkbox by name
-        # rather than promising a whole-row click target.
-        st.caption("👆 Tick the ☑ on a player's row to draft them.")
         if warn_txt:
             st.warning(warn_txt)
         if sug is not None:
