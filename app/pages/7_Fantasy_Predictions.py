@@ -161,7 +161,9 @@ FORCE_INCLUDE_STARTERS = {
 # Players removed from 2026 board (not projected starters / retired / injury risk)
 EXPERT_REMOVE = {
     "Rob Gronkowski",    # Officially retired March 2026
-    "Michael Penix",     # ACL surgery (Nov 2025); lost ATL QB battle to newly-traded-in Tua — not the 2026 starter
+    "Michael Penix",     # ACL surgery (Nov 2025); still not medically cleared for 11-on-11 in Aug-2026 camp
+                         #   while Tua takes every first-team rep — not the projected Week 1 ATL starter
+    "Jayden Higgins",    # Torn ACL in the Aug-2026 joint practice vs LV — out for the 2026 season
     "Austin Ekeler",     # Torn Achilles; out for 2026 season
     "Zach Ertz",         # Unsigned FA (2026); no confirmed team — removed pending signing
     "Zavier Scott",      # MIN RB4/practice-squad-caliber; buried behind the Jones/Mason committee, not fantasy-relevant
@@ -213,6 +215,8 @@ INJURY_RISK_MAP = {
     "Nick Chubb":         "      Yes      ",   # Torn ACL/MCL/PCL (2023, full season); ACL re-injury risk remains elevated
     "Aaron Jones":        "      Yes      ",   # Knee/MCL injuries (2023); recurring soft tissue
     "Dameon Pierce":      "      Yes      ",   # Hamstring (2023); ankle (2024); limited availability both seasons
+    "Alvin Kamara":       "      Yes      ",   # Sprained MCL (Aug 2026, 4-6 wks) on top of an injury-plagued 2025; age 31
+    "Kyle Monangai":      "      Yes      ",   # Hyperextended right knee (Aug 2026); week-to-week, Wk1 in doubt
 
     # ── WIDE RECEIVERS ───────────────────────────────────────────────────────
     # Returning from significant 2024/2025 injury
@@ -226,6 +230,8 @@ INJURY_RISK_MAP = {
     "Stefon Diggs":       "      Yes      ",   # ACL (2024, 8 games); played full 2025, but age 33 + Aug-2026 signing = zero camp ramp with WAS
     "Tyreek Hill":        "      Yes      ",   # Multi-ligament knee injury (ACL+); released by MIA
     "Nico Collins":       "      Yes      ",   # Hamstring tear (2024); missed final 6 games of regular season
+    "Jordyn Tyson":       "      Yes      ",   # Hamstring (~2 months, Aug 2026) after separate hamstring trouble in the spring
+    "Emeka Egbuka":       "      Yes      ",   # Sprained toe (Aug 2026); TB "optimistic" for Wk1 but Bowles stayed non-committal
 
     # Chronic / recurring history
     "Justin Jefferson":   "      Yes      ",   # Hamstring tear (2023); missed 8 games; recurring hamstring risk
@@ -264,7 +270,9 @@ INJURY_RISK_MAP = {
 # Sources: ESPN / NFL.com free agency trackers, March 2026
 EXPERT_TEAM_CORRECTIONS = {
     "Travis Etienne":    "NO",   # Signed with New Orleans Saints (left JAX)
-    "Tua Tagovailoa":    "ATL",  # Traded MIA → ATL; favored to win the QB1 job over Penix
+    "Tua Tagovailoa":    "ATL",  # Signed 1 yr with ATL after his MIA release. Stefanski has NOT formally
+                                 #   named a Week 1 starter, but Penix is uncleared (ACL) and Tua has taken
+                                 #   every first-team rep, so he is the projected QB1.
     "Kyler Murray":      "MIN",  # 1-year deal with Vikings
     "Jaylen Waddle":     "DEN",  # Traded MIA → DEN (pairs with Bo Nix)
     "Michael Pittman":   "PIT",  # Traded IND → PIT
@@ -372,11 +380,13 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     # ── Injury / suspension cuts (0.70–0.92) ───────────────────────────────
     "Rashee Rice":           0.92,   # Suspension served; mild haircut for May-2026 knee surgery + off-field risk
     "Patrick Mahomes":       0.92,   # OL concerns + WR group still maturing
-    "Malik Nabers":          0.85,   # ACL + meniscus, then a 2nd cleanup surgery Apr-2026; NYG say "no target date" for Wk1
+    "Malik Nabers":          0.95,   # Was 0.85 on a "no target date" report; he is now in 11-on-11 at full speed
+                                     #   and NYG expect him Wk1 — small haircut left for the non-contact ramp
     # ── Committee / role demotions (0.70–0.85) ─────────────────────────────
     "Tyrone Tracy Jr.":      0.75,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's injury
     # ── 2026 top-150 audit: same-team committee / role cuts ────────────────
-    "Travis Etienne":        0.95,   # NO committee w/ Kamara, but the 4-yr/$52M deal implies more lead-back volume than a pure split
+    "Travis Etienne":        1.10,   # Was 0.95 for a pure NO committee; Kamara's Aug-19 MCL sprain (4-6 wks) hands
+                                     #   him the lead-back reps through at least the opening month
     "Alvin Kamara":          0.85,   # NO true committee split w/ Etienne — age-31 decline also applies via age curve
     "RJ Harvey":             0.72,   # DEN RB committee (Dobbins/Estime); early-down/passing split
     "Rhamondre Stevenson":   0.85,   # NE committee w/ Henderson; goal-line + volume not guaranteed
@@ -434,7 +444,10 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Lamar Jackson":         1.25,   # Model had him QB16; consensus QB2, healthy, confirmed starter. Biggest QB miss on the board
     "Dak Prescott":          1.10,   # Model QB19 vs consensus QB8; healthy and confirmed
     "Fernando Mendoza":      0.35,   # NOT the LV starter — Kubiak named Cousins QB1; GM wants the rookie to sit year one
-    "Kyler Murray":          0.80,   # Genuine open MIN competition w/ J.J. McCarthy; reps split roughly evenly in early August
+    # Kyler Murray is deliberately NOT listed. He carried a 0.80 for a "genuine open MIN
+    # competition w/ J.J. McCarthy" — O'Connell named him the Week 1 starter on Aug 11, 2026
+    # and McCarthy the backup, so that discount no longer has a reason to exist. His
+    # availability risk is still priced in via the 14-game PROJ_GAMES_OVERRIDES entry.
     # Shough and Willis are deliberately NOT listed. Their old QB4/QB14 placements were
     # an artefact of force-includes being handed a flat 16 games; the availability fix in
     # _force_include_proj_games now sits them on the positional centre, which lands both
@@ -445,7 +458,8 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Jaylen Warren":         0.72,   # Now the PIT 1B behind Dowdle, not the lead back
     "Kenneth Gainwell":      0.55,   # TB pass-down back only; Irving owns the carries. Model had him RB19, ESPN has him ~101
     "Javonte Williams":      0.80,   # Model RB6 vs ESPN 41 — largest unsupported RB spike on the board
-    "D'Andre Swift":         0.85,   # Kyle Monangai is a real committee partner in CHI; model RB9 vs ESPN 69
+    "D'Andre Swift":         1.00,   # Was 0.85 for the Monangai committee; Monangai's hyperextended knee (multiple
+                                     #   weeks, Wk1 in doubt) gives Swift the early-season workload back
     "Ashton Jeanty":         1.15,   # Consensus RB6-7 vs model RB13; market is buying the Year-2 breakout
     # ── WR ─────────────────────────────────────────────────────────────────
     "Stefon Diggs":          0.85,   # WAS WR2 opposite McLaurin; real target volume, but Daniels is run-first and he has zero camp ramp
@@ -730,7 +744,7 @@ RUSHING_OFFENSE_TIERS = {
 # Everyone NOT listed here keeps the model's own player-specific expected games.
 # Predicted points are recomputed as pred_ppg × games, so the per-game rate is
 # preserved and only availability changes. Format: name_fragment → 2026 games.
-# Sources: 2026 offseason reporting (CBS/FantasyPros/NBC/4for4, Mar–Jul 2026).
+# Sources: 2026 offseason reporting (CBS/FantasyPros/NBC/4for4, Mar–Aug 2026).
 PROJ_GAMES_OVERRIDES = {
     # 2025 suspension served; healthy for 2026 (ready for camp per Jul-2026 reporting),
     # projected as a full-season starter. Prior-year 8-game total understates his role.
@@ -746,9 +760,9 @@ PROJ_GAMES_OVERRIDES = {
     "Tucker Kraft":     14,   # Off PUP but practicing limited (individual/walkthrough only); Wk1 is a target, not a lock (GB)
     "Chris Godwin Jr.": 13,   # Ankle PUP watch; slow start likely (TB)
     "Jordan Addison":   14,   # 3-game suspension to open 2026 (MIN)
-    "Alec Pierce":      12,   # Opened camp on PUP after Apr-2026 ankle surgery; recovery behind schedule (IND)
+    "Alec Pierce":      15,   # Was 12 on a behind-schedule PUP report; now expected off PUP within a week and available Wk1 (IND)
     "Zach Charbonnet":  8,    # ACL recovery; limited early-season availability (SEA)
-    "Malik Nabers":     12,   # 2nd cleanup surgery Apr-2026; NYG say there is "no target date" for a return (NYG)
+    "Malik Nabers":     15,   # Was 12 on "no target date"; now taking full-speed 11-on-11 reps and on track for Wk1 (NYG)
     # ── Aug-2026 soft audit ────────────────────────────────────────────────
     "Stefon Diggs":     15,   # Signed with WAS Aug 5 with no camp ramp; slow September likely
     "Brock Bowers":     16,   # "100%" after the 2025 PCL/bone bruise; full speed through OTAs and minicamp (LV)
@@ -756,6 +770,11 @@ PROJ_GAMES_OVERRIDES = {
     "Omarion Hampton":  16,   # Healthy and named the LAC "clear-cut featured back"
     "Quinshon Judkins": 16,   # Full medical clearance; CLE staff say he can play all three downs
     "Josh Jacobs":      13,   # Brown County investigation still open (Jul-2026); Personal Conduct suspension risk (GB)
+    # ── Aug-19-2026 preseason audit: new camp injuries ─────────────────────
+    "Alvin Kamara":     11,   # Sprained MCL in the Aug-19 joint practice vs DAL; 4-6 wks, so ~3 games missed (NO)
+    "Jordyn Tyson":     10,   # Hamstring, ~2 months (into mid-Oct) — prime candidate to open on IR, which forces 4+ games (NO)
+    "Kyle Monangai":    12,   # Hyperextended right knee; "multiple weeks" and week-to-week, Wk1 in doubt (CHI)
+    "Jeremiyah Love":   15,   # High ankle sprain in camp; expected back for Wk1 but the ramp is real (ARI)
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
