@@ -797,15 +797,32 @@ _IMG_COLS = {
     "Headshot": st.column_config.ImageColumn("📷", width="small"),
     "Team":     st.column_config.ImageColumn("Team", width="small"),
 }
-# Rank shown for players ESPN never ranked, so they sort below every real rank.
-_ESPN_UNRANKED = 999
+# Marker shown for players ESPN never ranked.
+_UNRANKED_MARK = "\u2014"
+
+
+def _rank_display(s: pd.Series) -> pd.Series:
+    """Format a rank column so clicking its header sorts the way it reads.
+
+    Streamlit sorts a *numeric* column's blanks to the top on ascending, which
+    buries rank 1 under every unranked player. Text columns sort by collation
+    instead, so render the ranks right-aligned to a fixed width: the padding
+    keeps 10 after 9 (plain text would give 1, 10, 2), and the one extra space
+    guarantees every number leads with whitespace, which the collator orders
+    ahead of the em dash. Unranked players therefore land at the bottom.
+    """
+    nums = pd.to_numeric(s, errors="coerce")
+    width = (len(str(int(nums.max()))) + 1) if nums.notna().any() else 2
+    return nums.map(lambda v: _UNRANKED_MARK if pd.isna(v) else f"{int(v):{width}d}")
+
+
 # Big board table — same image columns plus the unranked note on ESPN Rank.
 _BOARD_COLS = {
     **_IMG_COLS,
-    "ESPN Rank": st.column_config.NumberColumn(
+    "ESPN Rank": st.column_config.TextColumn(
         "ESPN Rank",
-        help=f"ESPN's overall rank. {_ESPN_UNRANKED} = outside ESPN's ranked pool "
-             "(kickers, defenses, and deep-bench players).",
+        help=f"ESPN's overall rank. {_UNRANKED_MARK} = outside ESPN's ranked pool "
+             "(kickers, defenses, and deep-bench players); sorts to the bottom.",
     ),
 }
 # Roster tables (right panel + per-team inspector) — squeeze the image/bye
@@ -930,11 +947,9 @@ with left:
     show.insert(2, "headshot", view["player"].map(_HEADSHOTS).fillna(""))
     show["team"] = view["team"].map(_TEAM_LOGOS).fillna("")
     # ESPN only publishes ~180 overall ranks, so K/DEF and the deep bench land
-    # here as NaN. Streamlit sorts blanks to the *top* on ascending, which buries
-    # ESPN #1 under 249 empty rows — park the unranked at 999 so clicking the
-    # header sorts the column the way it reads.
-    show["espn_overall"] = (pd.to_numeric(show["espn_overall"], errors="coerce")
-                            .fillna(_ESPN_UNRANKED).astype(int))
+    # here as NaN, and clicking the header ascending used to bury ESPN #1 under
+    # every one of them — see _rank_display.
+    show["espn_overall"] = _rank_display(show["espn_overall"])
     show.columns = ["My Rank", "ESPN Rank", "Headshot", "Player", "Pos", "Team", "Bye",
                     "VOR", "Proj Pts", "Proj G", "Grade"]
     st.dataframe(show, hide_index=True, use_container_width=True, height=430,
