@@ -175,11 +175,6 @@ STARTER_SLOTS = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "DEF", "K"]
 FLEX_POS = ("RB", "WR", "TE")
 FLEX_TOTAL = STARTER_TARGET["RB"] + STARTER_TARGET["WR"] + STARTER_TARGET["TE"] + 1  # 6
 
-# How many one-click "Draft" rows to render under the board. Each row is a real
-# Streamlit button, so this trades render cost against how deep you can pick
-# without opening the full dropdown.
-QUICK_DRAFT_ROWS = 12
-
 # Robot draft variance: how many ESPN-rank "spots" of gaussian noise to add to
 # each available player before a robot takes its best-available. 0 = pure chalk
 # (always the ADP top); larger = more real-draft reaches and slides.
@@ -921,6 +916,41 @@ with left:
         "Position", ["All", *POSITIONS], key="ds_pos_filter")
     view = avail if pos_filter == "All" else avail[avail["pos"] == pos_filter]
 
+    # The board doubles as the pick control (clicking a row drafts that player),
+    # so the legal pool has to be resolved BEFORE it renders — the click handler
+    # needs to know which rows are legal. The warning and suggestion this
+    # produces are held back and rendered under the board, so reading order
+    # stays board → advice → fallback picker.
+    pool = pool_view = avail.iloc[0:0]
+    sugs: list = []
+    sug = None
+    warn_txt = ""
+    if not done:
+        counts = _pos_counts(active_slot)
+        needed = _needed_positions(active_slot)
+        must = _is_must_fill(active_slot)
+        who_txt = _team_label(active_slot) if manual and active_slot != user_slot else "you"
+
+        # Selectable pool = available players this team can still roster (caps).
+        pool = avail[avail["pos"].apply(lambda p: counts.get(p, 0) < POS_CAPS.get(p, 99))].copy()
+        if must and needed:
+            forced = pool[pool["pos"].isin(needed)]
+            if not forced.empty:
+                pool = forced
+                warn_txt = (
+                    f"⚠️ Roster requirement — {who_txt} still need **{', '.join(needed)}**. "
+                    "Only those positions are selectable so the roster finishes with a full lineup."
+                )
+
+        # Suggestions are computed over the full legal pool (roster-aware).
+        sugs = _suggest_pick(active_slot, pool)
+        sug = sugs[0] if sugs else None
+
+        # Apply the position filter, but never let it push outside the legal pool.
+        pool_view = pool if pos_filter == "All" else pool[pool["pos"] == pos_filter]
+        if pool_view.empty:
+            pool_view = pool
+
     # Show the full available board (scrollable). Capping at the top 50 by VOR
     # hid every kicker, since their VOR ranks them ~150+ — use the "K" position
     # filter (or scroll) to reach them.
@@ -934,74 +964,51 @@ with left:
     show["espn_overall"] = rank_display(show["espn_overall"])
     show.columns = ["My Rank", "ESPN Rank", "Headshot", "Player", "Pos", "Team", "Bye",
                     "VOR", "Proj Pts", "Proj G", "Grade"]
-    st.dataframe(show, hide_index=True, use_container_width=True, height=430,
-                 column_config=_BOARD_COLS)
+    # Click-to-draft: the board IS the pick control, so there's no separate list
+    # of buttons to keep in sync with it. Keyed on pick_idx so the selection is
+    # cleared every pick — a selection that survived the rerun would re-fire and
+    # draft again the moment anything else on the page changed.
+    sel = st.dataframe(
+        show, hide_index=True, use_container_width=True, height=430,
+        column_config=_BOARD_COLS, key=f"ds_board_{pick_idx}",
+        on_select="rerun" if not done else "ignore", selection_mode="single-row",
+    )
 
     if not done:
-        counts = _pos_counts(active_slot)
-        needed = _needed_positions(active_slot)
-        must = _is_must_fill(active_slot)
-        who_txt = _team_label(active_slot) if manual and active_slot != user_slot else "you"
-
-        # Selectable pool = available players this team can still roster (caps).
-        pool = avail[avail["pos"].apply(lambda p: counts.get(p, 0) < POS_CAPS.get(p, 99))].copy()
-        if must and needed:
-            forced = pool[pool["pos"].isin(needed)]
-            if not forced.empty:
-                pool = forced
-                st.warning(
-                    f"⚠️ Roster requirement — {who_txt} still need **{', '.join(needed)}**. "
-                    "Only those positions are selectable so the roster finishes with a full lineup."
-                )
-
-        # Suggestions are computed over the full legal pool (roster-aware).
-        sugs = _suggest_pick(active_slot, pool)
-        sug = sugs[0] if sugs else None
+        # Streamlit's row selection is driven by the checkbox column only —
+        # clicking a cell just focuses it — so point at the checkbox by name
+        # rather than promising a whole-row click target.
+        st.caption("👆 Tick the ☑ on a player's row to draft them.")
+        if warn_txt:
+            st.warning(warn_txt)
         if sug is not None:
             st.info(f"💡 **Suggested pick:** {sug['player']} ({sug['pos']}) — {sug['reason']}")
         if len(sugs) > 1:
             st.caption("**Also considered** — " + "  ·  ".join(
                 f"{s['player']} ({s['pos']}): {s['reason']}" for s in sugs[1:]))
 
-        # Apply the position filter, but never let it push outside the legal pool.
-        pool_view = pool if pos_filter == "All" else pool[pool["pos"] == pos_filter]
-        if pool_view.empty:
-            pool_view = pool
+        rows = list(sel.selection.rows) if sel and sel.selection else []
+        if rows:
+            # Streamlit reports the position in the ORIGINAL frame, not in the
+            # user's current header sort, so index straight back into `view`.
+            picked = view.iloc[rows[0]]
+            if picked["player"] in set(pool_view["player"]):
+                _record_pick(active_slot, picked.to_dict())
+                _advance_robots()
+                st.rerun()
+            else:
+                # Cap reached or a must-fill is in force. Say so rather than
+                # silently ignoring the click.
+                st.error(
+                    f"🚫 Can't draft **{picked['player']}** ({picked['pos']}) right now — "
+                    + (f"{who_txt} must fill {', '.join(needed)} first."
+                       if warn_txt else f"the {picked['pos']} limit is already full.")
+                )
 
         pick_opts = pool_view["player"].tolist()
         if pick_opts:
-            # Quick-draft rows. st.dataframe can't host a widget in a cell, so the
-            # one-click path is a short list rendered as real rows + buttons. The
-            # suggested pick is floated to the top because it is roster-aware and
-            # can otherwise sit well outside the top of the VOR order.
-            quick = pool_view.head(QUICK_DRAFT_ROWS)
-            if sug is not None and sug["player"] in pick_opts:
-                quick = pd.concat([pool_view[pool_view["player"] == sug["player"]],
-                                   quick[quick["player"] != sug["player"]]]).head(QUICK_DRAFT_ROWS)
-
-            st.markdown("##### ⚡ Quick draft — best available")
-            for _, r in quick.iterrows():
-                # st.columns can't be used here: Streamlit gives every column a
-                # min-width of 320px, and this panel is ~555px, so a text+button
-                # pair would always wrap onto two lines. A horizontal container
-                # is a plain flex row with no such breakpoint.
-                with st.container(horizontal=True, vertical_alignment="center"):
-                    mark = "💡 " if sug is not None and r["player"] == sug["player"] else ""
-                    bye = "" if pd.isna(r["bye"]) else f" · Bye {int(r['bye'])}"
-                    st.markdown(
-                        f"{mark}**#{r['my_rank']}**  {r['player']}  ·  "
-                        f"{r['pos']}·{r['team']}  ·  VOR {r['vor']}{bye}"
-                    )
-                    # Keyed by player as well as pick so the widget identity changes
-                    # the moment the pool does — a stale key would otherwise let a
-                    # click land on whoever now occupies that row.
-                    if st.button("✅ Draft", width="content",
-                                 key=f"ds_quick_{pick_idx}_{r['player']}"):
-                        _record_pick(active_slot, r.to_dict())
-                        _advance_robots()
-                        st.rerun()
-
-            # Anyone outside the quick list is still reachable here.
+            # Kept as a fallback: the board lists every available player, but the
+            # legal pool can be narrower, and this only ever offers legal picks.
             with st.expander(f"🔍 Draft someone else ({len(pick_opts)} available)"):
                 labels = {
                     r["player"]: f'#{r["my_rank"]}  {r["player"]} ({r["pos"]}) · VOR {r["vor"]}'

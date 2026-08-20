@@ -4,9 +4,9 @@
 # scikit-learn, psycopg2, etc.) are intentionally excluded so the cloud build
 # stays reproducible on modern Python — install them locally when running
 # the data/back-test scripts.
-# >=1.46 for st.container(horizontal=...), used by the draft simulator's
-# quick-draft rows (st.columns can't lay them out — see 8_Draft_Simulator.py).
-streamlit>=1.46.0
+# >=1.35 for st.dataframe(on_select=...), which powers the draft simulator's
+# click-a-row-to-draft board (see 8_Draft_Simulator.py).
+streamlit>=1.35.0
 pandas>=2.0
 numpy>=1.26
 plotly>=5.0
