@@ -967,8 +967,10 @@ with left:
     # Streamlit's row-selection column is glide-data-grid's built-in row marker,
     # which has no settable header — so the checkbox sits under a blank column
     # with nothing naming it. Label it here instead, directly above the board.
-    if not done:
-        st.markdown("**☑️ Draft** — tick the box on any player's row to draft them.")
+    # Always rendered (with a spent-draft variant) so this column stays the same
+    # height as the draft board beside it and the two tables line up.
+    st.markdown("**☑️ Draft** — tick the box on any player's row to draft them."
+                if not done else "**Undrafted** — everyone still on the board.")
 
     # Click-to-draft: the board IS the pick control, so there's no separate list
     # of buttons to keep in sync with it. Keyed on pick_idx so the selection is
@@ -1030,46 +1032,66 @@ with left:
                     _advance_robots()
                     st.rerun()
 
-# ── Your roster + recent picks ───────────────────────────────────────────────
+# ── Draft board: every pick that's been made ─────────────────────────────────
+# Deliberately mirrors the big board's structure — header, filter, one-line
+# label, then a 430px table — so the two sit level with each other.
 with right:
-    rhdr, rsel = st.columns([2, 1])
-    with rsel:
-        # Defaults to your own team; use the dropdown to inspect anyone else's
-        # roster (most useful in manual mode, where you pick for every team).
-        roster_slot = st.selectbox(
-            "View roster", list(range(1, teams + 1)),
-            index=user_slot - 1,
-            format_func=lambda s: f"You — {_team_label(s)}" if s == user_slot else _team_label(s),
-            key="ds_roster_view", label_visibility="collapsed",
-        )
-    with rhdr:
-        st.markdown("#### 🧢 Your Roster" if roster_slot == user_slot
-                    else f"#### 🧢 {_team_label(roster_slot)}")
-    my_picks = [p for p in st.session_state.dr_picks if p["team"] == roster_slot]
+    st.markdown("#### 🗒️ Draft Board")
 
-    st.dataframe(
-        pd.DataFrame(_roster_slot_rows(my_picks)),
-        hide_index=True, use_container_width=True, height=340,
-        column_config=_ROSTER_COLS,
+    board_team = st.columns([1, 2])[0].selectbox(
+        "Team", [0, *range(1, teams + 1)],
+        format_func=lambda s: (
+            "All teams" if s == 0
+            else f"You — {_team_label(s)}" if s == user_slot
+            else _team_label(s)
+        ),
+        key="ds_board_team",
     )
+    st.markdown("**🕒 Newest pick first.**")
 
-    _still_need = _needed_positions(roster_slot)
-    if _still_need:
-        st.caption(f"⚠️ Still to fill: {', '.join(_still_need)}")
+    log = [p for p in reversed(st.session_state.dr_picks)
+           if board_team in (0, p["team"])]
+    if log:
+        st.dataframe(
+            pd.DataFrame([{
+                "Rd": p["round"],
+                "Pk": p["overall"],
+                "Team": ("You" if p["is_user"] else _team_label(p["team"], short=True)),
+                "Player": f'{p["player"]} ({p["pos"]})',
+            } for p in log]),
+            hide_index=True, use_container_width=True, height=430,
+        )
     else:
-        st.caption("✅ All required starter positions filled.")
+        st.caption("No picks yet — every selection lands here as the draft runs.")
 
-    st.markdown("#### 🕒 Recent Picks")
-    recent = st.session_state.dr_picks[-10:][::-1]
-    if recent:
-        rdf = pd.DataFrame([{
-            "Pk": p["overall"],
-            "Team": ("You" if p["is_user"] else _team_label(p["team"], short=True)),
-            "Player": f'{p["player"]} ({p["pos"]})',
-        } for p in recent])
-        st.dataframe(rdf, hide_index=True, use_container_width=True, height=300)
-    else:
-        st.caption("No picks yet.")
+# ── Your team ────────────────────────────────────────────────────────────────
+st.markdown("---")
+rhdr, rsel = st.columns([2, 1])
+with rsel:
+    # Defaults to your own team; use the dropdown to inspect anyone else's
+    # roster (most useful in manual mode, where you pick for every team).
+    roster_slot = st.selectbox(
+        "View roster", list(range(1, teams + 1)),
+        index=user_slot - 1,
+        format_func=lambda s: f"You — {_team_label(s)}" if s == user_slot else _team_label(s),
+        key="ds_roster_view", label_visibility="collapsed",
+    )
+with rhdr:
+    st.markdown("### 🧢 Your Team" if roster_slot == user_slot
+                else f"### 🧢 {_team_label(roster_slot)}")
+
+my_picks = [p for p in st.session_state.dr_picks if p["team"] == roster_slot]
+st.dataframe(
+    pd.DataFrame(_roster_slot_rows(my_picks)),
+    hide_index=True, use_container_width=True,
+    column_config=_ROSTER_COLS,
+)
+
+_still_need = _needed_positions(roster_slot)
+if _still_need:
+    st.caption(f"⚠️ Still to fill: {', '.join(_still_need)}")
+else:
+    st.caption("✅ All required starter positions filled.")
 
 # ── Team rosters & draft grades ──────────────────────────────────────────────
 st.markdown("---")
