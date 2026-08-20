@@ -174,6 +174,11 @@ STARTER_SLOTS = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "DEF", "K"]
 FLEX_POS = ("RB", "WR", "TE")
 FLEX_TOTAL = STARTER_TARGET["RB"] + STARTER_TARGET["WR"] + STARTER_TARGET["TE"] + 1  # 6
 
+# How many one-click "Draft" rows to render under the board. Each row is a real
+# Streamlit button, so this trades render cost against how deep you can pick
+# without opening the full dropdown.
+QUICK_DRAFT_ROWS = 12
+
 # Robot draft variance: how many ESPN-rank "spots" of gaussian noise to add to
 # each available player before a robot takes its best-available. 0 = pure chalk
 # (always the ADP top); larger = more real-draft reaches and slides.
@@ -913,8 +918,8 @@ with left:
     st.markdown("#### 📋 Your Big Board — Best Available")
     avail = board[~board["player"].isin(drafted.keys())].copy()
 
-    fcol1, fcol2 = st.columns([1, 2])
-    pos_filter = fcol1.selectbox("Position", ["All", *POSITIONS], key="ds_pos_filter")
+    pos_filter = st.columns([1, 2])[0].selectbox(
+        "Position", ["All", *POSITIONS], key="ds_pos_filter")
     view = avail if pos_filter == "All" else avail[avail["pos"] == pos_filter]
 
     # Show the full available board (scrollable). Capping at the top 50 by VOR
@@ -968,23 +973,56 @@ with left:
 
         pick_opts = pool_view["player"].tolist()
         if pick_opts:
-            labels = {
-                r["player"]: f'#{r["my_rank"]}  {r["player"]} ({r["pos"]}) · VOR {r["vor"]}'
-                for _, r in pool_view.iterrows()
-            }
-            default_idx = pick_opts.index(sug["player"]) if sug and sug["player"] in pick_opts else 0
-            # Pick-scoped keys so a stale selection can never carry across picks
-            # (which previously let a non-required player slip through the guard).
-            pick_label = "Make your pick" if not manual else f"Make {_team_label(active_slot)}'s pick"
-            choice = fcol2.selectbox(pick_label, pick_opts, index=default_idx,
-                                     format_func=lambda p: labels.get(p, p),
-                                     key=f"ds_user_choice_{pick_idx}")
-            if st.button(f"✅ Draft {choice}", type="primary", use_container_width=True,
-                         key=f"ds_draft_btn_{pick_idx}"):
-                row = pool_view[pool_view["player"] == choice].iloc[0].to_dict()
-                _record_pick(active_slot, row)
-                _advance_robots()
-                st.rerun()
+            # Quick-draft rows. st.dataframe can't host a widget in a cell, so the
+            # one-click path is a short list rendered as real rows + buttons. The
+            # suggested pick is floated to the top because it is roster-aware and
+            # can otherwise sit well outside the top of the VOR order.
+            quick = pool_view.head(QUICK_DRAFT_ROWS)
+            if sug is not None and sug["player"] in pick_opts:
+                quick = pd.concat([pool_view[pool_view["player"] == sug["player"]],
+                                   quick[quick["player"] != sug["player"]]]).head(QUICK_DRAFT_ROWS)
+
+            st.markdown("##### ⚡ Quick draft — best available")
+            for _, r in quick.iterrows():
+                # st.columns can't be used here: Streamlit gives every column a
+                # min-width of 320px, and this panel is ~555px, so a text+button
+                # pair would always wrap onto two lines. A horizontal container
+                # is a plain flex row with no such breakpoint.
+                with st.container(horizontal=True, vertical_alignment="center"):
+                    mark = "💡 " if sug is not None and r["player"] == sug["player"] else ""
+                    bye = "" if pd.isna(r["bye"]) else f" · Bye {int(r['bye'])}"
+                    st.markdown(
+                        f"{mark}**#{r['my_rank']}**  {r['player']}  ·  "
+                        f"{r['pos']}·{r['team']}  ·  VOR {r['vor']}{bye}"
+                    )
+                    # Keyed by player as well as pick so the widget identity changes
+                    # the moment the pool does — a stale key would otherwise let a
+                    # click land on whoever now occupies that row.
+                    if st.button("✅ Draft", width="content",
+                                 key=f"ds_quick_{pick_idx}_{r['player']}"):
+                        _record_pick(active_slot, r.to_dict())
+                        _advance_robots()
+                        st.rerun()
+
+            # Anyone outside the quick list is still reachable here.
+            with st.expander(f"🔍 Draft someone else ({len(pick_opts)} available)"):
+                labels = {
+                    r["player"]: f'#{r["my_rank"]}  {r["player"]} ({r["pos"]}) · VOR {r["vor"]}'
+                    for _, r in pool_view.iterrows()
+                }
+                default_idx = pick_opts.index(sug["player"]) if sug and sug["player"] in pick_opts else 0
+                # Pick-scoped keys so a stale selection can never carry across picks
+                # (which previously let a non-required player slip through the guard).
+                pick_label = "Make your pick" if not manual else f"Make {_team_label(active_slot)}'s pick"
+                choice = st.selectbox(pick_label, pick_opts, index=default_idx,
+                                      format_func=lambda p: labels.get(p, p),
+                                      key=f"ds_user_choice_{pick_idx}")
+                if st.button(f"✅ Draft {choice}", type="primary", use_container_width=True,
+                             key=f"ds_draft_btn_{pick_idx}"):
+                    row = pool_view[pool_view["player"] == choice].iloc[0].to_dict()
+                    _record_pick(active_slot, row)
+                    _advance_robots()
+                    st.rerun()
 
 # ── Your roster + recent picks ───────────────────────────────────────────────
 with right:
