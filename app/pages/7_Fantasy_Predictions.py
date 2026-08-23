@@ -659,6 +659,43 @@ def _age_factor(pos: str, age: int) -> float:
     return 1.0   # unknown position
 
 
+# ── AGE-CURVE SOFTENING ───────────────────────────────────────────────────────
+# _age_factor FORECASTS decline. But when a player's most recent season was
+# already played inside the penalised band and he still beat his own prior
+# baseline, that decline has been MEASURED, not predicted — and the projection
+# already carries the result, because it is built from recency-weighted PPG.
+# Multiplying the full penalty on top double-counts the same year of aging.
+#
+# Worked example (the case that surfaced this): Matthew Stafford, age 38 in 2026.
+# His projection is 65% weighted to a 20.85-PPG age-37 season, the best fantasy
+# year of his career. The model then applied 0.88x for "age 37+ cliff" — a cliff
+# his own most recent tape shows no sign of. That single multiplier moved him
+# from ~QB7 to QB17.
+#
+# So: forgive part of the penalty in proportion to how far the latest season ran
+# ahead of the player's prior baseline. A player who is actually declining has a
+# ratio <= 1.0 and keeps the full penalty.
+AGE_SOFTEN_MAX_SHARE = 0.60   # never forgive more than 60% of the penalty
+AGE_SOFTEN_FULL_AT   = 1.25   # latest PPG 25%+ over baseline earns the full share
+AGE_SOFTEN_MIN_GAMES = 8      # ignore part-seasons: an injury year is not an age year
+
+
+def _age_soften(mult: float, pos: str, age_2026: int, form_ratio: float | None) -> float:
+    """Damp an age penalty the player's own recent production already disproves.
+
+    Returns `mult` unchanged when there is nothing to forgive: no penalty, no
+    comparable prior season, a latest season that did NOT beat the baseline, or
+    a latest season played before the age curve started biting (in which case
+    the penalty really is a forecast and should stand at full strength).
+    """
+    if mult >= 1.0 or form_ratio is None or form_ratio <= 1.0:
+        return mult
+    if _age_factor(pos, age_2026 - 1) >= 1.0:
+        return mult   # last season predates the decline band — nothing measured yet
+    share = min((form_ratio - 1.0) / (AGE_SOFTEN_FULL_AT - 1.0), 1.0) * AGE_SOFTEN_MAX_SHARE
+    return mult + (1.0 - mult) * share
+
+
 # ── TEAM OFFENSIVE TIER MULTIPLIERS ──────────────────────────────────────────
 # Derived from actual 2025 NFL regular-season data (weekly.csv).
 # All 32 teams split evenly into thirds: top 10 / mid 10 / bot 12.
@@ -1280,11 +1317,27 @@ def apply_expert_adjustments(df: pd.DataFrame,
 
         # Build first-season lookup from raw weekly data (fallback)
         _first_szn: dict = {}
+        # Latest-season PPG divided by the mean of the two seasons before it.
+        # Feeds _age_soften; absent when there's no comparable prior season.
+        _form_ratio: dict = {}
         if raw_weekly is not None and not raw_weekly.empty:
             _raw_reg = raw_weekly
             if "season_type" in raw_weekly.columns:
                 _raw_reg = raw_weekly[raw_weekly["season_type"] == "REG"]
             _first_szn = _raw_reg.groupby(name_col)["season"].min().to_dict()
+
+            _szn_ppg = _raw_reg.groupby([name_col, "season"])[TARGET_COL].agg(["sum", "count"])
+            _szn_ppg = _szn_ppg[_szn_ppg["count"] >= AGE_SOFTEN_MIN_GAMES]
+            _szn_ppg["ppg"] = _szn_ppg["sum"] / _szn_ppg["count"]
+            for _nm, _rows in _szn_ppg.groupby(level=0):
+                _s = _rows.reset_index().sort_values("season", ascending=False)
+                # Require the most recent season to actually be last year — a
+                # player who sat out 2025 has no new evidence to offer.
+                if len(_s) < 2 or _s.iloc[0]["season"] != PREDICTION_YEAR - 1:
+                    continue
+                _base = _s.iloc[1:3]["ppg"].mean()
+                if _base > 0:
+                    _form_ratio[_nm] = float(_s.iloc[0]["ppg"] / _base)
 
         def _player_age_2026(name: str, pos: str) -> int:
             if name in PLAYER_BIRTH_YEARS:
@@ -1292,13 +1345,13 @@ def apply_expert_adjustments(df: pd.DataFrame,
             first = _first_szn.get(name, 2020)
             return 2026 - (first - _AVG_DRAFT_AGE.get(pos, 22))
 
-        age_mults = out.apply(
-            lambda r: _age_factor(
-                str(r.get(pos_col, "")),
-                _player_age_2026(str(r.get(name_col, "")), str(r.get(pos_col, "")))
-            ),
-            axis=1
-        )
+        def _age_mult(r) -> float:
+            name = str(r.get(name_col, ""))
+            pos  = str(r.get(pos_col, ""))
+            age  = _player_age_2026(name, pos)
+            return _age_soften(_age_factor(pos, age), pos, age, _form_ratio.get(name))
+
+        age_mults = out.apply(_age_mult, axis=1)
         out["predicted_pts"] = (out["predicted_pts"] * age_mults).round(1)
         out["pred_ppg"]      = (out["pred_ppg"]      * age_mults).round(2)
 
