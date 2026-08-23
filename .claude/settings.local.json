@@ -167,7 +167,32 @@
       "Bash(done)",
       "Bash(rm /tmp/ds_sim.py)",
       "Bash(lsof -ti:8502)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:8502/Draft_Simulator\")"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:8502/Draft_Simulator\")",
+      "Bash(grep -viE \"^20[0-9-]{8} |WARNING streamlit|runtime found|use_container_width|^For .use_container|^$\")",
+      "Bash(.venv/bin/python -c \"import sys; print\\(sys.version\\)\")",
+      "Bash(.venv/bin/python -m py_compile app/pages/8_Draft_Simulator.py app/utils/espn_league.py)",
+      "Bash(git fetch:*)",
+      "Bash(git rev-list:*)",
+      "Bash(grep -rnE \"draft_live|live_draft|draft_league|draft_progress|my_leagues|resolve_players|pick_made\" --include=*.py --include=*.md --include=*.txt --include=*.toml .)",
+      "Bash(echo \"=== requirements diff 9f5212a -> HEAD ===\")",
+      "Bash(grep -rnE \"draft_live|live_draft|draft_league|draft_progress|my_leagues|resolve_players|pick_made|Draft Watch\" --include=*.py --include=*.md --include=*.txt --include=*.toml .)",
+      "Bash(git checkout:*)",
+      "Bash(git rm:*)",
+      "Bash(grep -r Diggs /Users/brw8201/Coding/nfl-analytics --include=*.py --include=*.json --include=*.csv)",
+      "WebFetch(domain:www.fanduel.com)",
+      "WebFetch(domain:heavy.com)",
+      "WebFetch(domain:www.fantasypros.com)",
+      "Bash(.venv/bin/python scripts/lint_expert_dicts.py)",
+      "Bash(.venv/bin/python scripts/backtest_model.py)",
+      "Bash(Rank\" ascending buried #1 under 249 empty rows. Park the unranked at 999 so:*)",
+      "Bash(mkdir -p /tmp/board_before)",
+      "Bash(cp data/derived/big_board_*.parquet /tmp/board_before/)",
+      "Bash(.venv/bin/python -c \"import streamlit; print\\(''streamlit'', streamlit.__version__\\)\")",
+      "Bash(git diff:*)",
+      "Bash(git apply:*)",
+      "Bash(grep -rn \"DECAY\\\\|PPG_BLEND_WEIGHT\\\\|PPG_BASELINE_GAMES\" --include=*.py app/)",
+      "Read(//Users/brw8201/Coding/nfl-analytics/NR>=1100 && NR<=1330 && /^def |^@/**)",
+      "Read(//Users/brw8201/Coding/nfl-analytics/NR<1140 && /^def apply|^def .*overlay|^def .*expert/**)"
     ]
   }
 }

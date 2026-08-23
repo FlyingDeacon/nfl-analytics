@@ -7,3 +7,6 @@ __pycache__/
 
 # Generated big-board snapshots (built on demand for the Draft Simulator)
 data/derived/big_board_*.parquet
+
+# Whatever the terminal agent has learned (personal, not shared)
+.agent_memory.json

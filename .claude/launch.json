@@ -1,0 +1,31 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sorttest",
+      "runtimeExecutable": "/Users/brw8201/Library/Python/3.9/bin/streamlit",
+      "runtimeArgs": [
+        "run",
+        "/tmp/sorttest/app.py",
+        "--server.port",
+        "8599",
+        "--server.headless",
+        "true"
+      ],
+      "port": 8599
+    },
+    {
+      "name": "nfl-analytics",
+      "runtimeExecutable": "/Users/brw8201/Coding/nfl-analytics/.venv/bin/streamlit",
+      "runtimeArgs": [
+        "run",
+        "/Users/brw8201/Coding/nfl-analytics/app/main.py",
+        "--server.port",
+        "8601",
+        "--server.headless",
+        "true"
+      ],
+      "port": 8601
+    }
+  ]
+}
