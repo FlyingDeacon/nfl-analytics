@@ -5,10 +5,12 @@ build_predictions_core(..., as_of_season=S)) and projects season S off S-1
 features, then compares the projection to what actually happened in season S.
 
 Two VOR numbers are computed per player, deliberately from different sources:
-  - "proj_vor"   = predicted_pts - REPLACEMENT_LEVEL_PPR[pos]. This mirrors
-    _assign_vor() in the live Streamlit page EXACTLY (same static, hardcoded
-    2024-25-calibrated constant) — this run is the "before" baseline, bugs
-    included, so later phases have something concrete to measure against.
+  - "proj_vor"   = predicted_pts - REPLACEMENT_LEVEL_PPR[pos], the static
+    2024-25-calibrated constant. NOTE: this no longer mirrors _assign_vor() in
+    the live page, which now derives its baseline from the projection pool via
+    derive_replacement_baseline(). This run is therefore the "before" baseline —
+    still useful as the thing to measure against, but no longer a description of
+    what the app does. Switching this over is the remaining half of Phase 2.
   - "actual_vor" = actual_pts - dynamic_baseline[pos], where dynamic_baseline
     is derived from season S's own real finishes via
     model.projection.derive_replacement_baseline() (the audit's Phase 2
@@ -44,11 +46,11 @@ LEAGUE_SIZE = 10
 ROSTER_SLOTS = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "FLEX": 1}
 FLEX_ELIGIBLE = {"RB", "WR", "TE"}
 
-# Static replacement levels as currently hardcoded in the live app's
+# Static replacement levels, formerly matching the live app's
 # SCORING_REPLACEMENT_LEVELS["PPR"] (app/pages/7_Fantasy_Predictions.py).
-# Duplicated here deliberately: this backtest measures what the app ACTUALLY
-# does today, bugs included. Phase 2 replaces both this dict and the app's
-# with derive_replacement_baseline() so there is nothing left to keep in sync.
+# The app has since moved to derive_replacement_baseline(); this dict is kept as
+# the "before" reference so the change stays measurable. Retiring it here too is
+# the remaining half of Phase 2, after which nothing needs keeping in sync.
 REPLACEMENT_LEVEL_PPR = {"QB": 290, "RB": 185, "WR": 185, "TE": 170}
 
 TOP_N_HIT_RATES = (24, 50)

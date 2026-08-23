@@ -15,7 +15,7 @@ from utils.data_loader import load_weekly, load_teams, get_logo
 from utils.nav import render_sidebar_nav
 from utils.tables import UNRANKED_MARK, rank_display
 from model.projection import (
-    ProjectionConfig, build_predictions_core,
+    ProjectionConfig, build_predictions_core, derive_replacement_baseline,
     NFL_GAMES, POSITION_FEATURES, MIN_GAMES_BY_POS,
     RIDGE_ALPHA, DECAY, PPG_BLEND_WEIGHT, PPG_BASELINE_GAMES,
     _weighted_durability, _expected_games,
@@ -85,11 +85,18 @@ REGRESS_K          = 10    # pseudo-games of positional baseline in the shrink
 # ── Value Over Replacement (VOR) — positional scarcity scoring ───────────────
 # Replacement level = projected points of the LAST startable player at each
 # position in a 10-team PPR league (i.e. the worst starter on opening day).
-# Calibrated empirically from weekly.csv 2024–2025 actual season finishes:
+# SEED values only. _assign_vor overwrites QB/RB/WR/TE in place with baselines
+# derived from the board's own projections (derive_replacement_baseline), so the
+# numbers below are not what VOR ends up using. They still matter for two things:
+#   • K and DEF, which are never derived — see the sentinel note on those entries.
+#   • The coarse "is this a starter" PPG threshold in the regression step, which
+#     runs BEFORE projections are final and so can't use the derived baseline.
+# Originally calibrated from weekly.csv 2024–2025 actual season finishes:
 #     2024 PPR:  QB10=297.2  RB24=191.8  WR30=196.5  TE10=163.3
 #     2025 PPR:  QB10=286.9  RB24=179.4  WR30=175.8  TE10=177.7
-# Defaults below take the 2-yr average and round to the nearest 5.
-# These will be re-derived dynamically when scoring format changes (see SCORING_REPLACEMENT_LEVELS).
+# That calibration is exactly what made these unusable as a VOR baseline: actual
+# finishes come off ~16.5 games played while projections sit on a ~13-game
+# baseline, so subtracting one from the other mixed units.
 REPLACEMENT_LEVEL = {
     "QB":  290,   # ~QB10 average; QB punt strategy still viable but cliff is steeper than prior 240
     "RB":  185,   # ~RB24 average (2 starters + flex in a 10-team league)
@@ -114,6 +121,14 @@ SCORING_REPLACEMENT_LEVELS = {
 
 # LEAGUE SIZE — used to derive round grades from model rank (picks per round = league size)
 LEAGUE_SIZE = 10
+
+# Roster shape. Drives the replacement baseline in _assign_vor: replacement is
+# whoever sits just past the last startable player at each position, so it moves
+# with league settings. In superflex, for example, the QB baseline collapses and
+# elite QBs correctly climb into the early rounds — something a hardcoded
+# constant can never follow.
+ROSTER_SLOTS = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "FLEX": 1}
+FLEX_ELIGIBLE = {"RB", "WR", "TE"}
 
 POSITION_LABELS = {"QB": "Quarterbacks", "RB": "Running Backs",
                    "WR": "Wide Receivers",  "TE": "Tight Ends", "K": "Kickers",
@@ -1544,10 +1559,10 @@ if not _defense_preds.empty:
 def _assign_vor(df: pd.DataFrame) -> pd.DataFrame:
     """Add VOR and model-derived round grade columns.
 
-    VOR = predicted_pts − replacement_level[position]
-    Replacement level is calibrated to a 10-team PPR league based on 2025
-    championship team analysis. Sorting by VOR rather than raw points accounts
-    for positional scarcity — an elite TE ranks higher than an equivalent-points RB.
+    VOR = predicted_pts − replacement_level[position], where replacement level is
+    derived from THIS board's own projections (see below). Sorting by VOR rather
+    than raw points accounts for positional scarcity — an elite TE ranks higher
+    than an equivalent-points RB.
 
     round_grade is derived entirely from this model's own VOR rankings:
       Overall model rank 1–10   → Rd 1
@@ -1557,6 +1572,24 @@ def _assign_vor(df: pd.DataFrame) -> pd.DataFrame:
     not what consensus thinks.
     """
     out = df.copy()
+
+    # ── Replacement level, derived from the projection pool ──────────────────
+    # Previously these were hardcoded constants read off ACTUAL season finishes
+    # (~16.5 real games played). But projections sit on a ~13-game baseline, so
+    # the two sides of the subtraction were denominated in different units and
+    # every QB came out roughly 50 points too negative — only one QB on the whole
+    # board cleared a 290 baseline. Deriving the baseline from the same pool the
+    # players are scored from puts both sides in one currency, and makes the
+    # result follow ROSTER_SLOTS instead of a frozen 2024-25 snapshot.
+    _roster = out[out[pos_col].isin(ROSTER_SLOTS)]
+    _derived, _ = derive_replacement_baseline(
+        _roster, pos_col, "predicted_pts", ROSTER_SLOTS, FLEX_ELIGIBLE,
+        LEAGUE_SIZE, name_col=name_col,
+    )
+    # K and DEF are deliberately left alone. Their entries aren't real replacement
+    # levels — they're sentinels inflated above every projection so kickers and
+    # defenses sort into the final rounds, mirroring how real drafts treat them.
+    REPLACEMENT_LEVEL.update({p: round(v, 1) for p, v in _derived.items()})
 
     # ── VOR ──────────────────────────────────────────────────────────────────
     out["vor"] = out.apply(
@@ -1799,7 +1832,8 @@ column_config_dict = {
                       help="Value Over Replacement — positional scarcity-adjusted score. "
                            "Accounts for how scarce elite players are at each position "
                            f"(QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, "
-                           f"WR={REPLACEMENT_LEVEL['WR']}, TE={REPLACEMENT_LEVEL['TE']} replacement baselines)."),
+                           f"WR={REPLACEMENT_LEVEL['WR']}, TE={REPLACEMENT_LEVEL['TE']} replacement baselines, "
+                           "derived from this board's own projections and your roster slots)."),
     "Round":      st.column_config.TextColumn(
                       help=f"Suggested fantasy draft round derived from this model's own VOR rankings. "
                            f"Overall VOR rank 1–{LEAGUE_SIZE} = Rd 1, "
@@ -1930,9 +1964,13 @@ st.caption(
     "**VOR (Value Over Replacement)** ranks players by positional scarcity in a 10-team league: "
     "elite TEs rank higher than equivalent-point WRs because only 10 starting TEs exist. Replacement levels "
     f"(QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, WR={REPLACEMENT_LEVEL['WR']}, "
-    f"TE={REPLACEMENT_LEVEL['TE']}) calibrated empirically from 2024–2025 actual position-rank finishes "
-    "(QB10 / RB24 / WR30 / TE10 in the chosen scoring format). 10-team drafts feature "
-    "steeper VOR cliffs between rounds due to scarcity and a shallow waiver wire. "
+    f"TE={REPLACEMENT_LEVEL['TE']}) are derived from this board's own projections rather than hardcoded: "
+    f"starting slots ({LEAGUE_SIZE}-team, "
+    f"{ROSTER_SLOTS['QB']}QB/{ROSTER_SLOTS['RB']}RB/{ROSTER_SLOTS['WR']}WR/{ROSTER_SLOTS['TE']}TE/"
+    f"{ROSTER_SLOTS['FLEX']}FLEX) are filled from the projection pool, and the baseline is the median of the "
+    "three players just past the last startable one — the realistic waiver-wire alternative. Deriving it this "
+    "way keeps players and baseline in the same units and lets the baseline follow league settings. "
+    "10-team drafts feature steeper VOR cliffs between rounds due to scarcity and a shallow waiver wire. "
     f"**Round grades** are derived entirely from this model's own VOR rankings — no external ADP is used. "
     f"Overall VOR rank 1–{LEAGUE_SIZE} = Rd 1, {LEAGUE_SIZE+1}–{LEAGUE_SIZE*2} = Rd 2, and so on "
     f"({LEAGUE_SIZE} picks per round for a {LEAGUE_SIZE}-team league). Grades update automatically "
