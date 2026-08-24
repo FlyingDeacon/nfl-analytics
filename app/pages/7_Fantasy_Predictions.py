@@ -82,6 +82,18 @@ PEAK_MIN_GAMES     = 6     # a season needs ≥ this many games to count as a pe
 REGRESS_MIN_GAMES  = 24    # players with fewer career games get shrunk to baseline
 REGRESS_K          = 10    # pseudo-games of positional baseline in the shrink
 
+# Players exempt from the peak cap. The cap assumes a player's best season is a
+# talent ceiling, which holds for anyone who has already had a full workload —
+# but NOT for a career backup who just won a starting job. Their peak measures
+# the old ROLE, so capping there silently deletes the promotion. Everyone here
+# set their previous high while splitting snaps; the 2026 job is a new one.
+PEAK_CAP_EXEMPT = {
+    "Isaiah Likely",       # career high came as the BAL TE2 behind Andrews; now the NYG TE1
+    "Darnell Washington",  # rotational blocker in PIT; now the starter on a 4-yr/$42M deal
+    "Chig Okonkwo",        # TEN committee TE; now the WAS TE1 inheriting the Ertz targets
+    "Kenneth Walker III",  # SEA carries were split with Charbonnet; KC signed him to be the bell cow
+}
+
 # ── Value Over Replacement (VOR) — positional scarcity scoring ───────────────
 # Replacement level = projected points of the LAST startable player at each
 # position in a 10-team PPR league (i.e. the worst starter on opening day).
@@ -154,6 +166,14 @@ FORCE_INCLUDE_STARTERS = {
     "Joe Burrow":       ("00-0036442", "QB", "CIN", None),   # 8 games 2025 (turf toe); healthy CIN QB1, consensus QB4 — uses 2024 full season
     "Brock Purdy":      ("00-0037834", "QB", "SF",  None),   # 11 games 2025 (toe/shoulder); confirmed SF QB1 — uses 2024 season
     "Kirk Cousins":     ("00-0029604", "QB", "LV",  None),   # 10 games 2025; named LV QB1 to open camp over rookie Mendoza — uses 2024 season
+    # ── Aug-24-2026 audit: starters the min-games gate dropped off the board ──
+    # Each missed most/all of 2025 with an injury, so their LATEST season fails
+    # MIN_GAMES_BY_POS and build_predictions_core never scores them — but all are
+    # healthy, rostered 2026 starters that ESPN ranks inside its positional lists.
+    "Jayden Reed":      ("00-0039146", "WR", "GB",  None),   # 5 games 2025 (collarbone/foot); GB slot WR1 — uses 2024 full season
+    "Tank Dell":        ("00-0038977", "WR", "HOU", None),   # missed all of 2025 (knee); cleared for camp — uses 2024 season
+    "Jalen McMillan":   ("00-0039855", "WR", "TB",  None),   # 4 games 2025 (hamstring); TB WR3 — uses 2024 season
+    "Jonathon Brooks":  ("00-0039344", "RB", "CAR", 9.0),    # two ACLs, 3 career games; CAR change-of-pace back behind Hubbard — expert PPG
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
@@ -168,7 +188,6 @@ EXPERT_REMOVE = {
     "Brandin Cooks",     # Unsigned FA (2026) as of late July; no confirmed team — removed pending signing
     "Ricky Pearsall",    # OUT FOR 2026 — PCL surgery announced Aug 2026 (chronic since Wk4 2025)
     "Jonnu Smith",       # Released by PIT (Mar 2026); unsigned FA with no confirmed team
-    "Darren Waller",     # Not expected back with MIA; no confirmed 2026 team
 }
 
 # Injury risk mapping — 2026 season outlook
@@ -262,6 +281,7 @@ INJURY_RISK_MAP = {
     "Dallas Goedert":     "      Yes      ",   # Shoulder/hamstring injuries (2022-2024); missed games every year
     "Kyle Pitts":         "      Yes      ",   # Knee injury (2022); missed 8 games; recurring soft tissue concern
     "Evan Engram":        "      Yes      ",   # Multiple knee/ankle injuries throughout career (NYG era and beyond)
+    "Darren Waller":      "      Yes      ",   # Age 34; hamstring/knee history, 7 games in 2025 — has cleared 12 games once since 2021
 }
 
 # Team corrections: player name fragment → corrected 2026 team abbreviation
@@ -309,6 +329,7 @@ EXPERT_TEAM_CORRECTIONS = {
     # ── Aug-2026 audit: late free-agency moves ─────────────────────────────
     "Stefon Diggs":      "WAS",  # Signed 1-yr/up-to-$12M with Washington (Aug 5, 2026) — WR2 opposite McLaurin
     "Kirk Cousins":      "LV",   # Named Raiders QB1 to open camp over rookie Mendoza
+    "Darren Waller":     "CAR",  # Signed with Carolina (Aug 2026) after leaving MIA — TE1 ahead of Tremble
 }
 
 # ── NEW HEAD COACH PENALTY ───────────────────────────────────────────────────
@@ -365,7 +386,9 @@ NEW_HC_PENALTY = {
 PLAYER_MULTIPLIERS: dict[str, float] = {
     # ── Breakout boosts (1.08–1.22) ────────────────────────────────────────
     "Jahmyr Gibbs":         1.22,   # Bell-cow workload after Monty departure
-    "Cam Skattebo":          1.10,   # NYG lead back but a committee (~55% of carries) w/ Tracy on passing downs
+    "Cam Skattebo":          0.82,   # NYG lead back but a committee (~55% of carries) w/ Tracy on passing downs.
+                                     #   Was 1.10, which contradicted its own rationale and let an 8-game rookie
+                                     #   sample (15.7 PPG) drive an RB6 board slot vs ESPN's RB20.
     "Jaxon Smith-Njigba":    1.18,   # Target share trending past Lockett/Metcalf
     "Bucky Irving":          1.18,   # Mayfield offense leans on dual-threat RB
     "George Pickens":        1.10,   # Dak elevates target quality vs PIT
@@ -452,9 +475,14 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     # at consensus (~QB21/QB22) on its own. A multiplier here would double-count.
     # ── RB ─────────────────────────────────────────────────────────────────
     "Kenneth Walker III":    1.35,   # SB LX MVP, signed KC 3-yr/$45M as the lead back; consensus RB9-12 vs model RB~30
-    "Rico Dowdle":           1.15,   # Taking PIT first-team RB1 reps ahead of Warren
-    "Jaylen Warren":         0.72,   # Now the PIT 1B behind Dowdle, not the lead back
-    "Kenneth Gainwell":      0.55,   # TB pass-down back only; Irving owns the carries. Model had him RB19, ESPN has him ~101
+    # PIT is a 1-2 punch, not a workhorse. These were 1.15 / 0.72 on early-camp rep
+    # reports; Pittsburgh's first preseason depth chart (Aug 5) lists WARREN as RB1
+    # with Dowdle RB2, McCarthy has said he is planning a committee, and ESPN has
+    # them one apart at RB28/RB29. The old pair had them 18 board spots apart.
+    "Rico Dowdle":           0.95,
+    "Jaylen Warren":         1.05,
+    "Kenneth Gainwell":      0.80,   # TB pass-down back behind Irving. Was 0.55, written when ESPN had him ~RB101;
+                                     #   the Aug-19 list has him RB31 and his 2025 (17 g, 13.0 PPG) was a real breakout
     "Javonte Williams":      0.80,   # Model RB6 vs ESPN 41 — largest unsupported RB spike on the board
     "D'Andre Swift":         1.00,   # Was 0.85 for the Monangai committee; Monangai's hyperextended knee (multiple
                                      #   weeks, Wk1 in doubt) gives Swift the early-season workload back
@@ -469,6 +497,25 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Wan'Dale Robinson":     0.75,   # Slot-only, and TEN drafted Carnell Tate; model WR22 vs ESPN 106
     "Chris Olave":           0.92,   # NO camp reports flag ongoing availability concerns despite the extension
     "Davante Adams":         0.92,   # Age 33/34 behind Nacua in LAR; consensus WR28
+    # ══ AUG-24-2026 AUDIT (vs the refreshed Aug-19 ESPN board) ═════════════════
+    # ── RB ─────────────────────────────────────────────────────────────────
+    "Derrick Henry":         1.20,   # Model 12.0 PPG vs an actual 16.4 over all 17 games in 2025 — the age
+                                     #   curve is charging him for a decline his own rate already shows. ESPN RB10
+    "TreVeyon Henderson":    0.88,   # Stevenson is trending as the NE Week 1 lead back and Henderson left the
+                                     #   Aug-24 practice with a right leg/ankle issue (no diagnosis). Model RB19
+                                     #   vs ESPN RB26 — RECHECK before drafting, this one is still unresolved
+    # ── WR ─────────────────────────────────────────────────────────────────
+    "Tank Dell":             0.65,   # Missed all of 2025 (multi-ligament knee). The 2023/24 blend has him at
+                                     #   12.8 PPG and WR27; ESPN has him WR55 and HOU has not promised a role
+    "Parker Washington":     1.00,   # Was 0.82 as the "JAX WR3". He posted 12.3 PPG over 14 games in 2025 and
+                                     #   ESPN moved him to WR33 — the discount no longer has a reason to exist
+    "Khalil Shakir":         1.15,   # BUF's target leader two years running (10.8 PPG in 2025); the team tier
+                                     #   plus the Joe Brady HC penalty stacked him down to 8.6. ESPN WR43
+    # ── TE ─────────────────────────────────────────────────────────────────
+    "Pat Freiermuth":        1.00,   # Was 0.78 for the Darnell Washington extension, but that is already priced
+                                     #   into his own falling rate. ESPN still has him TE22; model had him TE47
+    "AJ Barner":             0.85,   # One 17-game season at 8.7 PPG; the age curve pushed him to 10.0 and TE12
+                                     #   on a SEA offense that just drafted competition. ESPN TE26
     # ── TE ─────────────────────────────────────────────────────────────────
     "T.J. Hockenson":        1.20,   # Restructured to stay MIN and remains the lead TE; consensus TE19 vs model TE~35
     "Kenyon Sadiq":          1.30,   # NYJ traded up to take him 16th overall; immediate lead TE, consensus TE22
@@ -599,6 +646,7 @@ PLAYER_BIRTH_YEARS: dict[str, int] = {
     # ── Tight Ends ────────────────────────────────────────────────────────────
     "Travis Kelce":        1989,
     "Taysom Hill":         1990,
+    "Darren Waller":       1992,
     "Tyler Higbee":        1993,
     "Gerald Everett":      1993,
     "George Kittle":       1993,
@@ -803,13 +851,26 @@ PROJ_GAMES_OVERRIDES = {
     "Brock Bowers":     16,   # "100%" after the 2025 PCL/bone bruise; full speed through OTAs and minicamp (LV)
     "Cam Skattebo":     16,   # Fully cleared and a full participant; camp reports have him as the NYG RB1
     "Omarion Hampton":  16,   # Healthy and named the LAC "clear-cut featured back"
-    "Quinshon Judkins": 16,   # Full medical clearance; CLE staff say he can play all three downs
+    "Quinshon Judkins": 15,   # Cleared to play all three downs, but held out of practice Aug 18-20 with a
+                              #   "nagging" issue — precautionary per Monken, who still expects him Week 1 (CLE)
     "Josh Jacobs":      13,   # Brown County investigation still open (Jul-2026); Personal Conduct suspension risk (GB)
     # ── Aug-19-2026 preseason audit: new camp injuries ─────────────────────
     "Alvin Kamara":     11,   # Sprained MCL in the Aug-19 joint practice vs DAL; 4-6 wks, so ~3 games missed (NO)
     "Jordyn Tyson":     10,   # Hamstring, ~2 months (into mid-Oct) — prime candidate to open on IR, which forces 4+ games (NO)
     "Kyle Monangai":    12,   # Hyperextended right knee; "multiple weeks" and week-to-week, Wk1 in doubt (CHI)
-    "Jeremiyah Love":   15,   # High ankle sprain in camp; expected back for Wk1 but the ramp is real (ARI)
+    "Jeremiyah Love":   14,   # High ankle sprain (Aug 13), out for the rest of the preseason. ARI is "hopeful"
+                              #   for Wk1 but follow-up reporting says it is worse than first portrayed (ARI)
+    "TreVeyon Henderson": 14, # Left the Aug-24 practice with a right leg/ankle issue; no diagnosis yet (NE)
+    # ── Aug-24-2026 audit: QBs the availability model double-counts ────────────
+    # Their recency-weighted PPG already absorbs the injury seasons; letting the
+    # durability model ALSO cut their games to ~11-12 charged them twice and left
+    # three consensus top-12 QBs sitting at QB16-QB19 on rate alone.
+    "Joe Burrow":       15,   # Turf-toe surgery (2025) fully healed; 17 games in 2024 (CIN)
+    "Brock Purdy":      14,   # Toe/shoulder history is real, but he is the uncontested SF QB1
+    # 13 games in 2025 was a Week-4 takeover, not injury, so the durability model was
+    # reading a role artefact as fragility. Kept below a full season anyway: at 16 his
+    # rate (3rd-best on the board off one partial year) vaulted him past Allen/Lamar.
+    "Jaxson Dart":      14,
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -854,11 +915,16 @@ ESPN_RANKS_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "espn_ra
 
 _NAME_SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
 
+# Nicknames ESPN uses that suffix-stripping alone can't reconcile with the
+# nflverse spelling the board carries.
+_NAME_ALIASES = {"kenny gainwell": "kenneth gainwell"}
+
 
 def _norm_name(n: str) -> str:
     """Lowercase, strip punctuation and generational suffixes for name matching."""
     n = str(n).lower().replace(".", "").replace(",", "").strip()
-    return " ".join(p for p in n.split() if p not in _NAME_SUFFIXES)
+    n = " ".join(p for p in n.split() if p not in _NAME_SUFFIXES)
+    return _NAME_ALIASES.get(n, n)
 
 # Depth-chart role → opportunity multiplier and projected games. QBs that sit
 # behind a veteran ("redshirt") accrue almost no fantasy value, hence the steep
@@ -874,30 +940,36 @@ def _rookie_base_ppr(pos: str, pick: int) -> float:
     capital → more guaranteed opportunity → more production. RB/WR curves are the
     steepest (early picks routinely start); rookie TEs historically produce little
     regardless of capital (Bowers-tier is the rare exception, not the baseline).
+
+    Recalibrated in the Aug-24-2026 audit. The prior tops of the RB and WR curves
+    were set below what first-round rookies actually deliver — Jeanty/Bijan/Gibbs
+    all cleared 245 PPR, and Nabers/Egbuka/Harrison/McMillan put the top-10 rookie
+    WR median near 190 — which pushed the entire 2026 rookie class 20-70 spots
+    below consensus at every pick slot.
     """
     if pos == "RB":
-        if pick <= 5:   return 185.0
-        if pick <= 15:  return 155.0
-        if pick <= 32:  return 130.0
-        if pick <= 50:  return 108.0
-        if pick <= 75:  return 85.0
-        if pick <= 110: return 62.0
-        if pick <= 150: return 42.0
+        if pick <= 5:   return 225.0
+        if pick <= 15:  return 178.0
+        if pick <= 32:  return 145.0
+        if pick <= 50:  return 115.0
+        if pick <= 75:  return 88.0
+        if pick <= 110: return 64.0
+        if pick <= 150: return 43.0
         return 26.0
     if pos == "WR":
-        if pick <= 8:   return 150.0
-        if pick <= 20:  return 125.0
-        if pick <= 32:  return 105.0
-        if pick <= 50:  return 80.0
-        if pick <= 75:  return 58.0
-        if pick <= 110: return 42.0
-        if pick <= 150: return 27.0
-        return 15.0
+        if pick <= 8:   return 178.0
+        if pick <= 20:  return 148.0
+        if pick <= 32:  return 124.0
+        if pick <= 50:  return 95.0
+        if pick <= 75:  return 70.0
+        if pick <= 110: return 50.0
+        if pick <= 150: return 31.0
+        return 16.0
     if pos == "TE":
-        if pick <= 20:  return 90.0
-        if pick <= 45:  return 62.0
-        if pick <= 75:  return 45.0
-        if pick <= 110: return 30.0
+        if pick <= 20:  return 105.0
+        if pick <= 45:  return 70.0
+        if pick <= 75:  return 50.0
+        if pick <= 110: return 32.0
         return 16.0
     if pos == "QB":
         # QB points are ~scoring-format-independent (QBs rarely catch passes).
@@ -1408,8 +1480,8 @@ def apply_expert_adjustments(df: pd.DataFrame,
         #     A multiplier pinned at this cap is a signal the boost is too aggressive.
         def _cap_ppg(row):
             ppg = float(row["pred_ppg"])
-            if row["_curated_ppg"]:
-                return ppg  # trust the expert-supplied rate as-is
+            if row["_curated_ppg"] or str(row[name_col]) in PEAK_CAP_EXEMPT:
+                return ppg  # expert-supplied rate, or a promotion the peak can't see
             pk = peak_ppg.get(str(row[name_col]))
             return min(ppg, pk * PEAK_CAP_MULT) if pk is not None else ppg
         out["pred_ppg"] = out.apply(_cap_ppg, axis=1).round(2)
