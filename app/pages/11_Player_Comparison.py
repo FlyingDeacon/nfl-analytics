@@ -16,7 +16,6 @@ from utils.data_loader import (
     load_weekly, load_teams, get_logo, get_base_dir, _file_mtime, _normalize_name,
 )
 from utils.nav import render_sidebar_nav
-from utils import ollama_chat
 
 st.set_page_config(page_title="Player Comparison · NFL", page_icon="⚔️", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
@@ -36,10 +35,6 @@ st.markdown("""
 </div>
 <div class="gold-rule"></div>
 """, unsafe_allow_html=True)
-
-# The assistant sits up here, but it can only describe the comparison once both
-# players are resolved — so the slot is reserved now and filled at the bottom.
-chat_slot = st.container()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE STYLES — the VS arena
@@ -243,28 +238,6 @@ st.markdown("""
 }
 .pc-bar span { display: block; height: 100%; border-radius: 999px; transition: width 0.3s ease; }
 
-/* ── Ask-the-data panel ── */
-.pc-ask {
-    display: flex; align-items: center; gap: 10px;
-    margin: 0.1rem 0 0.55rem;
-}
-.pc-ask .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent2); box-shadow: 0 0 0 4px var(--accent2-soft);
-    flex: none;
-}
-.pc-ask .t {
-    font-family: 'DM Sans', sans-serif; font-weight: 800;
-    font-size: 1.02rem; letter-spacing: -0.01em; color: var(--text);
-}
-.pc-ask .s { font-size: 0.78rem; color: var(--muted); }
-.pc-ask .tag {
-    margin-left: auto; font-size: 0.68rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 999px; padding: 3px 10px; white-space: nowrap;
-}
-
 /* ── Mobile ── */
 @media (max-width: 768px) {
     .pc-arena { grid-template-columns: 1fr; gap: 0; }
@@ -435,28 +408,9 @@ def _season_totals(scoring: str, mtime: float) -> pd.DataFrame:
     return out.rename(columns={col: "pts"})
 
 
-CHAT_KEY = "pc_chat_history"
-
-
-@st.cache_data(ttl=30, show_spinner=False)
-def _ollama_models() -> list[str]:
-    """Locally installed models, re-probed every half minute."""
-    return ollama_chat.list_models()
-
-
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 sel_scoring = st.sidebar.radio("Scoring Format", SCORING_FORMATS, key="pc_scoring")
 POSITIONS = ["All", "QB", "RB", "WR", "TE", "K", "DEF"]
-
-st.sidebar.markdown("---")
-models = _ollama_models()
-if models:
-    sel_model = st.sidebar.selectbox("Assistant model", models, key="pc_model")
-    if st.sidebar.button("Clear chat", key="pc_chat_clear", use_container_width=True):
-        st.session_state[CHAT_KEY] = []
-else:
-    sel_model = None
-    st.sidebar.caption("Assistant offline — no Ollama server found.")
 
 board_path = _ensure_board(sel_scoring)
 if board_path is None:
@@ -941,146 +895,3 @@ if not totals.empty:
     arc.update_xaxes(tickmode="array",
                      tickvals=list(range(LAST_SEASON - 2, PROJ_SEASON + 1)))
     st.plotly_chart(arc, use_container_width=True)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# ASK THE DATA — a local Ollama model grounded in this page's numbers
-# ══════════════════════════════════════════════════════════════════════════════
-
-MAX_HISTORY = 8       # messages replayed to the model, newest last
-BOARD_SNAPSHOT = 40   # overall ranks shipped along for "who else" questions
-POS_SNAPSHOT = 12     # positional ranks for each side's position
-
-
-def _board_rows(df: pd.DataFrame) -> str:
-    return "\n".join(
-        f"  #{int(r.model_rank)} {r.player} ({r.pos}, {r.team}) "
-        f"{_fmt_1(_num(r.predicted_pts))} pts, VOR {_fmt_1(_num(r.vor))}"
-        for r in df.itertuples()
-    )
-
-
-def _player_brief(tag: str, row, weekly: pd.DataFrame) -> str:
-    """Everything the page shows about one player, flattened into prose lines."""
-    team = str(row["team"])
-    meta = tmeta.get(team, {})
-    where = meta.get("name", team)
-    if meta.get("div"):
-        where += f", {meta['div']}"
-
-    flags = []
-    if bool(row.get("is_rookie")):
-        flags.append("rookie")
-    for label, key in (("injury risk", "injury_risk"), ("round grade", "round_grade")):
-        val = _text(row.get(key))
-        if val:
-            flags.append(f"{label} {val}")
-
-    head = f"{tag} — {row['player']} ({row['pos']}, {where})"
-    lines = [head + (f" [{'; '.join(flags)}]" if flags else "")]
-
-    for group_name, metrics in GROUPS:
-        vals = "; ".join(
-            f"{label} {fmt(_num(row.get(key)))}" for label, key, _hib, fmt in metrics
-        )
-        lines.append(f"  {group_name}: {vals}")
-
-    if not weekly.empty:
-        lines.append(f"  {LAST_SEASON} by week: " + "; ".join(
-            f"W{int(r.week)} {r.pts:.1f}" for r in weekly.itertuples()
-        ))
-
-    if not totals.empty:
-        hist = totals[totals["name_key"] == row["name_key"]].sort_values("season")
-        if not hist.empty:
-            lines.append("  Season totals: " + "; ".join(
-                f"{int(r.season)} {r.pts:.1f}" for r in hist.itertuples()
-            ))
-    return "\n".join(lines)
-
-
-def _build_context() -> str:
-    parts = [
-        f"Scoring format: {sel_scoring}. Anything labelled expected/projected is my "
-        f"model's {PROJ_SEASON} forecast; production stats are actual {LAST_SEASON} "
-        "regular-season results. On every rank, 1 is best. VOR is value over "
-        "replacement — points above the last startable player at the position.",
-        "",
-        "=== THE TWO PLAYERS ON SCREEN ===",
-        _player_brief("Player A (left)", A, log_a),
-        _player_brief("Player B (right)", B, log_b),
-        "",
-        f"Metric tally on screen: {A['player']} wins {wins_a}, {B['player']} wins {wins_b}.",
-        "",
-        f"=== TOP {BOARD_SNAPSHOT} OVERALL ===",
-        _board_rows(data.nsmallest(BOARD_SNAPSHOT, "model_rank")),
-    ]
-    for pos in dict.fromkeys([str(A["pos"]), str(B["pos"])]):
-        pool = data[data["pos"] == pos].nsmallest(POS_SNAPSHOT, "pos_rank")
-        if not pool.empty:
-            parts += ["", f"=== TOP {POS_SNAPSHOT} {pos} ===", _board_rows(pool)]
-    return "\n".join(parts)
-
-
-SYSTEM_PROMPT = (
-    "You are the analyst built into Brandon's NFL analytics app, answering questions "
-    "on the Player Comparison page. Ground every answer in the DATA block below and "
-    "quote the actual numbers you used. If the data doesn't cover something — injury "
-    "news, depth charts, schedules, anyone not listed — say you don't have it rather "
-    "than guessing. \"My model\" means this app's own projections, which are allowed "
-    "to disagree with ESPN's ranks. Be direct and brief: a few sentences or a short "
-    "bullet list, no preamble.\n\n=== DATA ===\n"
-)
-
-with chat_slot:
-    st.markdown(_flat(f"""
-    <div class="pc-ask">
-        <div class="dot"></div>
-        <div>
-            <div class="t">Ask about this data</div>
-            <div class="s">Answers come from Ollama, grounded in the {sel_scoring} board and {LAST_SEASON} game logs behind this page.</div>
-        </div>
-        <div class="tag">{sel_model or "offline"}</div>
-    </div>
-    """), unsafe_allow_html=True)
-
-    if sel_model is None:
-        ollama_host, _, ollama_model = ollama_chat.config()
-        if ollama_host == ollama_chat.LOCAL_HOST:
-            st.info(
-                f"No Ollama server on `{ollama_host}` — run `ollama serve` and "
-                f"`ollama pull {ollama_model}`, or point the app at Ollama Cloud "
-                "with an `[ollama]` section in Streamlit secrets."
-            )
-        else:
-            st.info(
-                f"Couldn't reach `{ollama_host}`. Check the `host` and `key` in "
-                "the `[ollama]` section of Streamlit secrets."
-            )
-    else:
-        history = st.session_state.setdefault(CHAT_KEY, [])
-        # Bound the transcript once it exists so it can't shove the arena off-screen.
-        transcript = st.container(height=340) if history else st.container()
-        question = st.chat_input(f"Ask about {p1}, {p2}, or anyone on the board…")
-
-        if question:
-            history.append({"role": "user", "content": question})
-
-        with transcript:
-            for msg in history:
-                with st.chat_message(msg["role"]):
-                    st.markdown(msg["content"])
-
-            if question:
-                payload = [
-                    {"role": "system", "content": SYSTEM_PROMPT + _build_context()}
-                ] + history[-MAX_HISTORY:]
-                with st.chat_message("assistant"):
-                    try:
-                        reply = st.write_stream(
-                            ollama_chat.stream_chat(sel_model, payload)
-                        )
-                    except Exception as exc:   # server down, timeout, bad response
-                        reply = f"Couldn't get an answer from Ollama: {exc}"
-                        st.error(reply)
-                history.append({"role": "assistant", "content": reply})
