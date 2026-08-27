@@ -1038,18 +1038,25 @@ with chat_slot:
         <div class="dot"></div>
         <div>
             <div class="t">Ask about this data</div>
-            <div class="s">Runs locally on Ollama, grounded in the {sel_scoring} board and {LAST_SEASON} game logs behind this page.</div>
+            <div class="s">Answers come from Ollama, grounded in the {sel_scoring} board and {LAST_SEASON} game logs behind this page.</div>
         </div>
         <div class="tag">{sel_model or "offline"}</div>
     </div>
     """), unsafe_allow_html=True)
 
     if sel_model is None:
-        st.info(
-            "No Ollama server on "
-            f"`{ollama_chat.HOST}`. Start it with `ollama serve`, then "
-            f"`ollama pull {ollama_chat.PREFERRED_MODEL}`."
-        )
+        ollama_host, _, ollama_model = ollama_chat.config()
+        if ollama_host == ollama_chat.LOCAL_HOST:
+            st.info(
+                f"No Ollama server on `{ollama_host}` — run `ollama serve` and "
+                f"`ollama pull {ollama_model}`, or point the app at Ollama Cloud "
+                "with an `[ollama]` section in Streamlit secrets."
+            )
+        else:
+            st.info(
+                f"Couldn't reach `{ollama_host}`. Check the `host` and `key` in "
+                "the `[ollama]` section of Streamlit secrets."
+            )
     else:
         history = st.session_state.setdefault(CHAT_KEY, [])
         # Bound the transcript once it exists so it can't shove the arena off-screen.
