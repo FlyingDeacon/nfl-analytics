@@ -1,9 +1,15 @@
 """Shared sidebar navigation component for all pages."""
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import streamlit as st
 import streamlit.components.v1 as components
+
+# Streamlit Community Cloud runs its containers in UTC, so an unqualified
+# fromtimestamp() renders a 10:17 AM ET edit as "2:17 PM" once deployed. Pinning
+# the zone makes the stamp read identically on a laptop and on the deployed app.
+_STAMP_TZ = ZoneInfo("America/New_York")
 
 
 def render_last_updated(*paths, label: str = "Data updated", at: float = None) -> None:
@@ -20,7 +26,8 @@ def render_last_updated(*paths, label: str = "Data updated", at: float = None) -
     stamps = [Path(p).stat().st_mtime for p in paths if Path(p).exists()]
     if at is not None:
         stamps.append(at)
-    ts = datetime.fromtimestamp(max(stamps)) if stamps else datetime.now()
+    ts = (datetime.fromtimestamp(max(stamps), _STAMP_TZ) if stamps
+          else datetime.now(_STAMP_TZ))
 
     # Built by hand rather than with strftime: the no-leading-zero directives
     # (%-d / %-I) are platform-specific and blow up off glibc/BSD.
@@ -29,7 +36,7 @@ def render_last_updated(*paths, label: str = "Data updated", at: float = None) -
 
     st.markdown(
         f'<div class="nfl-updated"><span class="dot"></span>'
-        f'{label} {date_str} at {time_str}</div>',
+        f'{label} {date_str} at {time_str} ET</div>',
         unsafe_allow_html=True,
     )
 

@@ -277,10 +277,25 @@ def _board_path(scoring: str) -> Path:
     return BIG_BOARD_DIR / f"big_board_{scoring.replace(' ', '_')}.parquet"
 
 
+# The module that actually produces the board. Its hand-maintained expert dicts
+# (injury flags, games overrides, player multipliers) are inputs to every number
+# in the parquet, so a board older than this file was built by superseded code.
+_PIPELINE_SRC = ROOT_DIR / "app" / "pages" / "7_Fantasy_Predictions.py"
+
+
 def _ensure_board(scoring: str) -> Path | None:
-    """Return the big-board parquet, building it on demand if it's missing."""
+    """Return the big-board parquet, rebuilding it when missing or superseded.
+
+    Existence alone is not enough. The parquet is gitignored, so a deployed
+    instance keeps whatever copy is already on its disk across redeploys and
+    would serve projections from older code indefinitely.
+    """
     path = _board_path(scoring)
-    if path.exists():
+    fresh = path.exists() and not (
+        _PIPELINE_SRC.exists()
+        and path.stat().st_mtime < _PIPELINE_SRC.stat().st_mtime
+    )
+    if fresh:
         return path
     with st.spinner(f"Building your {scoring} big board…"):
         try:

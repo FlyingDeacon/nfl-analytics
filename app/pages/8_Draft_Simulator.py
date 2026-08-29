@@ -132,11 +132,23 @@ def _build_board(scoring: str) -> bool:
 # stale (built before that position was added) and gets rebuilt automatically.
 _REQUIRED_BOARD_POS = ("QB", "RB", "WR", "TE", "DEF", "K")
 
+# The module that actually produces the board. Its hand-maintained expert dicts
+# (injury flags, games overrides, player multipliers) are inputs to every number
+# in the parquet, so a board older than this file was built by superseded code.
+_PIPELINE_SRC = ROOT_DIR / "app" / "pages" / "7_Fantasy_Predictions.py"
+
 
 def _board_is_current(path: Path) -> bool:
-    """True if the parquet exists and already carries every required position
-    (e.g. defenses/kickers). Guards against a board written by older code."""
+    """True if the parquet exists, postdates the pipeline, and carries every
+    required position (e.g. defenses/kickers). Guards against a board written by
+    older code."""
     if not path.exists():
+        return False
+    # Structural completeness isn't enough: a board can hold every position and
+    # still be built from superseded projections. This is what stops a deployed
+    # instance from serving an old parquet forever — the file is gitignored, so
+    # pushing new code does not replace the copy already on that container's disk.
+    if _PIPELINE_SRC.exists() and path.stat().st_mtime < _PIPELINE_SRC.stat().st_mtime:
         return False
     try:
         have = set(pd.read_parquet(path, columns=["pos"])["pos"].unique())
