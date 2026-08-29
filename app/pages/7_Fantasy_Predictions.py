@@ -112,6 +112,9 @@ PEAK_CAP_EXEMPT = {
 REPLACEMENT_LEVEL = {
     "QB":  290,   # ~QB10 average; QB punt strategy still viable but cliff is steeper than prior 240
     "RB":  185,   # ~RB24 average (2 starters + flex in a 10-team league)
+                  # NOTE: QB/RB/WR/TE entries here are only seed values — _assign_vor
+                  # overwrites them with baselines derived from the live projection
+                  # pool at the current LEAGUE_SIZE. Only K/DEF survive as sentinels.
     "WR":  185,   # ~WR30 average (3 starters + flex)
     "TE":  170,   # ~TE10 average; elite TEs (Kelce-tier) still command a premium
     "K":   220,   # deliberately inflated (well above any kicker projection) so
@@ -132,7 +135,9 @@ SCORING_REPLACEMENT_LEVELS = {
 }
 
 # LEAGUE SIZE — used to derive round grades from model rank (picks per round = league size)
-LEAGUE_SIZE = 10
+# and to set how deep the replacement baseline sits. Confirmed against the league's
+# own ESPN settings payload for 2026 (settings.size == 11), which expanded from 10.
+LEAGUE_SIZE = 11
 
 # Roster shape. Drives the replacement baseline in _assign_vor: replacement is
 # whoever sits just past the last startable player at each position, so it moves
@@ -929,8 +934,15 @@ def _norm_name(n: str) -> str:
 # Depth-chart role → opportunity multiplier and projected games. QBs that sit
 # behind a veteran ("redshirt") accrue almost no fantasy value, hence the steep
 # cut; skill "backup" players still see rotational / injury-fill snaps.
-ROOKIE_ROLE_MULT   = {"starter": 1.00, "committee": 0.78, "backup": 0.45, "redshirt": 0.12}
-ROOKIE_PROJ_GAMES  = {"starter": 16,   "committee": 15,   "backup": 14,   "redshirt": 6}
+#
+# "handcuff" is the RB2 directly behind a bell-cow: he is active every week and
+# is one injury from the lead job, but the starter's workload caps his weekly
+# floor, so he earns neither the carry split a "committee" back gets nor the
+# third-string treatment of a "backup". Added Aug-29-2026 because the taxonomy
+# had no slot for it — Mike Washington Jr. is the only RB2 in the rookie class
+# and was landing below three RB3s purely on the label.
+ROOKIE_ROLE_MULT   = {"starter": 1.00, "committee": 0.78, "handcuff": 0.70, "backup": 0.45, "redshirt": 0.12}
+ROOKIE_PROJ_GAMES  = {"starter": 16,   "committee": 15,   "handcuff": 15,   "backup": 14,   "redshirt": 6}
 
 
 def _rookie_base_ppr(pos: str, pick: int) -> float:
@@ -2033,8 +2045,8 @@ st.caption(
     "games, injury-prone players fewer). This is centred on the position mean so it redistributes value without "
     "inflating the overall scale — points = projected per-game rate × expected games. QB qualifier: "
     f"{MIN_GAMES_BY_POS['QB']}+ games started. Skill positions: 6+ games. "
-    "**VOR (Value Over Replacement)** ranks players by positional scarcity in a 10-team league: "
-    "elite TEs rank higher than equivalent-point WRs because only 10 starting TEs exist. Replacement levels "
+    f"**VOR (Value Over Replacement)** ranks players by positional scarcity in an {LEAGUE_SIZE}-team league: "
+    f"elite TEs rank higher than equivalent-point WRs because only {LEAGUE_SIZE} starting TEs exist. Replacement levels "
     f"(QB={REPLACEMENT_LEVEL['QB']}, RB={REPLACEMENT_LEVEL['RB']}, WR={REPLACEMENT_LEVEL['WR']}, "
     f"TE={REPLACEMENT_LEVEL['TE']}) are derived from this board's own projections rather than hardcoded: "
     f"starting slots ({LEAGUE_SIZE}-team, "
@@ -2042,10 +2054,10 @@ st.caption(
     f"{ROSTER_SLOTS['FLEX']}FLEX) are filled from the projection pool, and the baseline is the median of the "
     "three players just past the last startable one — the realistic waiver-wire alternative. Deriving it this "
     "way keeps players and baseline in the same units and lets the baseline follow league settings. "
-    "10-team drafts feature steeper VOR cliffs between rounds due to scarcity and a shallow waiver wire. "
+    f"{LEAGUE_SIZE}-team drafts feature steeper VOR cliffs between rounds due to scarcity and a shallow waiver wire. "
     f"**Round grades** are derived entirely from this model's own VOR rankings — no external ADP is used. "
     f"Overall VOR rank 1–{LEAGUE_SIZE} = Rd 1, {LEAGUE_SIZE+1}–{LEAGUE_SIZE*2} = Rd 2, and so on "
-    f"({LEAGUE_SIZE} picks per round for a {LEAGUE_SIZE}-team league). Grades update automatically "
+    f"({LEAGUE_SIZE} picks per round for an {LEAGUE_SIZE}-team league). Grades update automatically "
     "whenever projections change, so a breakout candidate rising in VOR will see their round grade improve. "
     "**Expert overlays** applied post-model using live 2026 offseason data: team corrections "
     "(Kyler→MIN, Waddle→DEN, DJ Moore→BUF, Pittman→PIT, Walker→KC, Evans→SF, Etienne→NO, "

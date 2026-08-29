@@ -8,5 +8,8 @@ __pycache__/
 # Generated big-board snapshots (built on demand for the Draft Simulator)
 data/derived/big_board_*.parquet
 
+# Headshot/logo cache downloaded by scripts/build_draft_guide.py
+data/derived/guide_art/
+
 # Whatever the terminal agent has learned (personal, not shared)
 .agent_memory.json
