@@ -43,8 +43,11 @@ st.markdown("""
 
 # Every curated input the projections are built from. The stamp shows the newest
 # of them, so hand-editing any expert file is reflected on the page immediately.
+# This module counts as one of those inputs: the injury flags, games overrides and
+# player multipliers below are hand-maintained here, not in data/, and editing them
+# moves the numbers just as much as a new CSV does.
 RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
-render_last_updated(*(RAW_DIR / f for f in (
+render_last_updated(__file__, *(RAW_DIR / f for f in (
     "weekly.csv", "rookies_2026.csv", "kickers_2026.csv",
     "defenses_2026.csv", "espn_ranks_2026.csv")), label="Projections updated")
 
@@ -246,6 +249,8 @@ INJURY_RISK_MAP = {
     "Dameon Pierce":      "      Yes      ",   # Hamstring (2023); ankle (2024); limited availability both seasons
     "Alvin Kamara":       "      Yes      ",   # Sprained MCL (Aug 2026, 4-6 wks) on top of an injury-plagued 2025; age 31
     "Kyle Monangai":      "      Yes      ",   # Hyperextended right knee (Aug 2026); week-to-week, Wk1 in doubt
+    "Ashton Jeanty":      "      Yes      ",   # Wk1 availability in doubt (Aug 2026) on top of a 300+ touch rookie
+                                               #   workload — the LV offense has no second bell-cow to absorb it
 
     # ── WIDE RECEIVERS ───────────────────────────────────────────────────────
     # Returning from significant 2024/2025 injury
@@ -516,6 +521,14 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "TreVeyon Henderson":    0.88,   # Stevenson is trending as the NE Week 1 lead back and Henderson left the
                                      #   Aug-24 practice with a right leg/ankle issue (no diagnosis). Model RB19
                                      #   vs ESPN RB26 — RECHECK before drafting, this one is still unresolved
+    "Mike Washington Jr.":   2.90,   # The largest override on the board, because the model has no way to see
+                                     #   what makes him valuable. _rookie_base_ppr reads only draft capital, and
+                                     #   pick 115 sits five slots past a tier edge (64.0 → 43.0), so he was
+                                     #   projecting 25 pts — RB~110, behind three rookie RB3s. He is the LV RB2
+                                     #   outright, with only a 34-year-old Mostert behind him, handcuffing a
+                                     #   bell-cow whose own Week 1 is in doubt. Priced against the veterans in
+                                     #   that exact role rather than against his draft slot: Ray Davis 78,
+                                     #   Sean Tucker 90, Blake Corum 107. This lands him ~72, just under Davis
     # ── WR ─────────────────────────────────────────────────────────────────
     "Tank Dell":             0.65,   # Missed all of 2025 (multi-ligament knee). The 2023/24 blend has him at
                                      #   12.8 PPG and WR27; ESPN has him WR55 and HOU has not promised a role
@@ -873,6 +886,8 @@ PROJ_GAMES_OVERRIDES = {
     "Jeremiyah Love":   14,   # High ankle sprain (Aug 13), out for the rest of the preseason. ARI is "hopeful"
                               #   for Wk1 but follow-up reporting says it is worse than first portrayed (ARI)
     "TreVeyon Henderson": 14, # Left the Aug-24 practice with a right leg/ankle issue; no diagnosis yet (NE)
+    "Ashton Jeanty":    15,   # Week 1 in doubt (Aug 2026). Pinned rather than left to the model, which
+                              #   happens to land on 15 today but would drift on the next retrain (LV)
     # ── Aug-24-2026 audit: QBs the availability model double-counts ────────────
     # Their recency-weighted PPG already absorbs the injury seasons; letting the
     # durability model ALSO cut their games to ~11-12 charged them twice and left
