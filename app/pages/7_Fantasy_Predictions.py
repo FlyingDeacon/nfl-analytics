@@ -479,7 +479,10 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
 
     # ══ AUG-2026 SOFT AUDIT (top-25 per position vs camp reporting / consensus) ══
     # ── QB ─────────────────────────────────────────────────────────────────
-    "Lamar Jackson":         1.25,   # Model had him QB16; consensus QB2, healthy, confirmed starter. Biggest QB miss on the board
+    "Lamar Jackson":         1.18,   # Model had him QB16 off a 16.8-PPG/13-game 2025; consensus QB2, healthy,
+                                     #   confirmed starter. Was 1.25, which overshot its own target — it aimed at
+                                     #   consensus, but ESPN has Allen 31st and Lamar 39th, and 1.25 put Lamar
+                                     #   ahead of him. Trimmed to land just behind Allen, where consensus has him
     "Dak Prescott":          1.10,   # Model QB19 vs consensus QB8; healthy and confirmed
     "Fernando Mendoza":      0.35,   # NOT the LV starter — Kubiak named Cousins QB1; GM wants the rookie to sit year one
     # Kyler Murray is deliberately NOT listed. He carried a 0.80 for a "genuine open MIN
