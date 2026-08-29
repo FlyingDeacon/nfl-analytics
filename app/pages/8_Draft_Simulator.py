@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 from utils.styles import NFL_CSS
-from utils.nav import render_sidebar_nav
+from utils.nav import render_sidebar_nav, render_last_updated
 from utils.data_loader import load_teams, load_weekly, get_logo, get_base_dir, _file_mtime
 from utils.espn_league import espn_configured, load_league, draft_setup
 from utils.tables import UNRANKED_MARK, rank_display
@@ -42,6 +42,11 @@ BUILD_SCRIPT = ROOT_DIR / "scripts" / "build_big_boards.py"
 SCHEDULE_CSV = ROOT_DIR / "data" / "raw" / "schedules.csv"
 SCORING_FORMATS = ["PPR", "Half PPR", "Standard"]
 DRAFT_SEASON = 2026
+
+# Renders directly under the gold rule above — nothing between it and the header
+# draws to the page. All three boards are written in one build, so the newest of
+# them dates the set. Declared here because it needs BIG_BOARD_DIR.
+render_last_updated(*BIG_BOARD_DIR.glob("big_board_*.parquet"), label="Big board built")
 
 # Board team abbreviations vs. nflverse schedule abbreviations (only differences).
 _SCHED_TEAM_ALIAS = {"LAR": "LA", "LA": "LA", "JAC": "JAX"}

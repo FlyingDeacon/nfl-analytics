@@ -6,7 +6,7 @@ import streamlit as st
 import pandas as pd
 
 from utils.styles import NFL_CSS
-from utils.nav import render_sidebar_nav
+from utils.nav import render_sidebar_nav, render_last_updated
 from utils.espn_league import (
     espn_configured, load_league, league_name, draft_completed,
     standings_df, roster_df, matchups_df, team_names,
@@ -69,6 +69,12 @@ with st.spinner("Loading league data from ESPN..."):
 
 if not data:
     st.stop()  # load_league() already surfaced an st.error
+
+# Everything here comes off ESPN's live API, so the stamp reports the last time
+# we actually reached them — not the render time, which the 15-minute cache
+# would otherwise make look fresher than it is. Deliberately below the
+# not-configured branch: with no league connected there is nothing to date.
+render_last_updated(at=data.get("_fetched_at"), label="Synced with ESPN")
 
 name = league_name(data) or "Your League"
 teams_ct = len(data.get("teams", []))

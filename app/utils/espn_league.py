@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import base64
 import json
+import time
 import urllib.error
 import urllib.request
 from typing import Optional
@@ -119,11 +120,17 @@ def load_league(_ttl_bucket: int = 0) -> Optional[dict]:
     if not espn_configured():
         return None
     cfg = st.secrets["espn"]
-    return _get(
+    payload = _get(
         cfg["season"], cfg["league_id"],
         cfg.get("espn_s2", ""), cfg.get("swid", ""),
         views=["mTeam", "mRoster", "mSettings", "mStandings", "mMatchupScore"],
     )
+    if payload is not None:
+        # Stamped inside the cached call so the page can report when ESPN was
+        # actually reached rather than when the cached copy happened to render —
+        # otherwise the "synced" time would drift by up to the 15-minute TTL.
+        payload["_fetched_at"] = time.time()
+    return payload
 
 
 @st.cache_data(show_spinner=False, ttl=86400)

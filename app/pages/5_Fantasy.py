@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
 from utils.data_loader import load_weekly, load_teams, get_logo, load_preseason_rankings, _normalize_name
-from utils.nav import render_sidebar_nav
+from utils.nav import render_sidebar_nav, render_last_updated
 
 st.set_page_config(page_title="Fantasy Football · NFL", page_icon="🏆", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
@@ -27,6 +27,9 @@ st.markdown("""
 </div>
 <div class="gold-rule"></div>
 """, unsafe_allow_html=True)
+
+_RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
+render_last_updated(_RAW_DIR / "weekly.csv", _RAW_DIR / "preseason_rankings.csv")
 
 # ── Quick actions ────────────────────────────────────────────────────────────
 col1, col2, col3 = st.columns(3)

@@ -248,6 +248,31 @@ hr {
     margin: 0.4rem 0 1.5rem 0;
 }
 
+/* ── "Data updated" stamp ── */
+/* Pulled up under the gold rule (which carries 1.5rem of bottom margin) so it
+   reads as part of the page header instead of floating above the content. */
+.nfl-updated {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+    margin: -1.25rem 0 1.4rem 0;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+}
+.nfl-updated .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    flex: none;
+}
+@media (max-width: 768px) {
+    .nfl-updated { justify-content: flex-start; font-size: 0.68rem; }
+}
+
 /* ── Sidebar navigation ── */
 [data-testid="stSidebar"] [data-testid="stPageLink"],
 [data-testid="stSidebar"] .stPageLink {

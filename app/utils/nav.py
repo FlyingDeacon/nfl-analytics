@@ -1,6 +1,37 @@
 """Shared sidebar navigation component for all pages."""
+from datetime import datetime
+from pathlib import Path
+
 import streamlit as st
 import streamlit.components.v1 as components
+
+
+def render_last_updated(*paths, label: str = "Data updated", at: float = None) -> None:
+    """Render a muted 'last updated' stamp directly beneath the page's gold rule.
+
+    The timestamp is the newest mtime among `paths`, so it reports when the data
+    behind the page actually changed rather than when the page happened to be
+    rendered — a page reload should not make stale numbers look fresh. Pages
+    served from a live API instead of disk pass that fetch time as `at`.
+
+    Missing files are skipped; if none of them exist we fall back to now rather
+    than showing 1970 or hiding the stamp entirely.
+    """
+    stamps = [Path(p).stat().st_mtime for p in paths if Path(p).exists()]
+    if at is not None:
+        stamps.append(at)
+    ts = datetime.fromtimestamp(max(stamps)) if stamps else datetime.now()
+
+    # Built by hand rather than with strftime: the no-leading-zero directives
+    # (%-d / %-I) are platform-specific and blow up off glibc/BSD.
+    date_str = f"{ts:%b} {ts.day}, {ts.year}"
+    time_str = f"{(ts.hour % 12) or 12}:{ts.minute:02d} {'AM' if ts.hour < 12 else 'PM'}"
+
+    st.markdown(
+        f'<div class="nfl-updated"><span class="dot"></span>'
+        f'{label} {date_str} at {time_str}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def render_sidebar_nav(current_page: str = ""):

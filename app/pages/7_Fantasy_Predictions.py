@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
 from utils.data_loader import load_weekly, load_teams, get_logo
-from utils.nav import render_sidebar_nav
+from utils.nav import render_sidebar_nav, render_last_updated
 from utils.tables import UNRANKED_MARK, rank_display
 from model.projection import (
     ProjectionConfig, build_predictions_core, derive_replacement_baseline,
@@ -40,6 +40,13 @@ st.markdown("""
 </div>
 <div class="gold-rule"></div>
 """, unsafe_allow_html=True)
+
+# Every curated input the projections are built from. The stamp shows the newest
+# of them, so hand-editing any expert file is reflected on the page immediately.
+RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
+render_last_updated(*(RAW_DIR / f for f in (
+    "weekly.csv", "rookies_2026.csv", "kickers_2026.csv",
+    "defenses_2026.csv", "espn_ranks_2026.csv")), label="Projections updated")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # MODEL CONSTANTS
@@ -901,22 +908,22 @@ PROJ_GAMES_OVERRIDES = {
 # data/raw/rookies_2026.csv so the class can be edited without touching code.
 # ══════════════════════════════════════════════════════════════════════════════
 
-ROOKIE_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "rookies_2026.csv"
+ROOKIE_CSV = RAW_DIR / "rookies_2026.csv"
 
 # Kickers can't be projected by the statistical engine — nflverse weekly stats
 # don't include FG/XP scoring, so kicker fantasy_points are ~0. Instead they're
 # injected from a curated, editable projection file (points ≈ scoring-independent).
-KICKER_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "kickers_2026.csv"
+KICKER_CSV = RAW_DIR / "kickers_2026.csv"
 
 # Team defenses (D/ST), same story as kickers: nflverse weekly stats are per
 # player, so team-defense fantasy scoring lives in its own curated file.
-DEFENSE_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "defenses_2026.csv"
+DEFENSE_CSV = RAW_DIR / "defenses_2026.csv"
 
 # ESPN 2026 positional rankings (Mike Clay PPR). Displayed on the big board next
 # to the model's own overall rank so users can compare the model vs consensus.
 # Matched to board players by normalized name so suffix / punctuation differences
 # (Jr., III, "A.J." vs "AJ") don't break the join.
-ESPN_RANKS_CSV = Path(__file__).resolve().parents[2] / "data" / "raw" / "espn_ranks_2026.csv"
+ESPN_RANKS_CSV = RAW_DIR / "espn_ranks_2026.csv"
 
 _NAME_SUFFIXES = {"jr", "sr", "ii", "iii", "iv", "v"}
 

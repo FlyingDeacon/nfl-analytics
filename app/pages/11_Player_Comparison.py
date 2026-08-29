@@ -15,7 +15,7 @@ from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
 from utils.data_loader import (
     load_weekly, load_teams, get_logo, get_base_dir, _file_mtime, _normalize_name,
 )
-from utils.nav import render_sidebar_nav
+from utils.nav import render_sidebar_nav, render_last_updated
 
 st.set_page_config(page_title="Player Comparison · NFL", page_icon="⚔️", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
@@ -265,6 +265,12 @@ SCORING_FORMATS = ["PPR", "Half PPR", "Standard"]
 LAST_SEASON = 2025
 
 SCORING_COL = {"PPR": "fantasy_points_ppr", "Standard": "fantasy_points", "Half PPR": "__half"}
+
+# Renders under the gold rule above — nothing between draws to the page. The
+# comparison mixes model projections with last season's real production, so the
+# stamp covers both the boards and the weekly log.
+render_last_updated(*BIG_BOARD_DIR.glob("big_board_*.parquet"),
+                    ROOT_DIR / "data" / "raw" / "weekly.csv")
 
 
 def _board_path(scoring: str) -> Path:
