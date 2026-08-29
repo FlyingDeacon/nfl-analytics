@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 from typing import Optional
 import pandas as pd
@@ -6,37 +5,16 @@ import streamlit as st
 import urllib.request
 import urllib.error
 
-
-def get_base_dir() -> Path:
-    # app/utils/data_loader.py → utils → app → NFL-Analytics (root)
-    return Path(__file__).resolve().parent.parent.parent
-
-
-# ── Canonical team abbreviation map ──────────────────────────────────────────
-# Applied at load time in EVERY loader so stale caches can never produce wrong abbrs
-ABBR_MAP = {
-    "LA":  "LAR",   # Los Angeles Rams (old alias)
-    "STL": "LAR",   # St. Louis Rams (relocated)
-    "OAK": "LV",    # Oakland Raiders (relocated)
-    "SD":  "LAC",   # San Diego Chargers (relocated)
-}
-
-# Exactly the 32 active franchises — any other team_abbr in teams.csv is dropped
-ACTIVE_32 = {
-    "ARI","ATL","BAL","BUF","CAR","CHI","CIN","CLE","DAL","DEN",
-    "DET","GB","HOU","IND","JAX","KC","LAC","LAR","LV","MIA",
-    "MIN","NE","NO","NYG","NYJ","PHI","PIT","SEA","SF","TB","TEN","WAS",
-}
-
-
-def _norm_abbr(series: pd.Series) -> pd.Series:
-    """Replace legacy team abbreviations with canonical ones."""
-    return series.map(lambda x: ABBR_MAP.get(str(x).strip(), str(x).strip()) if pd.notna(x) else x)
-
-
-def _file_mtime(path: Path) -> float:
-    """Return file mtime so cache_data re-runs when file changes on disk."""
-    return path.stat().st_mtime if path.exists() else 0.0
+# Normalisation rules live in nfl_data_core so the Streamlit pages and the MCP
+# server (which cannot import streamlit) apply exactly the same ones.
+from utils.nfl_data_core import (
+    ABBR_MAP,
+    ACTIVE_32,
+    get_base_dir,
+    norm_abbr as _norm_abbr,
+    normalize_name as _normalize_name,
+    file_mtime as _file_mtime,
+)
 
 
 # ── Loaders ──────────────────────────────────────────────────────────────────
@@ -137,13 +115,6 @@ def load_preseason_rankings() -> pd.DataFrame:
     df = pd.read_csv(path)
     df.columns = [c.lower().strip() for c in df.columns]
     return df
-
-
-def _normalize_name(name: str) -> str:
-    name = str(name).lower().strip()
-    name = re.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv)$", "", name)
-    name = re.sub(r"[.\-']", "", name)
-    return re.sub(r"\s+", " ", name).strip()
 
 
 @st.cache_data(show_spinner=False)  # mtime arg handles invalidation

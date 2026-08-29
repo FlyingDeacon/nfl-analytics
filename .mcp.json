@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "nfl": {
+      "command": "/Users/brw8201/.local/bin/uv",
+      "args": [
+        "run",
+        "/Users/brw8201/Coding/nfl-analytics/mcp_server/nfl_mcp.py"
+      ]
+    }
+  }
+}

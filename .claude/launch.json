@@ -26,6 +26,19 @@
         "true"
       ],
       "port": 8601
+    },
+    {
+      "name": "calorie-tracker",
+      "runtimeExecutable": "/Users/brw8201/Coding/calorie_tracker/venv/bin/streamlit",
+      "runtimeArgs": [
+        "run",
+        "/Users/brw8201/Coding/calorie_tracker/app.py",
+        "--server.port",
+        "8602",
+        "--server.headless",
+        "true"
+      ],
+      "port": 8602
     }
   ]
 }
