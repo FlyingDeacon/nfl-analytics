@@ -429,6 +429,21 @@ _CUFF_W  = 0.35   # handcuff behind an RB you already roster
 _AVAIL_W = 0.12   # projected-games nudge — VOR already prices games, so this
                   # only ever acts as a tiebreaker between similar players
 _REACH_W = 0.24   # per round, for taking your first QB/TE before its window
+_DEPTH_W = 0.55   # bench depth at a position the roster is thin in. _lineup_vor
+                  # only counts starters plus one FLEX, so every bench body scores
+                  # a zero _upgrade and the choice between a bench RB and a bench
+                  # WR fell through to raw VOR — which on a PPR board is a WR,
+                  # every time, no matter how thin the RB room was.
+_DEPTH_TARGET = {"RB": 4, "WR": 5}   # bodies wanted before a position is covered
+# How readily a bench body at each position turns into startable points. This is
+# a stated assumption, not a measured one: deriving it from the board's own
+# proj_games was tried and does not work, because proj_games measures the absence
+# of the specific player projected, not the positional dynamic that matters. It
+# came out WR 0.75 / RB 0.70 — near-flat and pointing the wrong way. The real
+# asymmetry is workload concentration: one injury ahead of a bench RB hands him a
+# bell-cow role, while a WR3 promoted to WR2 gains far less, and RB waiver
+# replacements are far worse than WR ones.
+_DEPTH_VALUE  = {"RB": 1.00, "WR": 0.75}
 
 _VONA_W  = 0.65   # weight on scarcity vs raw value. Drafting on pure scarcity
                   # over-corrects and grabs mediocre players from thin
@@ -732,6 +747,15 @@ def _suggest_pick(slot: int, pool: pd.DataFrame, top_n: int = 3) -> list:
         # WR who beats the current FLEX by six points earns six points of credit;
         # a WR filling an empty starting slot earns his whole VOR.
         s += _START_W * _upgrade(pos, float(row["vor"]))
+
+        # Depth insurance. A bench player is only ever worth the chance you have
+        # to start him, so price him by how thin the room is and how often that
+        # position's starters actually miss time. This is the term that stops a
+        # fifth WR from outscoring a second RB purely on raw VOR.
+        if depth and pos in _DEPTH_TARGET:
+            tgt = _DEPTH_TARGET[pos]
+            shortfall = max(0, tgt - c[pos]) / float(tgt)
+            s += _DEPTH_W * scale * _DEPTH_VALUE[pos] * shortfall
 
         # The flat bonuses on top of that encode timing — how soon the slot has
         # to be filled, and how close the league is to running the position dry.
