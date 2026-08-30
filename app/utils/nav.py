@@ -60,11 +60,12 @@ def render_sidebar_nav(current_page: str = ""):
     # ── Page links ────────────────────────────────────────────────────────────
     st.sidebar.page_link("main.py",                    label="Home",             icon="🏠")
     st.sidebar.page_link("pages/1_Team_Ratings.py",    label="Team Ratings",     icon="📊")
-    # Season Projections is passcode-gated, so advertising it to a visitor who
-    # cannot open it is just a dead link. The gate itself is what protects the
-    # page — hiding the link only keeps the nav honest.
-    if is_unlocked():
-        st.sidebar.page_link("pages/9_Record_Predictions.py", label="Season Projections", icon="🔮")
+    # Season Projections is passcode-gated. The link stays visible either way —
+    # the gate is what protects the page, and hiding the link only succeeds in
+    # locking out the one person who knows the code. A lock icon signals that
+    # following it leads to a prompt rather than the page.
+    st.sidebar.page_link("pages/9_Record_Predictions.py", label="Season Projections",
+                         icon="🔮" if is_unlocked() else "🔒")
     st.sidebar.page_link("pages/2_Player_Stats.py",    label="Player Stats",     icon="🏃")
     st.sidebar.page_link("pages/3_Schedule.py",        label="Schedule",         icon="📅")
     st.sidebar.page_link("pages/4_Historical.py",      label="Historical Trends",icon="📈")
