@@ -242,7 +242,8 @@ INJURY_RISK_MAP = {
     "Javonte Williams":   "      Yes      ",   # ACL/LCL/MCL tear Week 4 (2022); high-risk ligament profile
     "Kyren Williams":     "      Yes      ",   # ACL tear (2022 rookie year); ankle issues 2024; structural re-injury concern
     "D'Andre Swift":      "      Yes      ",   # Shoulder/hip injuries (2021-2023); missed significant time each year
-    "Josh Jacobs":        "      Yes      ",   # Quad/hamstring soft tissue issues; recurring throughout career
+    "Josh Jacobs":        "      Yes      ",   # Quad/hamstring soft tissue issues, and as of Aug-30-2026 on the
+                                               #   commissioner's exempt list — the availability risk is off-field
     "Rhamondre Stevenson":"      Yes      ",   # Ankle injuries (2022, 2024); recurring lower-body issues
     "Kenneth Walker III": "      Yes      ",   # Hernia surgery (2023); oblique 2024; missed multiple games
     "Brian Robinson":     "      Yes      ",   # Gunshot wound recovery (2022); shoulder/knee issues since
@@ -588,6 +589,11 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Kenyon Sadiq":          1.30,   # NYJ traded up to take him 16th overall; immediate lead TE, consensus TE22
     "Colston Loveland":      1.15,   # Was CHI's de facto No. 1 target late in 2025 (10+ targets in each of the last four games)
     "Gunnar Helm":           1.10,   # TEN TE room is his alone now that Okonkwo left for WAS
+    # ══ AUG-30-2026: Josh Jacobs ═══════════════════════════════════════════════
+    "Josh Jacobs":           0.92,   # Separate from the games cut, which only prices the weeks he misses.
+                                     #   Exempt-list players may not practice at all, so he returns cold off a
+                                     #   ~2-month layoff into a backfield someone else has been running. Rate,
+                                     #   not just availability, takes the hit for the games he does play (GB)
 }
 
 # ── PLAYER BIRTH YEARS ───────────────────────────────────────────────────────
@@ -920,7 +926,16 @@ PROJ_GAMES_OVERRIDES = {
     "Omarion Hampton":  16,   # Healthy and named the LAC "clear-cut featured back"
     "Quinshon Judkins": 15,   # Cleared to play all three downs, but held out of practice Aug 18-20 with a
                               #   "nagging" issue — precautionary per Monken, who still expects him Week 1 (CLE)
-    "Josh Jacobs":      13,   # Brown County investigation still open (Jul-2026); Personal Conduct suspension risk (GB)
+    # ── Aug-30-2026: Jacobs is no longer a "risk", he is already unavailable ───
+    # Charged Aug 27 with misdemeanor battery and criminal damage to property over
+    # the May 23 Hobart incident, and placed on the commissioner's exempt list on
+    # Aug 30 — he cannot practice or attend games, so Week 1 is gone outright.
+    # The exempt list runs until the case resolves, and the Personal Conduct
+    # baseline for a domestic-violence finding is six games on top of it, with
+    # prosecutors saying part of the incident is on video. Blending the outcomes
+    # (quick plea and back by Wk4 / six-game ban with exempt time credited / exempt
+    # list dragging into a full six-game ban / longer ban) lands near ten games.
+    "Josh Jacobs":      10,
     # ── Aug-19-2026 preseason audit: new camp injuries ─────────────────────
     "Alvin Kamara":     11,   # Sprained MCL in the Aug-19 joint practice vs DAL; 4-6 wks, so ~3 games missed (NO)
     "Jordyn Tyson":     10,   # Hamstring, ~2 months (into mid-Oct) — prime candidate to open on IR, which forces 4+ games (NO)
