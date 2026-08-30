@@ -195,6 +195,13 @@ FORCE_INCLUDE_STARTERS = {
                                                              #   2021-24 seasons all qualify, so the automatic path
                                                              #   would price the PIT bell-cow role he no longer has —
                                                              #   this is a handcuff rate behind a shaky Skattebo
+    # ── Aug-30-2026: the back Jacobs' exempt-list placement promotes ──────────
+    # One career game across two seasons (hamstring, then IR), so MIN_GAMES_BY_POS
+    # drops him entirely and the board had GB's Week 1 starter missing. Beat
+    # reporting has him as the favourite for the largest share while Jacobs is
+    # away. The rate is a blend, not a lead-back rate: roughly seven games at
+    # ~12 PPR as the committee lead, then ~4 once Jacobs is back.
+    "MarShawn Lloyd":   ("00-0039811", "RB", "GB",  8.0),
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
@@ -355,6 +362,8 @@ EXPERT_TEAM_CORRECTIONS = {
     "Stefon Diggs":      "WAS",  # Signed 1-yr/up-to-$12M with Washington (Aug 5, 2026) — WR2 opposite McLaurin
     "Kirk Cousins":      "LV",   # Named Raiders QB1 to open camp over rookie Mendoza
     "Darren Waller":     "CAR",  # Signed with Carolina (Aug 2026) after leaving MIA — TE1 ahead of Tremble
+    "Kaleb Johnson":     "GB",   # Traded PIT → GB on Aug 30, 2026, hours after Jacobs went on the exempt
+                                 #   list. depth_charts.csv still has him as the PIT RB3 behind Warren/Dowdle
 }
 
 # ── NEW HEAD COACH PENALTY ───────────────────────────────────────────────────
@@ -589,6 +598,16 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Kenyon Sadiq":          1.30,   # NYJ traded up to take him 16th overall; immediate lead TE, consensus TE22
     "Colston Loveland":      1.15,   # Was CHI's de facto No. 1 target late in 2025 (10+ targets in each of the last four games)
     "Gunnar Helm":           1.10,   # TEN TE room is his alone now that Okonkwo left for WAS
+    # ══ AUG-30-2026: the GB backfield behind Jacobs ════════════════════════════
+    # Both of these are career backups with too few games to escape the
+    # REGRESS_MIN_GAMES shrinkage, so the engine hands them the positional median
+    # instead of their own rate and they surfaced above Lloyd — and Johnson above
+    # Jacobs. These pull them back to the roles beat reporting actually describes.
+    "Kaleb Johnson":         0.66,   # 28 carries for 69 yards as a rookie, and PIT had him behind Lew Nichols
+                                     #   and Travis Homer before trading him. Arrives days before Week 1 without
+                                     #   the playbook — a distant second to Lloyd for the vacated work (GB)
+    "Chris Brooks":          0.62,   # 2.71 PPR/g over 16 career games; a third-down and pass-protection back.
+                                     #   Shrinkage had him at 7.36 PPG, which is a committee-lead rate (GB)
     # ══ AUG-30-2026: Josh Jacobs ═══════════════════════════════════════════════
     "Josh Jacobs":           0.92,   # Separate from the games cut, which only prices the weeks he misses.
                                      #   Exempt-list players may not practice at all, so he returns cold off a
@@ -936,6 +955,19 @@ PROJ_GAMES_OVERRIDES = {
     # (quick plea and back by Wk4 / six-game ban with exempt time credited / exempt
     # list dragging into a full six-game ban / longer ban) lands near ten games.
     "Josh Jacobs":      10,
+    # The GB backfield that inherits those weeks. Lloyd has managed one game in two
+    # seasons (hamstring, then IR), so he gets the durability haircut even as the
+    # projected starter; Johnson and Brooks are healthy.
+    "MarShawn Lloyd":   14,
+    # Johnson and Brooks are priced through games rather than rate, because rate is
+    # not reachable for them: with 9 and 16 career games they sit under
+    # REGRESS_MIN_GAMES, so _regress_ppg blends ~53% and ~38% of the RB starter
+    # median (14.9 PPG) into players whose own rates are 1.0 and 2.7. Probing the
+    # pipeline, Johnson's floor is 7.86 PPG even at a multiplier of zero. These are
+    # therefore "games of usable role", not availability, and are the honest lever
+    # until that shrinkage gets a role-aware exemption.
+    "Kaleb Johnson":    11,   # third in line, no playbook, ~7 weeks of committee work then buried
+    "Chris Brooks":     8,    # pass-protection specialist; real snaps, few touches
     # ── Aug-19-2026 preseason audit: new camp injuries ─────────────────────
     "Alvin Kamara":     11,   # Sprained MCL in the Aug-19 joint practice vs DAL; 4-6 wks, so ~3 games missed (NO)
     "Jordyn Tyson":     10,   # Hamstring, ~2 months (into mid-Oct) — prime candidate to open on IR, which forces 4+ games (NO)
