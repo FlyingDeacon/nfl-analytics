@@ -11,7 +11,7 @@ import numpy as np
 import plotly.graph_objects as go
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
-from utils.data_loader import load_weekly, load_teams, get_logo
+from utils.data_loader import load_weekly, load_teams, get_logo, load_depth_charts
 from utils.nav import render_sidebar_nav, render_last_updated
 from utils.tables import UNRANKED_MARK, rank_display
 from model.projection import (
@@ -317,7 +317,9 @@ EXPERT_TEAM_CORRECTIONS = {
     "Mike Evans":        "SF",   # 3-yr $60M deal — joins 49ers
     "Derrick Henry":     "BAL",  # Re-signed with Baltimore Ravens
     "Sam Darnold":       "SEA",  # Signed with Seattle Seahawks
-    "Keenan Allen":      "LAC",  # Returns to the Chargers
+    "Keenan Allen":      "IND",  # Signed with Indianapolis — WR3 behind Pierce/Downs. Was listed
+                                 #   LAC here on a reported return that never happened; he is absent
+                                 #   from every 2026 depth chart, so only this entry can place him
     "DeAndre Hopkins":   "BAL",  # Signed with Baltimore Ravens; pairs with Lamar
     "Rico Dowdle":       "PIT",  # Signed with Pittsburgh Steelers (was DAL)
     "Tyler Allgeier":    "ARI",  # Signed 2-yr/$12.25M with Cardinals (was ATL)
@@ -421,7 +423,17 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Malik Nabers":          0.95,   # Was 0.85 on a "no target date" report; he is now in 11-on-11 at full speed
                                      #   and NYG expect him Wk1 — small haircut left for the non-contact ramp
     # ── Committee / role demotions (0.70–0.85) ─────────────────────────────
-    "Tyrone Tracy Jr.":      0.75,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's injury
+    "Tyrone Tracy Jr.":      0.62,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's
+                                     #   injury (he played 8 games). Was 0.75, which still left Tracy RB26 —
+                                     #   ahead of every clear starter's backup and inside ESPN's RB50, where
+                                     #   they do not rank him at all. 0.62 lands him ~RB36: no longer a
+                                     #   featured back, but the top handcuff on a backfield that already
+                                     #   broke once, so not cut to the floor either
+    "David Montgomery":      1.50,   # HOU lead back. The engine had him RB46 / Rd 15 — below Woody Marks,
+                                     #   the RB2 listed under him — because his 2025 line was a DET committee
+                                     #   split with Gibbs and HOU carries a weaker rushing tier than DET, so
+                                     #   correcting the team actually pushed him further down. Neither effect
+                                     #   knows he inherited the job. Sized to ESPN's RB24
     # ── 2026 top-150 audit: same-team committee / role cuts ────────────────
     "Travis Etienne":        1.10,   # Was 0.95 for a pure NO committee; Kamara's Aug-19 MCL sprain (4-6 wks) hands
                                      #   him the lead-back reps through at least the opening month
@@ -431,7 +443,10 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Kyle Monangai":         0.80,   # CHI RB2 behind Swift; spot starter only
     "Parker Washington":     0.82,   # JAX WR3 behind Thomas/Hunter target hierarchy
     "Juwan Johnson":         0.85,   # NO TE sharing with rookie Delp; TD-dependent
-    "Woody Marks":           0.78,   # HOU committee behind Mixon; change-of-pace back
+    "Woody Marks":           0.68,   # HOU RB2. Was 0.78 for a "committee behind Mixon" that no longer
+                                     #   exists — Mixon is off the roster and Montgomery signed to lead it.
+                                     #   Marks graded out RB31 to Montgomery's RB46, i.e. ahead of the
+                                     #   starter listed above him; this puts him back at ESPN's RB42
     "Michael Wilson":        0.85,   # ARI WR3 behind MHJ + Harrison target share
     "Marvin Harrison Jr.":   0.90,   # ARI target share capped by McBride + rookie WR draft
     "Kimani Vidal":          0.75,   # LAC RB2 behind Hampton
@@ -1395,7 +1410,29 @@ def apply_expert_adjustments(df: pd.DataFrame,
 
             out = pd.concat([out, pd.DataFrame([new_row])], ignore_index=True)
 
-    # 4. Team corrections (trades / FA signings not captured in historical data)
+    # 4a. Team from the 2026 depth chart — the authoritative roster source.
+    #     Without this the team column carries over from the last season a player
+    #     actually logged snaps in, so anyone who moved in the offseason keeps his
+    #     old club and then gets scored against that club's offensive tier. The
+    #     hand-maintained dict below used to be the only correction, which meant a
+    #     move was wrong until somebody noticed it; the depth chart already knows.
+    #     Only offensive skill players are mapped — K and DEF are keyed differently.
+    if team_col:
+        _dc_path = RAW_DIR / "depth_charts.csv"
+        dc = load_depth_charts(_mtime=_dc_path.stat().st_mtime if _dc_path.exists() else 0.0)
+        if not dc.empty and {"season", "side", "position", "player_name", "team"} <= set(dc.columns):
+            dc = dc[(dc["season"] == PREDICTION_YEAR) & (dc["side"] == "offense")
+                    & (dc["position"].isin(["QB", "RB", "WR", "TE"]))]
+            # Names are unique across the 2026 offensive depth charts, so a plain
+            # name → team map is unambiguous; normalise so "Etienne Jr." matches
+            # "Etienne" and "A.J." matches "AJ".
+            dc_team = dict(zip(dc["player_name"].map(_norm_name), dc["team"]))
+            mapped = out[name_col].map(_norm_name).map(dc_team)
+            out.loc[mapped.notna(), team_col] = mapped[mapped.notna()]
+
+    # 4b. Team corrections (trades / FA signings not captured in historical data).
+    #     Applied last so a hand entry still wins: it covers players missing from
+    #     the depth chart entirely and moves that land after the last chart pull.
     if team_col:
         for player_fragment, new_team in EXPERT_TEAM_CORRECTIONS.items():
             mask = out[name_col].str.contains(player_fragment, case=False, na=False)
