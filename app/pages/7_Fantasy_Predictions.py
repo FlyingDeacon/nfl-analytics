@@ -426,7 +426,16 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
                                      #   which still had him RB8 off an 8-game rookie sample (15.7 PPG) —
                                      #   ESPN has him 56th overall, an RB2 rather than a back-end RB1
     "Jaxon Smith-Njigba":    1.18,   # Target share trending past Lockett/Metcalf
-    "Bucky Irving":          1.18,   # Mayfield offense leans on dual-threat RB
+    "Bucky Irving":          0.86,   # Was 1.18 for "Mayfield offense leans on dual-threat RB" — but that
+                                     #   receiving work is exactly what TB signed Gainwell to take. OC Zac
+                                     #   Robinson has floated a balanced / hot-hand split with Gainwell as
+                                     #   the pass-catching back. Irving still leads the carries, so keep the
+                                     #   offense boost and drop the dual-threat premium. Games stay at the
+                                     #   model's 13.5 (shoulder surgery, injury-hit 2025) even though he is
+                                     #   now full-go and has carried in the preseason (TB).
+                                     #   NOTE: PEAK_CAP binds here — his pre-cap rate is 18.74 PPG against a
+                                     #   cap of 15.10, so any multiplier above ~0.86 is invisible on the
+                                     #   board. 0.86 is the largest value that actually moves him.
     "George Pickens":        1.10,   # Dak elevates target quality vs PIT
     "Kyle Pitts":            1.00,   # Franchise-tagged then 3-yr/$53M to stay ATL, but QB instability caps him; consensus TE7 vs model TE3
     "Justin Jefferson":      1.20,   # Still a 28.5% target share; model had him WR16 vs consensus WR6 — QB upgrade in MIN
@@ -598,6 +607,13 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Kenyon Sadiq":          1.30,   # NYJ traded up to take him 16th overall; immediate lead TE, consensus TE22
     "Colston Loveland":      1.15,   # Was CHI's de facto No. 1 target late in 2025 (10+ targets in each of the last four games)
     "Gunnar Helm":           1.10,   # TEN TE room is his alone now that Okonkwo left for WAS
+    "Jadarian Price":        1.18,   # The rookie curve reads draft capital, and pick 32 lands on the wrong
+                                     #   side of a tier edge, so a first-round back tagged "starter" in
+                                     #   rookies_2026.csv still projected RB30 at NEGATIVE VOR. Walker left
+                                     #   for KC and Charbonnet opened on PUP with a torn ACL, so the Week 1
+                                     #   job is his against only Holani and Emanuel Wilson. Not a bell cow —
+                                     #   SEA plan to use Wilson, and Charbonnet returns at some point — so
+                                     #   this lands him a back-end RB2, near ESPN's 74th overall (SEA)
     # ══ AUG-30-2026: the GB backfield behind Jacobs ════════════════════════════
     # Both of these are career backups with too few games to escape the
     # REGRESS_MIN_GAMES shrinkage, so the engine hands them the positional median
