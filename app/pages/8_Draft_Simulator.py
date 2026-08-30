@@ -191,7 +191,9 @@ def _load_board(path: str, mtime: float) -> pd.DataFrame:
 
 # ── Draft settings ───────────────────────────────────────────────────────────
 POSITIONS = ("QB", "RB", "WR", "TE", "DEF", "K")
-POS_CAPS = {"QB": 2, "RB": 8, "WR": 8, "TE": 3, "DEF": 2, "K": 2}  # max per roster
+# TE was capped at 3, which is why a third one was legal to suggest at all in a
+# single-TE lineup. 2 is the real ceiling: a starter and one backup.
+POS_CAPS = {"QB": 2, "RB": 8, "WR": 8, "TE": 2, "DEF": 2, "K": 2}  # max per roster
 REQ_MIN = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "DEF": 1, "K": 1}   # starters that must be filled
 STARTER_TARGET = {"QB": 1, "RB": 2, "WR": 2, "TE": 1, "DEF": 1, "K": 1}  # weekly starters (+1 FLEX)
 STARTER_SLOTS = ["QB", "RB", "RB", "WR", "WR", "TE", "FLEX", "DEF", "K"]
@@ -457,8 +459,12 @@ _K_PRIORITY = 500.0  # once it's the kicker's turn, lift it above bench value
                      # can't out-rank a high-VOR bench player) — beats any
                      # realistic VOR gap but stays below _BLOCK
 _BLOCK      = 1e6    # effectively removes a player from consideration
-_MIN_SCALE  = 8.0    # floor under the VOR spread, so the bonuses don't vanish
-                     # once the late-round board flattens out
+_MIN_SCALE  = 8.0    # absolute floor under the VOR spread, so the bonuses don't
+                     # vanish once the late-round board flattens out
+_SPREAD_FLOOR = 0.45 # ...and a relative floor: this share of the live 10th-90th
+                     # percentile VOR range. Keeps every bonus proportional to
+                     # the decision actually being made rather than pinning to a
+                     # constant as soon as the elite tier clears.
 _SURVIVAL_SIMS = 400
 _TIER_MIN_GAP  = 6.0 # VOR points — the smallest gap that may start a new tier
 
@@ -474,12 +480,28 @@ _REACH_ROUND = {"QB": 4, "TE": 3}   # earliest round to prioritize QB1 / TE1
 
 
 def _vor_scale(avail: pd.DataFrame) -> float:
-    """Spread of the talent still on the board — the unit every bonus is in."""
+    """Spread of the talent still on the board — the unit every bonus is in.
+
+    This used to be the standard deviation of the top 3*teams alone, which
+    collapsed onto the _MIN_SCALE floor by round 3 and stayed pinned there for
+    the rest of the draft: every roster bonus became a flat ~8 points while the
+    VOR gaps they had to compete with were still 25-33. That is the reason
+    suggestions read as pure value from the middle rounds onward.
+
+    Standard deviation understates a skewed board, so it is now floored by a
+    share of the 10th-90th percentile range of a wider slice, which decays
+    smoothly with the board instead of falling off a cliff. Round 1 is
+    essentially unchanged; rounds 3-11, where the collapse was worst, roughly
+    double.
+    """
     v = avail["vor"].to_numpy(dtype=float)
     if v.size == 0:
         return _MIN_SCALE
-    top = np.sort(v)[::-1][: max(12, 3 * teams)]
-    return max(float(top.std()), _MIN_SCALE)
+    desc = np.sort(v)[::-1]
+    top = desc[: max(12, 3 * teams)]
+    wide = desc[: max(24, 6 * teams)]
+    spread = float(np.percentile(wide, 90) - np.percentile(wide, 10))
+    return max(float(top.std()), _SPREAD_FLOOR * spread, _MIN_SCALE)
 
 
 def _picks_until_next(slot: int, idx: int) -> int:
