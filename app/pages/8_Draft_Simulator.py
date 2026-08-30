@@ -741,8 +741,16 @@ def _suggest_pick(slot: int, pool: pd.DataFrame, top_n: int = 3) -> list:
             s += _FLEX_W * scale * urgency
         if core_need or flex_ok:
             s += _PRESS_W * scale * press.get(pos, 0.0)
+        # Single-slot positions: penalise the surplus, not just the fact of one.
+        # This used to be a flat charge, so a third TE cost exactly what a second
+        # did — and since a bench TE gets no _upgrade credit and only damped VONA,
+        # a high-VOR name could still out-rank the whole board on raw VOR alone.
+        # Squaring the surplus makes the second one a real decision, the third
+        # practically unreachable, and a fourth impossible, without a hard block
+        # that could strand the endgame with no legal pick.
         if pos in ("QB", "TE", "K", "DEF") and c[pos] >= STARTER_TARGET[pos]:
-            s -= _STACK_W * scale
+            surplus = c[pos] - STARTER_TARGET[pos]
+            s -= _STACK_W * scale * float((surplus + 1) ** 2)
 
         tier, tier_size, cliff = tiers.get(name, (1, 99, 0.0))
         if tier_size == 1 and cliff >= 0.5 * scale:
