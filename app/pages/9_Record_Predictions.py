@@ -8,23 +8,16 @@ import streamlit as st
 import plotly.graph_objects as go
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
-from utils.data_loader import (
-    load_ratings, load_teams, load_schedules, load_divisions, load_weekly,
-    load_weekly_def, get_logo, get_base_dir, _file_mtime,
-)
-from utils.record_model import project_season
-from utils.survivor import (
-    MARKET_WEIGHT, blend_probabilities, team_week_table, optimal_plan,
-    week_options, survival_probability,
-)
+from utils.data_loader import load_teams, get_logo, get_base_dir, _file_mtime
+from utils.projection import season_projection
 from utils.nav import render_sidebar_nav
 from utils.gate import require_passcode
 
 st.set_page_config(page_title="Season Projections · NFL", page_icon="🔮", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
 
-# Gate before anything else: this page carries the CHOPPED survivor plan, which
-# is only worth having if the rest of the pool cannot read it.
+# Gate before anything else: this page and the two it leads to are the CHOPPED
+# edge, which is only worth having if the rest of the pool cannot read it.
 require_passcode("2026 Season Projections")
 
 render_sidebar_nav(current_page="9_Record_Predictions")
@@ -43,36 +36,21 @@ st.markdown("""
 <div class="gold-rule"></div>
 """, unsafe_allow_html=True)
 
-# ── Load data + run projection (cached on file mtimes) ───────────────────────
+# ── Load data + run projection (shared cache with the matchup/survivor pages) ─
 _base = get_base_dir()
-ratings   = load_ratings(_mtime=_file_mtime(_base / "data/processed/team_ratings.csv"))
-teams_df  = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
-schedules = load_schedules(_mtime=_file_mtime(_base / "data/raw/schedules.csv"))
-divisions = load_divisions(_mtime=_file_mtime(_base / "data/raw/nfl_divisions.csv"))
-weekly    = load_weekly(_mtime=_file_mtime(_base / "data/raw/weekly.csv"))
-weekly_def = load_weekly_def(_mtime=_file_mtime(_base / "data/raw/weekly_def.csv"))
+teams_df = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
 
-
-_WIN_TOTALS_CSV = _base / "data/raw/win_totals_2026.csv"
-
-
-@st.cache_data(show_spinner="Simulating the 2026 season…")
-def _run(_r_m, _d_m, _s_m, _w_m, _wd_m, _wt_m):
-    depth_df = pd.read_csv(_base / "data/raw/depth_charts.csv")
-    win_totals = pd.read_csv(_WIN_TOTALS_CSV) if _WIN_TOTALS_CSV.exists() else None
-    return project_season(ratings, depth_df, divisions, schedules, weekly,
-                          weekly_def, win_totals=win_totals)
-
-
-table, games, changes = _run(
-    _file_mtime(_base / "data/processed/team_ratings.csv"),
-    _file_mtime(_base / "data/raw/depth_charts.csv"),
-    _file_mtime(_base / "data/raw/schedules.csv"),
-    _file_mtime(_base / "data/raw/weekly.csv"),
-    _file_mtime(_base / "data/raw/weekly_def.csv"),
-    _file_mtime(_WIN_TOTALS_CSV),
-)
+table, games, changes = season_projection()
 _market = table.attrs.get("market", {})
+
+# ── Companion pages ──────────────────────────────────────────────────────────
+_nav_l, _nav_r = st.columns(2)
+if _nav_l.button("🗓️ Weekly Matchups", key="rp_to_matchups", use_container_width=True,
+                 help="Every game this week with win probabilities and Vegas lines"):
+    st.switch_page("pages/12_Weekly_Matchups.py")
+if _nav_r.button("🔪 CHOPPED Survivor", key="rp_to_chopped", use_container_width=True,
+                 help="Which team to pick each week, and what each pick costs later"):
+    st.switch_page("pages/13_Chopped_Survivor.py")
 
 ORD = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th"}
 
@@ -166,156 +144,6 @@ for i, dv in enumerate(div_order):
         )
     html += "</table>"
     grid[i % 2].markdown(html, unsafe_allow_html=True)
-
-st.markdown("---")
-
-# ══════════════════════════════════════════════════════════════════════════════
-# WEEKLY MATCHUP PREDICTOR
-# ══════════════════════════════════════════════════════════════════════════════
-st.markdown("### 🗓️ Weekly Matchup Predictor")
-
-blended = blend_probabilities(games, schedules)
-tw_table = team_week_table(blended)
-
-_weeks = sorted(blended["week"].unique())
-_wk = st.selectbox("Week", _weeks, key="rp_week",
-                   format_func=lambda w: f"Week {w}")
-
-# Sort by how strong the favourite is, not by the home side's number — sorting
-# on p_home interleaves road favourites with genuine coin flips.
-_slate = blended[blended["week"] == _wk].copy()
-_slate["_fav_p"] = _slate["p_home_blend"].clip(lower=1 - _slate["p_home_blend"])
-_slate = _slate.sort_values("_fav_p", ascending=False)
-
-
-def _logo_or_abbr(abbr: str, size: int = 26) -> str:
-    url = get_logo(abbr, teams_df)
-    return (f'<img src="{url}" width="{size}" style="vertical-align:middle;">'
-            if url else f'<b>{abbr}</b>')
-
-
-_rows = ""
-for _, gm in _slate.iterrows():
-    ph = gm["p_home_blend"]
-    fav, dog = (gm["home_team"], gm["away_team"]) if ph >= 0.5 else (gm["away_team"], gm["home_team"])
-    fav_p = max(ph, 1 - ph)
-    # A near-coin-flip is genuinely different information from a lock, so make
-    # the confidence readable at a glance rather than making the user parse a
-    # percentage against every other row.
-    band, colour = (("Lock", "#15803d") if fav_p >= 0.75 else
-                    ("Strong", "#4f46e5") if fav_p >= 0.65 else
-                    ("Lean", "#b45309") if fav_p >= 0.55 else
-                    ("Toss-up", "#8b8fa8"))
-    src = (f'{gm["p_home_mkt"] if gm["home_team"] == fav else 1 - gm["p_home_mkt"]:.0%}'
-           if gm["has_market"] else "—")
-    at_home = "vs" if gm["home_team"] == fav else "@"
-    _rows += (
-        f'<tr style="border-bottom:1px solid #eceef4;">'
-        f'<td style="padding:8px 6px;">{_logo_or_abbr(fav)} <b>{fav}</b> '
-        f'<span style="color:#8b8fa8;">{at_home}</span> {_logo_or_abbr(dog, 20)} {dog}</td>'
-        f'<td style="padding:8px 6px;text-align:right;font-weight:700;">{fav_p:.0%}</td>'
-        f'<td style="padding:8px 6px;text-align:right;color:#8b8fa8;">{1 - fav_p:.0%}</td>'
-        f'<td style="padding:8px 6px;text-align:right;color:#8b8fa8;">{src}</td>'
-        f'<td style="padding:8px 6px;text-align:right;color:{colour};font-weight:600;">{band}</td>'
-        f'</tr>'
-    )
-
-st.markdown(
-    '<table style="width:100%;border-collapse:collapse;font-family:Inter,sans-serif;font-size:0.92rem;">'
-    '<tr style="text-align:left;color:#8b8fa8;font-size:0.78rem;text-transform:uppercase;">'
-    '<th style="padding:6px;">Matchup</th><th style="padding:6px;text-align:right;">Favorite</th>'
-    '<th style="padding:6px;text-align:right;">Underdog</th>'
-    '<th style="padding:6px;text-align:right;">Vegas</th>'
-    '<th style="padding:6px;text-align:right;">Confidence</th></tr>'
-    f'{_rows}</table>', unsafe_allow_html=True)
-
-_priced = int(_slate["has_market"].sum())
-st.caption(
-    f"{_priced} of {len(_slate)} games carry a sportsbook line this week. "
-    f"Where one exists the number is {MARKET_WEIGHT:.0%} market / {1 - MARKET_WEIGHT:.0%} model; "
-    "otherwise it is the model alone (power rating gap + home field, through a normal curve). "
-    "Across the 67 priced 2026 games the two agree to within 3 points on average."
-)
-
-st.markdown("---")
-
-# ══════════════════════════════════════════════════════════════════════════════
-# CHOPPED SURVIVOR PLANNER
-# ══════════════════════════════════════════════════════════════════════════════
-st.markdown("### 🔪 CHOPPED Survivor Planner")
-st.caption(
-    "Pick one winner a week, never reuse a team, one mulligan, last entrant takes the pot. "
-    "Because teams cannot be reused, the best pick this week is rarely the biggest favourite — "
-    "it is the one that leaves the strongest set of teams for the weeks still to come."
-)
-
-
-@st.cache_data(show_spinner="Optimising the rest of the season…")
-def _plan(_used: frozenset, _week: int, _tw_key: float):
-    used = set(_used)
-    return (optimal_plan(tw_table, used, _week),
-            week_options(tw_table, used, _week))
-
-
-_all_teams = sorted(tw_table["team"].unique())
-_cur_week = st.number_input("Current week", min_value=1, max_value=18, value=1,
-                           step=1, key="rp_surv_week")
-
-_entries = st.columns(2)
-_recs: dict[str, str] = {}
-for _i, (_col, _label) in enumerate(zip(_entries, ("Your entry", "Your wife's entry"))):
-    with _col:
-        st.markdown(f"**{_label}**")
-        _used = st.multiselect("Teams already used", _all_teams, default=[],
-                               key=f"rp_surv_used_{_i}")
-        _plan_df, _opts = _plan(frozenset(_used), int(_cur_week),
-                                _file_mtime(_base / "data/raw/schedules.csv"))
-        if _opts.empty:
-            st.warning("No legal picks left for this week.")
-            continue
-
-        _best = _opts.iloc[0]
-        _recs[_label] = _best["team"]
-        st.markdown(
-            f'<div class="stat-card" style="text-align:center;padding:16px 12px;">'
-            f'<div class="label">Recommended pick · Week {int(_cur_week)}</div>'
-            f'<div style="font-size:1.8rem;font-weight:800;margin:6px 0 2px;">'
-            f'{_logo_or_abbr(_best["team"], 34)} {_best["team"]}</div>'
-            f'<div class="sub">{_best["win_prob"]:.0%} to win '
-            f'{"vs" if _best["is_home"] else "@"} {_best["opponent"]}</div></div>',
-            unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        _show = _opts.head(8).copy()
-        _show["Matchup"] = _show.apply(
-            lambda r: f'{r["team"]} {"vs" if r["is_home"] else "@"} {r["opponent"]}', axis=1)
-        _show["Win %"] = (_show["win_prob"] * 100).round(0).astype(int)
-        _show["Cost"] = (_show["cost_vs_best"] * 100).round(2)
-        st.dataframe(_show[["Matchup", "Win %", "Cost"]], hide_index=True,
-                     use_container_width=True,
-                     column_config={
-                         "Win %": st.column_config.NumberColumn(
-                             "Win %", format="%d%%", help="Chance this team wins this week"),
-                         "Cost": st.column_config.NumberColumn(
-                             "Cost", format="%.2f",
-                             help="Season survival given up versus the optimal pick, "
-                                  "in percentage points. 0.00 is the optimum."),
-                     })
-
-        with st.expander(f"Full plan to Week 18 ({survival_probability(_plan_df):.1%} to run the table)"):
-            _p = _plan_df.copy()
-            _p["Matchup"] = _p.apply(
-                lambda r: f'{r["team"]} {"vs" if r["is_home"] else "@"} {r["opponent"]}', axis=1)
-            _p["Win %"] = (_p["win_prob"] * 100).round(0).astype(int)
-            st.dataframe(_p[["week", "Matchup", "Win %"]].rename(columns={"week": "Wk"}),
-                         hide_index=True, use_container_width=True)
-
-if len(_recs) == 2 and len(set(_recs.values())) == 1:
-    st.info(
-        f"Both entries land on **{list(_recs.values())[0]}**. Only one of you can win the pot, "
-        "so playing the same team means you are eliminated together. Consider taking the "
-        "next-lowest-cost option on one entry to cover more outcomes."
-    )
 
 st.markdown("---")
 
