@@ -6,6 +6,8 @@ from zoneinfo import ZoneInfo
 import streamlit as st
 import streamlit.components.v1 as components
 
+from utils.gate import is_unlocked
+
 # Streamlit Community Cloud runs its containers in UTC, so an unqualified
 # fromtimestamp() renders a 10:17 AM ET edit as "2:17 PM" once deployed. Pinning
 # the zone makes the stamp read identically on a laptop and on the deployed app.
@@ -58,7 +60,11 @@ def render_sidebar_nav(current_page: str = ""):
     # ── Page links ────────────────────────────────────────────────────────────
     st.sidebar.page_link("main.py",                    label="Home",             icon="🏠")
     st.sidebar.page_link("pages/1_Team_Ratings.py",    label="Team Ratings",     icon="📊")
-    st.sidebar.page_link("pages/9_Record_Predictions.py", label="Season Projections", icon="🔮")
+    # Season Projections is passcode-gated, so advertising it to a visitor who
+    # cannot open it is just a dead link. The gate itself is what protects the
+    # page — hiding the link only keeps the nav honest.
+    if is_unlocked():
+        st.sidebar.page_link("pages/9_Record_Predictions.py", label="Season Projections", icon="🔮")
     st.sidebar.page_link("pages/2_Player_Stats.py",    label="Player Stats",     icon="🏃")
     st.sidebar.page_link("pages/3_Schedule.py",        label="Schedule",         icon="📅")
     st.sidebar.page_link("pages/4_Historical.py",      label="Historical Trends",icon="📈")

@@ -1,6 +1,6 @@
 # Runtime dependencies for the Streamlit Cloud deploy.
 # The app (main.py, pages/, model/) imports only these third-party packages.
-# Heavy/build-fragile extras used by offline scripts (nfl_data_py, scipy,
+# Heavy/build-fragile extras used by offline scripts (nfl_data_py,
 # scikit-learn, psycopg2, etc.) are intentionally excluded so the cloud build
 # stays reproducible on modern Python — install them locally when running
 # the data/back-test scripts.
@@ -10,3 +10,8 @@ streamlit>=1.35.0
 pandas>=2.0
 numpy>=1.26
 plotly>=5.0
+# scipy is a runtime dependency, not a script-only one: the survivor planner
+# solves its team/week assignment with scipy.optimize.linear_sum_assignment
+# (see utils/survivor.py). It ships manylinux wheels, so it does not reintroduce
+# the source-build problem that keeps the other heavy packages out of here.
+scipy>=1.11
