@@ -102,6 +102,7 @@ PEAK_CAP_EXEMPT = {
     "Darnell Washington",  # rotational blocker in PIT; now the starter on a 4-yr/$42M deal
     "Chig Okonkwo",        # TEN committee TE; now the WAS TE1 inheriting the Ertz targets
     "Kenneth Walker III",  # SEA carries were split with Charbonnet; KC signed him to be the bell cow
+    "Bhayshul Tuten",      # rookie year was a committee behind Etienne; now the JAX lead back
 }
 
 # ── Value Over Replacement (VOR) — positional scarcity scoring ───────────────
@@ -189,6 +190,11 @@ FORCE_INCLUDE_STARTERS = {
     "Tank Dell":        ("00-0038977", "WR", "HOU", None),   # missed all of 2025 (knee); cleared for camp — uses 2024 season
     "Jalen McMillan":   ("00-0039855", "WR", "TB",  None),   # 4 games 2025 (hamstring); TB WR3 — uses 2024 season
     "Jonathon Brooks":  ("00-0039344", "RB", "CAR", 9.0),    # two ACLs, 3 career games; CAR change-of-pace back behind Hubbard — expert PPG
+    "Najee Harris":     ("00-0036893", "RB", "NYG", 7.5),    # 3 games 2025 (Achilles); signed NYG Aug-2026 and is
+                                                             #   already the RB2 ahead of Singletary and Tracy. His
+                                                             #   2021-24 seasons all qualify, so the automatic path
+                                                             #   would price the PIT bell-cow role he no longer has —
+                                                             #   this is a handcuff rate behind a shaky Skattebo
 }
 
 # Players removed from 2026 board (not projected starters / retired / injury risk)
@@ -202,7 +208,6 @@ EXPERT_REMOVE = {
     "Zavier Scott",      # MIN RB4/practice-squad-caliber; buried behind the Jones/Mason committee, not fantasy-relevant
     "Brandin Cooks",     # Unsigned FA (2026) as of late July; no confirmed team — removed pending signing
     "Ricky Pearsall",    # OUT FOR 2026 — PCL surgery announced Aug 2026 (chronic since Wk4 2025)
-    "Jonnu Smith",       # Released by PIT (Mar 2026); unsigned FA with no confirmed team
 }
 
 # Injury risk mapping — 2026 season outlook
@@ -405,9 +410,11 @@ NEW_HC_PENALTY = {
 PLAYER_MULTIPLIERS: dict[str, float] = {
     # ── Breakout boosts (1.08–1.22) ────────────────────────────────────────
     "Jahmyr Gibbs":         1.22,   # Bell-cow workload after Monty departure
-    "Cam Skattebo":          0.82,   # NYG lead back but a committee (~55% of carries) w/ Tracy on passing downs.
-                                     #   Was 1.10, which contradicted its own rationale and let an 8-game rookie
-                                     #   sample (15.7 PPG) drive an RB6 board slot vs ESPN's RB20.
+    "Cam Skattebo":          0.70,   # NYG lead back, but the committee got worse, not better: his 2025 carry
+                                     #   share was 42%, preseason usage did not project a workhorse, and NYG
+                                     #   signed Najee Harris in Aug-2026 to take the RB2 snaps. Was 0.82,
+                                     #   which still had him RB8 off an 8-game rookie sample (15.7 PPG) —
+                                     #   ESPN has him 56th overall, an RB2 rather than a back-end RB1
     "Jaxon Smith-Njigba":    1.18,   # Target share trending past Lockett/Metcalf
     "Bucky Irving":          1.18,   # Mayfield offense leans on dual-threat RB
     "George Pickens":        1.10,   # Dak elevates target quality vs PIT
@@ -423,24 +430,36 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Malik Nabers":          0.95,   # Was 0.85 on a "no target date" report; he is now in 11-on-11 at full speed
                                      #   and NYG expect him Wk1 — small haircut left for the non-contact ramp
     # ── Committee / role demotions (0.70–0.85) ─────────────────────────────
-    "Tyrone Tracy Jr.":      0.62,   # NYG RB2 behind a healthy Skattebo; 2025 volume was inflated by Skattebo's
-                                     #   injury (he played 8 games). Was 0.75, which still left Tracy RB26 —
-                                     #   ahead of every clear starter's backup and inside ESPN's RB50, where
-                                     #   they do not rank him at all. 0.62 lands him ~RB36: no longer a
-                                     #   featured back, but the top handcuff on a backfield that already
-                                     #   broke once, so not cut to the floor either
+    "Tyrone Tracy Jr.":      0.30,   # NYG RB4. Was 0.62 for "top handcuff", which the Aug-2026 preseason
+                                     #   erased: he missed a pass-pro assignment vs MIN, fumbled untouched
+                                     #   vs MIA, and NYG then signed Najee Harris — the refreshed depth
+                                     #   chart has him fourth, behind Skattebo, Harris and Singletary. He
+                                     #   is not even the handcuff any more, so the 2025 line (160.8 pts,
+                                     #   all of it earned while Skattebo was hurt) describes a role that no
+                                     #   longer exists. ESPN projects ~45 points and does not rank him
     "David Montgomery":      1.50,   # HOU lead back. The engine had him RB46 / Rd 15 — below Woody Marks,
                                      #   the RB2 listed under him — because his 2025 line was a DET committee
                                      #   split with Gibbs and HOU carries a weaker rushing tier than DET, so
                                      #   correcting the team actually pushed him further down. Neither effect
                                      #   knows he inherited the job. Sized to ESPN's RB24
+    "Bhayshul Tuten":        1.40,   # JAX lead back — same failure as Montgomery. His only NFL season was a
+                                     #   15-game rookie committee (88.6 pts) behind Travis Etienne, who is
+                                     #   gone; the depth chart now lists Tuten first with Chris Rodriguez Jr.
+                                     #   as the change-of-pace. Scoring the old role left him RB37 against a
+                                     #   consensus RB25. Sized to ESPN's 62nd overall
+    "Chuba Hubbard":         1.18,   # CAR RB1 on the depth chart, but graded RB44 — behind backups on teams
+                                     #   with clearer starters — because 2025 was a 15-game split and CAR
+                                     #   carries a weak rushing tier that discounts him twice. Jonathon
+                                     #   Brooks (0 games, second ACL) is the RB2, so the job is Hubbard's
+                                     #   until proven otherwise. Sized to ESPN's 101st overall
     # ── 2026 top-150 audit: same-team committee / role cuts ────────────────
     "Travis Etienne":        1.10,   # Was 0.95 for a pure NO committee; Kamara's Aug-19 MCL sprain (4-6 wks) hands
                                      #   him the lead-back reps through at least the opening month
     "Alvin Kamara":          0.85,   # NO true committee split w/ Etienne — age-31 decline also applies via age curve
     "RJ Harvey":             0.72,   # DEN RB committee (Dobbins/Estime); early-down/passing split
     "Rhamondre Stevenson":   0.85,   # NE committee w/ Henderson; goal-line + volume not guaranteed
-    "Kyle Monangai":         0.80,   # CHI RB2 behind Swift; spot starter only
+    "Kyle Monangai":         0.95,   # CHI RB2, but 0.80 for a "spot starter only" understates a Ben Johnson
+                                     #   split — he handles the early-down work and is going around RB34
     "Parker Washington":     0.82,   # JAX WR3 behind Thomas/Hunter target hierarchy
     "Juwan Johnson":         0.85,   # NO TE sharing with rookie Delp; TD-dependent
     "Woody Marks":           0.68,   # HOU RB2. Was 0.78 for a "committee behind Mixon" that no longer
@@ -519,8 +538,13 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
     "Kenneth Gainwell":      0.80,   # TB pass-down back behind Irving. Was 0.55, written when ESPN had him ~RB101;
                                      #   the Aug-19 list has him RB31 and his 2025 (17 g, 13.0 PPG) was a real breakout
     "Javonte Williams":      0.80,   # Model RB6 vs ESPN 41 — largest unsupported RB spike on the board
-    "D'Andre Swift":         1.00,   # Was 0.85 for the Monangai committee; Monangai's hyperextended knee (multiple
-                                     #   weeks, Wk1 in doubt) gives Swift the early-season workload back
+    "D'Andre Swift":         0.88,   # Was 1.00, granted only because Monangai's hyperextended knee put his Wk1
+                                     #   in doubt. That has expired — Monangai is back at RB2 and being drafted
+                                     #   around RB34 as a sleeper — so the reason for the boost is gone. Ben
+                                     #   Johnson ran a true split in DET (Gibbs/Montgomery) and reporting points
+                                     #   to nearer 50-50 here, which the model's RB10 slot does not price. Not
+                                     #   back to 0.85: Swift's 2025 (257 touches, 1,386 yards) was his best year
+                                     #   and the market may be over-correcting. Sized between the two views
     "Ashton Jeanty":         1.15,   # Consensus RB6-7 vs model RB13; market is buying the Year-2 breakout
     # ── WR ─────────────────────────────────────────────────────────────────
     "Stefon Diggs":          0.85,   # WAS WR2 opposite McLaurin; real target volume, but Daniels is run-first and he has zero camp ramp
