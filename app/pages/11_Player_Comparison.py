@@ -13,7 +13,8 @@ import plotly.graph_objects as go
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
 from utils.data_loader import (
-    load_weekly, load_teams, get_logo, get_base_dir, _file_mtime, _normalize_name,
+    load_weekly, load_teams, load_headshots, get_logo, get_base_dir,
+    _file_mtime, _normalize_name,
 )
 from utils.nav import render_sidebar_nav, render_last_updated
 
@@ -442,6 +443,8 @@ _weekly_mtime = _file_mtime(get_base_dir() / "data" / "raw" / "weekly.csv")
 board = _load_board(str(board_path), _file_mtime(board_path))
 last = _last_season_stats(sel_scoring, _weekly_mtime)
 tmeta = _team_meta(_file_mtime(get_base_dir() / "data" / "raw" / "teams.csv"))
+_CUR_HEADSHOTS = load_headshots(
+    _mtime=_file_mtime(get_base_dir() / "data" / "raw" / "headshots.csv"))
 
 data = board.merge(
     last.drop(columns=["player", "position"], errors="ignore"), on="name_key", how="left"
@@ -650,8 +653,11 @@ def _side_html(row, color, side_cls) -> str:
     pos = str(row["pos"])
     meta = tmeta.get(team, {"name": team, "div": "", "logo": ""})
 
-    shot = _text(row.get("headshot"))
-    if shot.startswith("http"):
+    # Current-season picture first: it has rookies (who have no weekly rows at
+    # all, so no "headshot" to carry) and shows everyone in this year's uniform.
+    # The weekly value is the fallback for players off every current roster.
+    shot = _CUR_HEADSHOTS.get(_normalize_name(name)) or _text(row.get("headshot"))
+    if str(shot).startswith("http"):
         face = f'<img src="{shot}" alt="">'
     else:
         initials = "".join(p[0] for p in name.split()[:2]).upper()

@@ -117,6 +117,29 @@ def load_preseason_rankings() -> pd.DataFrame:
     return df
 
 
+@st.cache_data(show_spinner=False)
+def load_headshots(_mtime: float = 0.0) -> dict:
+    """Map normalized player name → current-season headshot URL.
+
+    weekly.csv carries a headshot per game row, but it only runs through the last
+    completed season, so reading it gives every player the picture attached to his
+    most recent game: last year's uniform for anyone who moved in the offseason,
+    and nothing at all for rookies who have not played. data/raw/headshots.csv is
+    keyed to the current season and fixes both — refresh it with
+    scripts/update_2026_data.py.
+
+    Returns {} if the file is missing so callers can fall back to weekly.csv.
+    """
+    path = get_base_dir() / "data" / "raw" / "headshots.csv"
+    if not path.exists():
+        return {}
+    df = pd.read_csv(path)
+    if df.empty or not {"player_name", "headshot_url"} <= set(df.columns):
+        return {}
+    df = df.dropna(subset=["player_name", "headshot_url"])
+    return dict(zip(df["player_name"].map(_normalize_name), df["headshot_url"]))
+
+
 @st.cache_data(show_spinner=False)  # mtime arg handles invalidation
 def load_depth_charts(_mtime: float = 0.0) -> pd.DataFrame:
     """Load depth charts from local cache or nflverse GitHub releases.

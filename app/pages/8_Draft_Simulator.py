@@ -12,7 +12,8 @@ import numpy as np
 
 from utils.styles import NFL_CSS
 from utils.nav import render_sidebar_nav, render_last_updated
-from utils.data_loader import load_teams, load_weekly, get_logo, get_base_dir, _file_mtime
+from utils.data_loader import (load_teams, load_weekly, load_headshots, get_logo,
+                               get_base_dir, _file_mtime, _normalize_name)
 from utils.espn_league import espn_configured, load_league, draft_setup
 from utils.tables import UNRANKED_MARK, rank_display
 
@@ -78,17 +79,22 @@ def _bye_weeks() -> dict:
 
 @st.cache_data(show_spinner=False)
 def _headshots() -> dict:
-    """Map player_display_name → most recent headshot_url (from weekly.csv).
+    """Map normalized player name → headshot_url.
 
-    Rookies with no NFL games yet simply won't have an entry — the image
-    column just renders blank for them.
+    Prefers the current-season roster pull (data/raw/headshots.csv), which has
+    rookies and shows everyone in the uniform he actually plays in this year.
+    weekly.csv fills the gaps for players with no current roster row — they no
+    longer have a current picture, but the last one is better than a blank.
     """
     _base = get_base_dir()
     wk = load_weekly(_mtime=_file_mtime(_base / "data" / "raw" / "weekly.csv"))
-    if wk.empty or "headshot_url" not in wk.columns:
-        return {}
-    wk = wk.sort_values(["season", "week"])
-    return wk.groupby("player_display_name")["headshot_url"].last().dropna().to_dict()
+    out = {}
+    if not wk.empty and "headshot_url" in wk.columns:
+        wk = wk.sort_values(["season", "week"])
+        out = {_normalize_name(k): v for k, v in
+               wk.groupby("player_display_name")["headshot_url"].last().dropna().items()}
+    out.update(load_headshots(_mtime=_file_mtime(_base / "data" / "raw" / "headshots.csv")))
+    return out
 
 
 @st.cache_data(show_spinner=False)
@@ -895,7 +901,7 @@ def _roster_row(slot_name: str, p: dict | None) -> dict:
                 "Team": "", "Bye": ""}
     return {
         "Slot": slot_name,
-        "Headshot": _HEADSHOTS.get(p["player"], ""),
+        "Headshot": _HEADSHOTS.get(_normalize_name(p["player"]), ""),
         "Player": p["player"],
         "Pos": p["pos"],
         "Team": _TEAM_LOGOS.get(p.get("team_abbr", ""), ""),
@@ -1086,7 +1092,8 @@ with left:
     # filter (or scroll) to reach them.
     show = view[["my_rank", "espn_overall", "player", "pos", "team", "bye", "vor",
                  "predicted_pts", "proj_games", "round_grade"]].copy()
-    show.insert(2, "headshot", view["player"].map(_HEADSHOTS).fillna(""))
+    show.insert(2, "headshot",
+                view["player"].map(_normalize_name).map(_HEADSHOTS).fillna(""))
     show["team"] = view["team"].map(_TEAM_LOGOS).fillna("")
     # ESPN only publishes ~180 overall ranks, so K/DEF and the deep bench land
     # here as NaN, and clicking the header ascending used to bury ESPN #1 under

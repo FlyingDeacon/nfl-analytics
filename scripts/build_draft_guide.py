@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import io
+import re
 import urllib.request
 from pathlib import Path
 
@@ -113,19 +114,36 @@ def _fetch(url: str, tag: str, box: int) -> Path | None:
     return dest
 
 
+def _normalize_name(name: str) -> str:
+    """Match utils.nfl_data_core.normalize_name — suffix/punctuation-insensitive."""
+    name = str(name).lower().strip()
+    name = re.sub(r"\s+(jr\.?|sr\.?|ii|iii|iv)$", "", name)
+    name = re.sub(r"[.\-']", "", name)
+    return re.sub(r"\s+", " ", name).strip()
+
+
 def art_maps() -> tuple[dict, dict]:
     wk = pd.read_csv(
         ROOT / "data" / "raw" / "weekly.csv",
         low_memory=False,
         usecols=["player_display_name", "headshot_url", "season"],
     )
-    shots = (
+    shots = {
+        _normalize_name(k): v for k, v in
         wk.sort_values("season")
         .groupby("player_display_name")["headshot_url"]
         .last()
         .dropna()
-        .to_dict()
-    )
+        .items()
+    }
+    # Current-season roster pull wins: weekly.csv stops at the last completed
+    # season, so on its own the guide prints last year's uniform for anyone who
+    # moved and nothing at all for rookies.
+    cur = ROOT / "data" / "raw" / "headshots.csv"
+    if cur.exists():
+        h = pd.read_csv(cur).dropna(subset=["player_name", "headshot_url"])
+        shots.update(zip(h["player_name"].map(_normalize_name), h["headshot_url"]))
+
     tm = pd.read_csv(ROOT / "data" / "raw" / "teams.csv")
     logos = dict(zip(tm.team_abbr, tm.team_logo_espn))
     return shots, logos
@@ -346,7 +364,7 @@ def player_card(doc, s: dict, badge: str, kind: str, blurb: str, shots, logos) -
     p = cells[0].paragraphs[0]
     p.paragraph_format.space_after = Pt(0)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    url = shots.get(s["name"])
+    url = shots.get(_normalize_name(s["name"]))
     path = _fetch(url, "h", 340) if url else None
     if path:
         p.add_run().add_picture(str(path), width=Emu(658368))

@@ -178,7 +178,43 @@ def update_def_stats() -> None:
           f"{out['player_id'].nunique()} defenders")
 
 
+# ── 4. Headshots ─────────────────────────────────────────────────────────────
+ROSTER_URL = (
+    "https://github.com/nflverse/nflverse-data/releases/download/"
+    f"rosters/roster_{SEASON}.csv"
+)
+
+
+def update_headshots() -> None:
+    """Save current-season headshots keyed by gsis id.
+
+    The app previously read headshot_url straight out of weekly.csv, which only
+    runs through 2025 — so every picture was the last one taken before a player's
+    most recent logged game. Players who changed teams in the offseason showed up
+    in their old uniform, and rookies with no NFL snaps had no picture at all.
+    The roster release is keyed to the current season and carries both.
+    """
+    df = pd.read_csv(ROSTER_URL, low_memory=False)
+    df = df.dropna(subset=["headshot_url", "gsis_id"])
+    # Weekly roster rows: keep each player's latest, which is his current club.
+    if "week" in df.columns:
+        df = df.sort_values("week")
+    out = (df.groupby("gsis_id")
+             .agg(player_name=("full_name", "last"),
+                  team=("team", "last"),
+                  position=("position", "last"),
+                  headshot_url=("headshot_url", "last"))
+             .reset_index())
+    out["team"] = _norm_abbr(out["team"])
+    out["season"] = SEASON
+    out = out[["gsis_id", "season", "player_name", "team", "position", "headshot_url"]]
+    out = out.sort_values("player_name").reset_index(drop=True)
+    out.to_csv(RAW / "headshots.csv", index=False)
+    print(f"headshots.csv: {len(out)} players for {SEASON}")
+
+
 if __name__ == "__main__":
     update_schedule()
     update_def_stats()
     update_depth_chart()
+    update_headshots()

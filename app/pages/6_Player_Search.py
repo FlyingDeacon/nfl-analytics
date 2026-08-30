@@ -6,7 +6,8 @@ import streamlit as st
 import pandas as pd
 
 from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
-from utils.data_loader import load_weekly, load_teams, get_logo
+from utils.data_loader import (load_weekly, load_teams, load_headshots, get_logo,
+                               get_base_dir, _file_mtime, _normalize_name)
 from utils.nav import render_sidebar_nav
 
 st.set_page_config(page_title="Player Search · NFL", page_icon="🔍", layout="wide")
@@ -89,7 +90,13 @@ player_row = player_data_all.iloc[-1]
 player_name = player_row[name_col_detect]
 player_team = player_row[team_col] if team_col else "—"
 player_pos = player_row[pos_col] if pos_col else "—"
-player_pic = player_row.get("headshot_url", "") if "headshot_url" in player_row.index else ""
+# Current-season picture first so a player who changed teams is shown in the
+# uniform he plays in now; the weekly row is the fallback for anyone off a roster.
+player_pic = load_headshots(
+    _mtime=_file_mtime(get_base_dir() / "data" / "raw" / "headshots.csv")
+).get(_normalize_name(player_name), "")
+if not player_pic and "headshot_url" in player_row.index:
+    player_pic = player_row.get("headshot_url", "")
 
 # Get team logo
 team_logo_url = get_logo(player_team, teams)
