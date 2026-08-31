@@ -103,6 +103,10 @@ PEAK_CAP_EXEMPT = {
     "Chig Okonkwo",        # TEN committee TE; now the WAS TE1 inheriting the Ertz targets
     "Kenneth Walker III",  # SEA carries were split with Charbonnet; KC signed him to be the bell cow
     "Bhayshul Tuten",      # rookie year was a committee behind Etienne; now the JAX lead back
+    "Jahmyr Gibbs",        # every career high was set splitting DET carries with David Montgomery,
+                           #   who is in HOU for 2026. The peak prices the committee, not the job.
+    "Matthew Golden",      # rookie year was the GB WR4 at 5.4 PPG behind Doubs/Reed/Watson;
+                           #   Doubs left for NE, so the peak measures a role he no longer has.
 }
 
 # ── Value Over Replacement (VOR) — positional scarcity scoring ───────────────
@@ -425,7 +429,11 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
                                      #   signed Najee Harris in Aug-2026 to take the RB2 snaps. Was 0.82,
                                      #   which still had him RB8 off an 8-game rookie sample (15.7 PPG) —
                                      #   ESPN has him 56th overall, an RB2 rather than a back-end RB1
-    "Jaxon Smith-Njigba":    1.18,   # Target share trending past Lockett/Metcalf
+    "Jaxon Smith-Njigba":    1.00,   # Was 1.18 for "target share trending past Lockett/Metcalf", but
+                                     #   Metcalf was traded to PIT after 2024 and JSN then posted 21.2
+                                     #   PPG as the outright alpha in 2025. The thesis already played
+                                     #   out inside the history the model reads, so the boost was
+                                     #   double-counting it — and PEAK_CAP was silently discarding it.
     "Bucky Irving":          0.86,   # Was 1.18 for "Mayfield offense leans on dual-threat RB" — but that
                                      #   receiving work is exactly what TB signed Gainwell to take. OC Zac
                                      #   Robinson has floated a balanced / hot-hand split with Gainwell as
@@ -436,7 +444,10 @@ PLAYER_MULTIPLIERS: dict[str, float] = {
                                      #   NOTE: PEAK_CAP binds here — his pre-cap rate is 18.74 PPG against a
                                      #   cap of 15.10, so any multiplier above ~0.86 is invisible on the
                                      #   board. 0.86 is the largest value that actually moves him.
-    "George Pickens":        1.10,   # Dak elevates target quality vs PIT
+    "George Pickens":        1.00,   # Was 1.10 for "Dak elevates target quality vs PIT", but he played
+                                     #   2025 in Dallas and went 11.7 -> 17.1 PPG doing it. The Dak
+                                     #   upgrade is already in the data; the boost re-applied a move
+                                     #   that had happened. This is the case PEAK_CAP was built for.
     "Kyle Pitts":            1.00,   # Franchise-tagged then 3-yr/$53M to stay ATL, but QB instability caps him; consensus TE7 vs model TE3
     "Justin Jefferson":      1.20,   # Still a 28.5% target share; model had him WR16 vs consensus WR6 — QB upgrade in MIN
     # ── Veteran decline / age cliffs (0.80–0.92) ───────────────────────────
