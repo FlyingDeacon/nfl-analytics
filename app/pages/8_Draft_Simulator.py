@@ -447,6 +447,16 @@ _DEPTH_TARGET = {"RB": 4, "WR": 5}   # bodies wanted before a position is covere
 # replacements are far worse than WR ones.
 _DEPTH_VALUE  = {"RB": 1.00, "WR": 0.75}
 
+# Waiver-wire baseline. VOR prices a player against league-wide replacement, which
+# quietly assumes you had to draft him. In the back half of a draft that is false:
+# the field never reaches the bottom of the board, so anyone who goes undrafted is
+# free on Tuesday. A bench pick is therefore only worth the gap to the best player
+# at his position who SURVIVES the draft — and a player at or below that line costs
+# a roster spot to buy nothing at all.
+_WIRE_W     = 0.70          # weight on the gap to the wire, in units of the VOR spread
+_WIRE_ROUND = 9             # round from which the wire starts to bite
+_WIRE_POS   = ("QB", "RB", "WR", "TE")   # K/DEF have their own late-round gate
+
 _VONA_W  = 0.65   # weight on scarcity vs raw value. Drafting on pure scarcity
                   # over-corrects and grabs mediocre players from thin
                   # positions, so raw value keeps the larger share.
@@ -721,6 +731,17 @@ def _suggest_pick(slot: int, pool: pd.DataFrame, top_n: int = 3) -> list:
     press = _pos_pressure(full)
     scale = _vor_scale(full)
 
+    # What the waiver wire will still be offering once the draft is over. Reuses
+    # the robots' own selection rule via _survival, but run out to the LAST pick
+    # of the draft rather than to this team's next turn, so a player's survival
+    # probability becomes "does the field ever reach him". Only computed once the
+    # draft is deep enough to matter — early on every position's best survivor is
+    # a genuine starter and the term would be pure noise.
+    wire: dict = {}
+    if cur_round >= _WIRE_ROUND:
+        picks_to_end = max(0, total_picks - int(st.session_state.dr_pick_idx) - 1)
+        wire = _next_turn_replacement(full, _survival(full, picks_to_end))
+
     mine = [p for p in st.session_state.dr_picks if p["team"] == slot]
     qb_teams = {p["team_abbr"] for p in mine if p["pos"] == "QB"}
     catcher_teams = {p["team_abbr"] for p in mine if p["pos"] in ("WR", "TE")}
@@ -778,6 +799,14 @@ def _suggest_pick(slot: int, pool: pd.DataFrame, top_n: int = 3) -> list:
             tgt = _DEPTH_TARGET[pos]
             shortfall = max(0, tgt - c[pos]) / float(tgt)
             s += _DEPTH_W * scale * _DEPTH_VALUE[pos] * shortfall
+
+        # Gap to the wire, for bench bodies only — a starter is worth drafting
+        # even if a comparable name goes undrafted, because you cannot field an
+        # empty slot. Clipped hard on the upside so this stays a late-round
+        # discipline check rather than a second value term competing with VOR.
+        if wire and depth and pos in _WIRE_POS:
+            edge = (float(row["vor"]) - wire.get(pos, 0.0)) / max(scale, 1.0)
+            s += _WIRE_W * scale * float(np.clip(edge, -1.5, 0.5))
 
         # The flat bonuses on top of that encode timing — how soon the slot has
         # to be filled, and how close the league is to running the position dry.
@@ -856,6 +885,12 @@ def _suggest_pick(slot: int, pool: pd.DataFrame, top_n: int = 3) -> list:
                     f"to your weekly lineup"]
         else:
             bits = ["best value left for your bench"]
+        if wire and pos in _WIRE_POS and not open_slot:
+            edge = float(row["vor"]) - wire.get(pos, 0.0)
+            bits.append(
+                f"+{edge:.0f} VOR over the best {pos} likely to go undrafted"
+                if edge > 0 else
+                f"no better than the {pos} you could add off waivers for free")
         if open_slot and press.get(pos, 0.0) > 0.5:
             bits.append(f"{pos} is thinning league-wide — more teams need one "
                         f"than there are startable ones left")
