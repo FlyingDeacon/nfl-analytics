@@ -423,7 +423,16 @@ NEW_HC_PENALTY = {
 # explicit reason — the team tier / HC / age multipliers carry most of the load.
 PLAYER_MULTIPLIERS: dict[str, float] = {
     # ── Breakout boosts (1.08–1.22) ────────────────────────────────────────
-    "Jahmyr Gibbs":         1.22,   # Bell-cow workload after Monty departure
+    "Jahmyr Gibbs":         1.14,   # Was 1.22 for "bell-cow workload after Monty departure", written while
+                                     #   PEAK_CAP was clipping it to ~1.03 — so it was never calibrated against
+                                     #   its real effect. Now that he is PEAK_CAP_EXEMPT the value flows
+                                     #   through unchecked, and 1.22 put him at 26.9 PPG / 401 pts, a
+                                     #   top-three all-time PPR back season. Priced from the touches instead:
+                                     #   in 2025 he out-carried Montgomery 243-159 but out-targeted him 94-29,
+                                     #   so the receiving half of his value — the expensive half — has nowhere
+                                     #   to grow. Only the early-down and goal-line carries transfer, and DET
+                                     #   will sign a body for a share of them. ~55 extra carries at his 5.0 ypc
+                                     #   plus the vacated goal-line work is roughly +14%, not +22%.
     "Cam Skattebo":          0.70,   # NYG lead back, but the committee got worse, not better: his 2025 carry
                                      #   share was 42%, preseason usage did not project a workhorse, and NYG
                                      #   signed Najee Harris in Aug-2026 to take the RB2 snaps. Was 0.82,
