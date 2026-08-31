@@ -162,8 +162,139 @@ def survival_probability(plan: pd.DataFrame) -> float:
     return float(plan["win_prob"].prod()) if not plan.empty else 0.0
 
 
+# Public survivor pools chase the biggest favourite, and they concentrate hard:
+# the most popular pick in a typical week draws roughly a third of the field.
+# Raising the favourite's edge over a coin flip to a power reproduces that shape
+# from win probability alone, which is what lets the planner estimate a pool it
+# cannot see. 3.0 puts the Week 1 chalk near 30%, matching published grids.
+POPULARITY_CONCENTRATION = 3.0
+
+
+def popularity_estimate(win_probs: pd.Series,
+                        concentration: float = POPULARITY_CONCENTRATION) -> pd.Series:
+    """Estimated share of a public pool on each team this week.
+
+    A stand-in for real pick percentages, not a substitute: if you can read the
+    actual numbers off a survivor grid, enter those instead. This only assumes
+    the field piles onto favourites in proportion to how big a favourite they are.
+    """
+    edge = (win_probs - 0.5).clip(lower=0.0) ** concentration
+    total = float(edge.sum())
+    if total <= 0:
+        return pd.Series(1.0 / len(win_probs), index=win_probs.index)
+    return edge / total
+
+
+# Grid resolution for the E[1/(1+X)] integral below. The integrand is a smooth
+# polynomial on [0, 1], so the trapezoid rule converges fast; 2001 points holds
+# the error well under a thousandth of the EV values being compared.
+_EV_GRID = 2001
+
+
+def pick_ev(win_probs: pd.Series, popularity: pd.Series, opponents: pd.Series,
+            pool_size: int = 50) -> pd.Series:
+    """Expected share of the pot for each pick, where 1.00 is the pool average.
+
+    Survival is not the objective in a knockout pool — pot share is. Surviving a
+    week in which most of the field also survived barely advances you, while
+    surviving one that wipes out half the pool is worth far more than the extra
+    risk cost. Both effects live in the denominator: the number of entries you
+    would be splitting the pot with, given your team won.
+
+    That is why an underdog can be the correct pick outright. If the chalk draws
+    40% of the field, the weeks where it loses are exactly the weeks your survival
+    is worth the most, and a lower win probability can more than pay for itself.
+
+    The value of a pick is p_i * E[1/(1 + X_i)], where X_i is the number of OTHER
+    entries that survive the week. Substituting E[1/(1+X)] with 1/(1+E[X]) looks
+    harmless and is not: by Jensen's inequality it understates exactly the
+    scenario a contrarian pick is buying — the week the chalk goes down and the
+    field collapses. Computed that way the tool never recommends anything but the
+    chalk. So take the expectation properly, via
+
+        E[1/(1+X)] = integral of E[t^X] dt over [0, 1].
+
+    The unit that factorises here is the GAME, not the entry. Entries are very
+    far from independent: everyone on one side of a game and everyone on the
+    other are perfectly anti-correlated, and that anti-correlation IS the
+    contrarian edge. If you take the underdog and it wins, every entry on the
+    favourite is eliminated with certainty — the collapse is not a tail scenario
+    you hope for, it is a guarantee that comes attached to the pick. Treating
+    entries as independent prices those backers as surviving at their own win
+    probability and erases the effect completely.
+
+    Games, by contrast, genuinely are independent, and each contributes a
+    two-term generating function
+
+        E[t^(survivors from game A-B)] = p_A * t^(n_A) + p_B * t^(n_B),
+
+    so E[t^X] is a product over games. Your own game is not random once you
+    condition on your team winning: it contributes t^(n_i - 1) exactly, the
+    backers you must share with minus yourself.
+
+    pool_size matters and has no sensible default that suits everyone: in a
+    20-entry pool differentiation is most of the game, while in a 500-entry pool
+    the field is so diluted that the raw win probability nearly always wins.
+    """
+    p = win_probs.astype(float)
+    pop = popularity.reindex(p.index).fillna(0.0).astype(float)
+    opp = opponents.reindex(p.index)
+
+    # Entries per team. Round rather than floor so small shares are not erased,
+    # and keep the total consistent with the pool size the user entered.
+    n = np.maximum(np.round(pop.to_numpy() * max(int(pool_size), 2)), 0.0)
+
+    # Pair the teams into games. Each team keeps a pointer to its game so the
+    # "my own game" factor can be divided back out below.
+    teams = list(p.index)
+    pos = {tm: i for i, tm in enumerate(teams)}
+    game_of = np.full(len(teams), -1, dtype=int)
+    games: list[tuple[int, int | None]] = []
+    for i, tm in enumerate(teams):
+        if game_of[i] >= 0:
+            continue
+        o = opp.iloc[i]
+        j = pos.get(o) if pd.notna(o) else None
+        game_of[i] = len(games)
+        if j is not None and j != i and game_of[j] < 0:
+            game_of[j] = len(games)
+            games.append((i, j))
+        else:
+            games.append((i, None))
+
+    t = np.linspace(0.0, 1.0, _EV_GRID)
+    log_t = np.log(np.clip(t, 1e-300, None))
+    pv = p.to_numpy()
+
+    def _log(x: float) -> float:
+        return float(np.log(max(x, 1e-300)))
+
+    # log E[t^X] for each game, via logaddexp so the two branches can be summed
+    # without leaving log space.
+    log_gf = np.empty((len(games), _EV_GRID))
+    for g, (i, j) in enumerate(games):
+        side_i = _log(pv[i]) + n[i] * log_t
+        # An unpaired team means the opponent is outside this table, so nobody in
+        # the pool is on them: their branch carries t^0 = 1.
+        side_j = (_log(pv[j]) + n[j] * log_t) if j is not None else np.full_like(t, _log(1.0 - pv[i]))
+        log_gf[g] = np.logaddexp(side_i, side_j)
+
+    log_total = log_gf.sum(axis=0)
+    raw = np.empty(len(teams))
+    for i in range(len(teams)):
+        # Swap this team's game out of the product for the conditioned version.
+        log_own = log_total - log_gf[game_of[i]] + np.maximum(n[i] - 1.0, 0.0) * log_t
+        raw[i] = pv[i] * float(np.trapz(np.exp(log_own), t))
+
+    out = pd.Series(raw, index=p.index)
+    # Normalise against the field's own average so 1.00 reads as "no better than
+    # the pool", rather than as an unanchored ratio.
+    baseline = float((pop * out).sum())
+    return out / baseline if baseline > 0 else out
+
+
 def week_options(tw: pd.DataFrame, used_teams: set[str], week: int,
-                 end_week: int = 18) -> pd.DataFrame:
+                 end_week: int = 18, pool_size: int | None = None) -> pd.DataFrame:
     """Every legal pick this week, priced by what it costs the rest of the season.
 
     A team's weekly win probability alone is a trap in survivor: the safest team
@@ -172,6 +303,12 @@ def week_options(tw: pd.DataFrame, used_teams: set[str], week: int,
     week, re-solves the remaining season around that choice, and reports the
     resulting full-season survival. `cost_vs_best` is how much survival you give
     up relative to the unconstrained optimum — the honest price of the pick.
+
+    Passing `pool_size` adds the other half of the picture: `popularity`, the
+    share of the field expected on each team, and `pot_ev`, expected pot share
+    where 1.00 is the pool average. Survival and pot share genuinely disagree
+    sometimes, and neither is a strict improvement on the other, so both are
+    reported rather than folded into one number.
     """
     best = optimal_plan(tw, used_teams, week, end_week)
     best_surv = survival_probability(best)
@@ -191,4 +328,18 @@ def week_options(tw: pd.DataFrame, used_teams: set[str], week: int,
     out = pd.DataFrame(rows)
     if out.empty:
         return out
+
+    if pool_size:
+        # Price the field on the FULL slate, not just our legal picks. The pool's
+        # money does not care which teams this entry has burned, and the EV
+        # integral needs both sides of every game to pair them up correctly.
+        # (It does assume the field has no used-team constraint of its own, which
+        # is why popularity is worth overriding with real grid numbers when you
+        # can read them.)
+        slate = tw[tw["week"] == week].drop_duplicates("team").set_index("team")
+        pop = popularity_estimate(slate["win_prob"])
+        ev = pick_ev(slate["win_prob"], pop, slate["opponent"], pool_size)
+        out["popularity"] = out["team"].map(pop)
+        out["pot_ev"] = out["team"].map(ev)
+
     return out.sort_values(["season_survival", "win_prob"], ascending=False).reset_index(drop=True)

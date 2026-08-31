@@ -47,9 +47,9 @@ def _crest(abbr: str, size: int = 26) -> str:
 
 
 @st.cache_data(show_spinner="Optimising the rest of the season…")
-def _plan(_used: frozenset, _week: int, _key: float):
+def _plan(_used: frozenset, _week: int, _pool: int, _key: float):
     used = set(_used)
-    return optimal_plan(tw, used, _week), week_options(tw, used, _week)
+    return optimal_plan(tw, used, _week), week_options(tw, used, _week, pool_size=_pool)
 
 
 @st.cache_data(show_spinner=False)
@@ -73,9 +73,15 @@ st.info(
     icon="🧠",
 )
 
-_wk_col, _div_col = st.columns([1, 2])
+_wk_col, _pool_col, _div_col = st.columns([1, 1, 2])
 cur_week = _wk_col.number_input("Current week", min_value=1, max_value=18, value=1,
                                 step=1, key="cs_week")
+pool_size = _pool_col.number_input(
+    "Entries in the pool", min_value=2, max_value=1000, value=50, step=1,
+    key="cs_pool",
+    help="Drives the EV column. Pot share is what you are actually playing for, "
+         "and how much being different is worth depends entirely on how many "
+         "people you would be splitting with.")
 diverge = _div_col.toggle(
     "Keep the two entries on different teams", value=True, key="cs_diverge",
     help="Both entries solve the same schedule, so left alone they converge on the "
@@ -98,7 +104,7 @@ for i, (col, label) in enumerate(zip(entries, ("Your entry", "Your wife's entry"
         st.caption(STYLES[i])
         used = st.multiselect("Teams already used", all_teams, default=[],
                               key=f"cs_used_{i}")
-        _, opts = _plan(frozenset(used), int(cur_week), _TW_KEY)
+        _, opts = _plan(frozenset(used), int(cur_week), int(pool_size), _TW_KEY)
         if diverge and taken is not None:
             opts = opts[opts["team"] != taken].reset_index(drop=True)
         if opts.empty:
@@ -131,7 +137,9 @@ for i, (col, label) in enumerate(zip(entries, ("Your entry", "Your wife's entry"
             lambda r: f'{r["team"]} {"vs" if r["is_home"] else "@"} {r["opponent"]}', axis=1)
         show["Win %"] = (show["win_prob"] * 100).round(0).astype(int)
         show["Cost"] = (show["cost_vs_best"] * 100).round(2)
-        st.dataframe(show[["Matchup", "Win %", "Cost"]], hide_index=True,
+        show["Field %"] = (show["popularity"] * 100).round(0).astype(int)
+        show["EV"] = show["pot_ev"].round(2)
+        st.dataframe(show[["Matchup", "Win %", "Cost", "Field %", "EV"]], hide_index=True,
                      use_container_width=True,
                      column_config={
                          "Win %": st.column_config.NumberColumn(
@@ -140,7 +148,34 @@ for i, (col, label) in enumerate(zip(entries, ("Your entry", "Your wife's entry"
                              "Cost", format="%.2f",
                              help="Season survival given up versus the optimal pick, "
                                   "in percentage points. 0.00 is the optimum."),
+                         "Field %": st.column_config.NumberColumn(
+                             "Field %", format="%d%%",
+                             help="Estimated share of the pool on this team. Modelled "
+                                  "from the win probability, not read off a real grid."),
+                         "EV": st.column_config.NumberColumn(
+                             "EV", format="%.2f",
+                             help="Expected share of the pot, where 1.00 is the pool "
+                                  "average. Above 1.00 means you gain ground on the "
+                                  "field in the weeks you survive."),
                      })
+
+        # Survival and pot share can disagree, and when they do it is worth
+        # saying out loud rather than burying in a column — but it is a judgement
+        # call about how much variance you want, so it is surfaced, not obeyed.
+        # Only when the edge is real: the EV leader is often ahead by less than a
+        # rounding step, and trading eight points of win probability for 0.6% of
+        # the pot is not a decision worth putting in front of anyone.
+        EV_EDGE_MIN = 0.02
+        ev_best = opts.loc[opts["pot_ev"].idxmax()]
+        if (ev_best["team"] != best["team"]
+                and ev_best["pot_ev"] - best["pot_ev"] >= EV_EDGE_MIN):
+            st.caption(
+                f'⚖️ Highest **EV** this week is **{ev_best["team"]}** '
+                f'({ev_best["pot_ev"]:.2f} vs {best["pot_ev"]:.2f}) — only '
+                f'{ev_best["win_prob"]:.0%} to win, but just '
+                f'{ev_best["popularity"]:.0%} of the field is on it, so it gains '
+                f'the most ground when it hits. The pick above is still the '
+                f'survival-maximising one.')
 
         with st.expander(f"Full plan to Week 18 ({survival_probability(plan_df):.1%} to run the table)"):
             p = plan_df.copy()
