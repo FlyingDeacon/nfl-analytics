@@ -486,7 +486,27 @@ _TIER_MIN_GAP  = 6.0 # VOR points — the smallest gap that may start a new tier
 # reaching* — taking your first QB or TE well before its window — so a genuinely
 # elite player (huge VOR) can still beat the penalty, but the engine won't burn
 # a premium pick on a replaceable starter at a scarce single-slot position.
-_REACH_ROUND = {"QB": 4, "TE": 3}   # earliest round to prioritize QB1 / TE1
+# QB moved 4 -> 6 after scoring two completed drafts against the board. QB VOR
+# tops out at +39 (Allen) against +110 at TE and +212 at RB, so raw VOR already
+# holds quarterbacks down and the round-4 gate was mostly redundant; the cliff
+# that actually matters is at ~QB15 (QB1->QB12 is 2.3 pts/wk, QB12->QB24 is 54
+# points), and the open-slot bonus is what catches that. Mock-drafting all 11
+# slots, the change is worth +11 VOR from the one seat where the old gate let a
+# round-5 QB through, and changes nothing anywhere else.
+#
+# Two companion changes were tried at the same time and both lost, so the numbers
+# above are the whole of it:
+#   • TE 3 -> 2, on the theory that an elite TE1 was the most repeatable edge in
+#     both drafts. It only ever fired once, at slot 10, where it pulled Bowers
+#     into round 1 ahead of a better WR and cost 15 VOR. TE VOR is already high
+#     enough to beat the round-3 gate on its own when the tight end is worth it.
+#   • an "anchor" bonus pushing toward the first RB once round 3 passed with the
+#     room still empty, since both drafts reached round 4 with no backs. Arriving
+#     at RB in round 4 turns out to be what the board wants: at a weight small
+#     enough not to distort anything it never moved a pick, and sized up until it
+#     did it cost 22 VOR. The RB shortfall in those drafts came from the endgame
+#     picks, which is the wire baseline's job rather than a round gate's.
+_REACH_ROUND = {"QB": 6, "TE": 3}   # earliest round to prioritize QB1 / TE1
 
 
 def _vor_scale(avail: pd.DataFrame) -> float:
@@ -711,6 +731,13 @@ def _suggest_pick(slot: int, pool: pd.DataFrame, top_n: int = 3) -> list:
     # starting slots still unfilled. Having every skill STARTER in place is not
     # reason enough on its own — bench depth at RB/WR is worth far more than a
     # kicker taken six rounds early, and the kicker will still be there.
+    #
+    # That one pick of slack is load-bearing, and was removed and restored after
+    # measuring it. Deferring K/DEF to the literal last two picks was worth 14-29
+    # points WORSE across every slot and format tried: the best kickers and
+    # defenses do go in the closing rounds (#1 to #12 is a 24-point spread at
+    # both), and what the extra round buys instead is a bench body who mostly
+    # never starts. K and DEF start every week; the trade is not close.
     kdef_time = picks_left <= st_["starters_left"] + 1
 
     # Spare picks between here and an all-starters endgame. `force` is a cliff —
