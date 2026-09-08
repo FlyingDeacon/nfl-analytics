@@ -1,8 +1,11 @@
 """Survivor-pool planning for the CHOPPED league.
 
 CHOPPED is a knockout pool: each week you name one team to win straight up, a
-team can be used only ONCE all season, and one wrong pick (the mulligan) is
-forgiven. Last entrant standing takes the pot.
+team can be used only ONCE all season, and a pick that loses ends your season.
+Nothing forgives a losing pick — the league's one safety net (the Goofball
+Compassion Clause) covers a pick you forgot to submit, and only through Week 5,
+by defaulting you to the home team of that week's last game. Last entrant
+standing takes the pot.
 
 The "use each team once" rule is what makes this more than a weekly win
 probability lookup. Spending the best team on the board in Week 1 buys a ~92%
@@ -16,6 +19,8 @@ the product of independent weekly wins. scipy's Hungarian solver finds the exact
 optimum in milliseconds, so the plan can be recomputed on every interaction.
 """
 from __future__ import annotations
+
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -37,6 +42,10 @@ P_FLOOR, P_CEIL = 0.03, 0.97
 # A large finite number rather than inf: the Hungarian solver needs a real
 # matrix, and inf propagates into NaN.
 INFEASIBLE = 1e6
+
+# np.trapz was renamed in NumPy 2.0 and the old spelling is on its way out.
+# requirements.txt allows numpy>=1.26, so the deploy can land on either.
+_trapezoid = getattr(np, "trapezoid", None) or np.trapz
 
 
 def _moneyline_to_prob(ml: pd.Series) -> pd.Series:
@@ -158,7 +167,7 @@ def optimal_plan(tw: pd.DataFrame, used_teams: set[str], start_week: int,
 
 
 def survival_probability(plan: pd.DataFrame) -> float:
-    """Chance of winning every week in the plan (no mulligan)."""
+    """Chance of winning every week in the plan."""
     return float(plan["win_prob"].prod()) if not plan.empty else 0.0
 
 
@@ -284,7 +293,7 @@ def pick_ev(win_probs: pd.Series, popularity: pd.Series, opponents: pd.Series,
     for i in range(len(teams)):
         # Swap this team's game out of the product for the conditioned version.
         log_own = log_total - log_gf[game_of[i]] + np.maximum(n[i] - 1.0, 0.0) * log_t
-        raw[i] = pv[i] * float(np.trapz(np.exp(log_own), t))
+        raw[i] = pv[i] * float(_trapezoid(np.exp(log_own), t))
 
     out = pd.Series(raw, index=p.index)
     # Normalise against the field's own average so 1.00 reads as "no better than
@@ -343,3 +352,102 @@ def week_options(tw: pd.DataFrame, used_teams: set[str], week: int,
         out["pot_ev"] = out["team"].map(ev)
 
     return out.sort_values(["season_survival", "win_prob"], ascending=False).reset_index(drop=True)
+
+
+# ── Season state ─────────────────────────────────────────────────────────────
+# Everything above prices hypothetical futures. The rest of this module answers
+# "where are we actually", which is what turns the planner into something usable
+# in Week 9 rather than only on draft night: which week is live, when the pick is
+# due, and whether the picks already made won or lost.
+
+_LEAGUE_TZ = ZoneInfo("America/New_York")
+
+
+def _regular_season(schedule: pd.DataFrame, season: int = 2026) -> pd.DataFrame:
+    return schedule[(schedule["season"] == season)
+                    & (schedule["game_type"] == "REG")].copy()
+
+
+def _kickoffs(games: pd.DataFrame) -> pd.Series:
+    """Kickoff timestamps, falling back to midnight when gametime is missing."""
+    day = pd.to_datetime(games["gameday"], errors="coerce")
+    if "gametime" not in games.columns:
+        return day
+    clock = pd.to_timedelta(games["gametime"].astype(str) + ":00", errors="coerce")
+    return day + clock.fillna(pd.Timedelta(0))
+
+
+def current_week(schedule: pd.DataFrame, today=None, season: int = 2026) -> int:
+    """The week the pool is picking right now.
+
+    A week stays current until its last game has been played, not until its
+    first: on a Sunday you are still in the week whose Thursday game is already
+    over. Past the end of the schedule it pins to 18 rather than running off.
+    """
+    games = _regular_season(schedule, season)
+    if games.empty:
+        return 1
+    # Eastern, not the server's clock: Streamlit Cloud runs in UTC, where a
+    # Monday night game is already Tuesday and the week would tick over while
+    # the last game of it is still being played.
+    today = (pd.Timestamp(today) if today is not None
+             else pd.Timestamp.now(tz=_LEAGUE_TZ).normalize().tz_localize(None))
+    last = pd.to_datetime(games["gameday"], errors="coerce").groupby(games["week"]).max()
+    live = last[last >= today]
+    return int(live.index.min()) if not live.empty else int(last.index.max())
+
+
+def week_deadline(schedule: pd.DataFrame, week: int, season: int = 2026):
+    """First kickoff of the week — the moment a pick has to be in by."""
+    games = _regular_season(schedule, season)
+    games = games[games["week"] == week]
+    if games.empty:
+        return None
+    return _kickoffs(games).min()
+
+
+def compassion_default(schedule: pd.DataFrame, week: int, season: int = 2026):
+    """Home team of the week's last game — what a missed pick defaults to.
+
+    Worth showing rather than leaving in the rulebook: it is the only pick the
+    league will make for you, and it is usually not one you would have chosen.
+    """
+    games = _regular_season(schedule, season)
+    games = games[games["week"] == week]
+    if games.empty:
+        return None
+    return str(games.loc[_kickoffs(games).idxmax(), "home_team"])
+
+
+def grade_picks(picks: pd.DataFrame, schedule: pd.DataFrame,
+                season: int = 2026) -> pd.DataFrame:
+    """Attach the real-world outcome to each logged pick.
+
+    Results are derived from the schedule rather than stored alongside the pick,
+    so the log only ever holds a human decision and can never disagree with what
+    happened on the field. League rule: a tie counts as a win, so the comparison
+    is >= and not >.
+
+    Adds opponent / is_home / points / opp_points / result, where result is
+    win, loss, or pending for a game that has not been played (or scored) yet.
+    """
+    cols = ["week", "entry", "team", "opponent", "is_home",
+            "points", "opp_points", "result"]
+    if picks.empty:
+        return pd.DataFrame(columns=cols)
+
+    games = _regular_season(schedule, season)[
+        ["week", "home_team", "away_team", "home_score", "away_score"]]
+    home = games.rename(columns={"home_team": "team", "away_team": "opponent",
+                                 "home_score": "points", "away_score": "opp_points"})
+    home["is_home"] = True
+    away = games.rename(columns={"away_team": "team", "home_team": "opponent",
+                                 "away_score": "points", "home_score": "opp_points"})
+    away["is_home"] = False
+    long = pd.concat([home, away], ignore_index=True)
+
+    out = picks.merge(long, on=["week", "team"], how="left")
+    played = out["points"].notna() & out["opp_points"].notna()
+    out["result"] = np.where(~played, "pending",
+                             np.where(out["points"] >= out["opp_points"], "win", "loss"))
+    return out[cols].sort_values(["week", "entry"]).reset_index(drop=True)

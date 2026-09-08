@@ -262,7 +262,18 @@
       "Bash(MOCK_ANCHOR_W=$W MOCK_TEAMS=11 MOCK_ROUNDS=16 MOCK_SLOT=$S .venv/bin/python /tmp/sweep.py)",
       "Bash(for S in 1 2 3 4 5 6 7 8 9 10 11)",
       "Bash(MOCK_REACH='{\"\"QB\"\": 6, \"\"TE\"\": 3}' MOCK_TEAMS=11 MOCK_ROUNDS=16 MOCK_SLOT=$S .venv/bin/python /tmp/sweep.py)",
-      "Bash(.venv/bin/python -c \"import ast,pathlib;ast.parse\\(pathlib.Path\\(''app/pages/8_Draft_Simulator.py''\\).read_text\\(\\)\\);print\\(''ok''\\)\")"
+      "Bash(.venv/bin/python -c \"import ast,pathlib;ast.parse\\(pathlib.Path\\(''app/pages/8_Draft_Simulator.py''\\).read_text\\(\\)\\);print\\(''ok''\\)\")",
+      "Bash(ls data/derived/big_board_*.parquet)",
+      "Bash(.venv/bin/python /tmp/rank2.py Half_PPR)",
+      "Bash(sed -n '2,25p')",
+      "Bash(.venv/bin/python /tmp/rank2.py Standard)",
+      "Bash(.venv/bin/python /tmp/wk1.py PPR)",
+      "mcp__nfl__nfl_schema",
+      "Bash(grep -rn \"Goofball\\\\|mulligan\\\\|Mulligan\\\\|CHOPPED\" --include=*.py --include=*.md --include=*.txt --include=*.json .)",
+      "Bash(/usr/bin/python3 -c \"import numpy; print\\(numpy.__version__\\); print\\(hasattr\\(numpy,''trapz''\\), hasattr\\(numpy,''trapezoid''\\)\\)\")",
+      "Bash(.venv/bin/python -m py_compile app/pages/13_Chopped_Survivor.py app/utils/survivor.py app/utils/chopped_log.py)",
+      "Bash(.venv/bin/python -c \"import pypdf; print\\(''''pypdf'''', pypdf.__version__\\)\")",
+      "Bash(.venv/bin/python -c \"import fitz; print\\(''''fitz ok''''\\)\")"
     ]
   }
 }
