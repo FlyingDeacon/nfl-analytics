@@ -22,39 +22,33 @@ st.markdown(NFL_CSS, unsafe_allow_html=True)
 
 # The three summary cards carry text of wildly different lengths ("2 of 2" next to
 # a two-sentence Compassion Clause note), so left alone they end at three different
-# heights. Streamlit already stretches the columns themselves to the tallest one —
-# it is only the card inside that shrinks to its content, so growing the card to
-# fill the slot is enough. Done in CSS rather than with a hard-coded min-height so
-# it still holds when the text wraps to more lines on a narrow screen.
+# heights.
 #
-# Scoped to `.cs-fill` so this cannot reach the stat-cards on the other eight pages
-# that share the class.
+# They are laid out as a single CSS grid rather than as three st.columns. Going
+# through Streamlit's columns means the card only fills its slot if a percentage
+# height resolves through four nested Streamlit wrappers, and whether a stretched
+# flex item counts as a definite height for that purpose is exactly the sort of
+# thing engines disagree on — it measured dead even in Chromium while still
+# rendering ragged in Safari. A grid row stretches its items by default, with no
+# height chain to resolve, so the three stay equal everywhere. It also sidesteps
+# the 320px min-width Streamlit puts on every column, which used to wrap the row
+# 2-then-1 and leave the third card full-width and short.
 st.markdown("""
 <style>
-[data-testid="stElementContainer"]:has(.cs-fill) { height: 100%; }
-[data-testid="stElementContainer"]:has(.cs-fill) [data-testid="stMarkdown"],
-[data-testid="stElementContainer"]:has(.cs-fill) [data-testid="stMarkdownContainer"] {
-    height: 100%;
+.cs-band {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 6px;
 }
-.stat-card.cs-fill {
-    height: 100%;
+.cs-band .stat-card {
+    margin: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin: 0;
 }
-/* Streamlit gives every column a 320px min-width before it wraps, so on a laptop-
-   width window three columns wrap 2-then-1: the third card lands full-width and
-   short instead of matching the square pair above it. Equal height alone can't
-   fix that — a card on its own row is a different shape no matter how tall it
-   is. Forcing this specific row to stay in one line (and letting the columns
-   shrink instead of wrap) keeps all three the same shape at any window width. */
-div[data-testid="stHorizontalBlock"]:has(.cs-fill) {
-    flex-wrap: nowrap !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.cs-fill) > div[data-testid="stColumn"] {
-    min-width: 0 !important;
-    flex: 1 1 0 !important;
+@media (max-width: 640px) {
+    .cs-band { grid-template-columns: 1fr; }
 }
 /* The two pick cards sit above a stack of controls, so they cannot be grown to
    the column height the way the summary cards are — they would swallow the page.
@@ -287,21 +281,19 @@ _mull = ", ".join(f"{s['name']}: " + ("mulligan intact" if s["mulligan"]
                                       else f"used Wk {s['mulligan_week']}")
                   for s in state.values())
 
-b1, b2, b3 = st.columns(3)
-b1.markdown(
-    f'<div class="stat-card cs-fill"><div class="label">Picking</div>'
+st.markdown(
+    f'<div class="cs-band">'
+    f'<div class="stat-card"><div class="label">Picking</div>'
     f'<div class="value">Week {cur_week} of {LAST_WEEK}</div>'
     f'<div class="sub">First kickoff {_clock(first_kick)} — but each pick is due '
-    f'only at its own team\'s kickoff</div></div>', unsafe_allow_html=True)
-b2.markdown(
-    f'<div class="stat-card cs-fill"><div class="label">Still alive</div>'
+    f'only at its own team\'s kickoff</div></div>'
+    f'<div class="stat-card"><div class="label">Still alive</div>'
     f'<div class="value">{len(alive)} of {len(ENTRIES)}</div>'
-    f'<div class="sub">{_mull or "both entries are out"}</div></div>',
-    unsafe_allow_html=True)
-b3.markdown(
-    f'<div class="stat-card cs-fill"><div class="label">If you forget to pick</div>'
+    f'<div class="sub">{_mull or "both entries are out"}</div></div>'
+    f'<div class="stat-card"><div class="label">If you forget to pick</div>'
     f'<div class="value">{_miss_value}</div>'
-    f'<div class="sub">{_miss_sub}</div></div>', unsafe_allow_html=True)
+    f'<div class="sub">{_miss_sub}</div></div>'
+    f'</div>', unsafe_allow_html=True)
 
 st.warning(
     f"**Locking a pick here does not enter it.** Email the team to "
