@@ -20,6 +20,45 @@ from utils.gate import require_passcode
 st.set_page_config(page_title="CHOPPED Survivor · NFL", page_icon="🔪", layout="wide")
 st.markdown(NFL_CSS, unsafe_allow_html=True)
 
+# The three summary cards carry text of wildly different lengths ("2 of 2" next to
+# a two-sentence Compassion Clause note), so left alone they end at three different
+# heights. Streamlit already stretches the columns themselves to the tallest one —
+# it is only the card inside that shrinks to its content, so growing the card to
+# fill the slot is enough. Done in CSS rather than with a hard-coded min-height so
+# it still holds when the text wraps to more lines on a narrow screen.
+#
+# Scoped to `.cs-fill` so this cannot reach the stat-cards on the other eight pages
+# that share the class.
+st.markdown("""
+<style>
+[data-testid="stElementContainer"]:has(.cs-fill) { height: 100%; }
+[data-testid="stElementContainer"]:has(.cs-fill) [data-testid="stMarkdown"],
+[data-testid="stElementContainer"]:has(.cs-fill) [data-testid="stMarkdownContainer"] {
+    height: 100%;
+}
+.stat-card.cs-fill {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0;
+}
+/* The two pick cards sit above a stack of controls, so they cannot be grown to
+   the column height the way the summary cards are — they would swallow the page.
+   They are instead given a floor tall enough for the tallest of the three states
+   they come in (recommended with two reasons, locked with a score, chopped), in
+   rem so it tracks the font size. */
+.stat-card.cs-pick {
+    min-height: 10rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16px 12px;
+    margin: 0 0 6px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 require_passcode("CHOPPED Survivor")
 
 render_sidebar_nav(current_page="13_Chopped_Survivor")
@@ -237,17 +276,17 @@ _mull = ", ".join(f"{s['name']}: " + ("mulligan intact" if s["mulligan"]
 
 b1, b2, b3 = st.columns(3)
 b1.markdown(
-    f'<div class="stat-card"><div class="label">Picking</div>'
+    f'<div class="stat-card cs-fill"><div class="label">Picking</div>'
     f'<div class="value">Week {cur_week} of {LAST_WEEK}</div>'
     f'<div class="sub">First kickoff {_clock(first_kick)} — but each pick is due '
     f'only at its own team\'s kickoff</div></div>', unsafe_allow_html=True)
 b2.markdown(
-    f'<div class="stat-card"><div class="label">Still alive</div>'
+    f'<div class="stat-card cs-fill"><div class="label">Still alive</div>'
     f'<div class="value">{len(alive)} of {len(ENTRIES)}</div>'
     f'<div class="sub">{_mull or "both entries are out"}</div></div>',
     unsafe_allow_html=True)
 b3.markdown(
-    f'<div class="stat-card"><div class="label">If you forget to pick</div>'
+    f'<div class="stat-card cs-fill"><div class="label">If you forget to pick</div>'
     f'<div class="value">{_miss_value}</div>'
     f'<div class="sub">{_miss_sub}</div></div>', unsafe_allow_html=True)
 
@@ -341,7 +380,7 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
                      if lk["result"] != "pending" else
                      f'{"vs" if lk["is_home"] else "@"} {lk["opponent"]}')
             st.markdown(
-                f'<div class="stat-card" style="padding:16px 12px;">'
+                f'<div class="stat-card cs-pick">'
                 f'<div class="label">Locked · Week {cur_week}</div>'
                 f'<div style="font-size:1.8rem;font-weight:800;margin:6px 0 2px;">'
                 f'{_crest(lk["team"], 34)} {lk["team"]} {icon}</div>'
@@ -382,16 +421,24 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
 
         # Say out loud why this is not simply the safest team on the board,
         # whenever it isn't — an unexplained 74% next to a 82% reads as a bug.
-        _why = []
-        if mode == "aggressive" and "pot_ev" in opts.columns:
-            _why.append(f'{best["pot_ev"]:.2f} claim on the pot · only '
-                        f'{best["popularity"]:.0%} of the field is on it')
-        if best["cost_vs_best"] > 0:
-            _why.append(f'costs {best["cost_vs_best"]:.2%} of season survival')
-        _toll = (f'<div class="sub" style="margin-top:4px;">{" · ".join(_why)}</div>'
-                 if _why else "")
+        #
+        # Both cards always carry exactly two facts, so the two boxes come out the
+        # same height and the controls underneath them line up. The safe entry
+        # solves first and so is almost always sitting on the season optimum at
+        # zero cost; without a second fact of its own its card was permanently a
+        # line shorter than the aggressive one.
+        _cost = (f'costs {best["cost_vs_best"]:.2%} of the season'
+                 if best["cost_vs_best"] > 0 else "no cost to the season plan")
+        if "pot_ev" not in opts.columns:
+            _why = [_cost]
+        elif mode == "aggressive":
+            _why = [f'{best["pot_ev"]:.2f} claim on the pot',
+                    f'only {best["popularity"]:.0%} of the field is on it']
+        else:
+            _why = [f'{best["popularity"]:.0%} of the field is on it', _cost]
+        _toll = f'<div class="sub" style="margin-top:4px;">{" · ".join(_why)}</div>'
         st.markdown(
-            f'<div class="stat-card" style="padding:16px 12px;">'
+            f'<div class="stat-card cs-pick">'
             f'<div class="label">Recommended · Week {cur_week}</div>'
             f'<div style="font-size:1.8rem;font-weight:800;margin:6px 0 2px;">'
             f'{_crest(best["team"], 34)} {best["team"]}</div>'
@@ -414,9 +461,11 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
                   if int(w) > cur_week}
         _held = [(r["team"], _later[r["team"]]) for _, r in opts.iterrows()
                  if r["team"] in _later and r["win_prob"] > best["win_prob"]]
-        if _held:
-            st.caption("🔒 Held back: " + " · ".join(
-                f"**{t}** for Wk {w}" for t, w in _held[:4]))
+        # Always printed, even when nothing is being saved, so one entry's held-back
+        # note does not shove that entry's controls a line lower than the other's.
+        st.caption("🔒 Held back: " + " · ".join(f"**{t}** for Wk {w}"
+                                                 for t, w in _held[:4]) if _held
+                   else "🔓 Nothing stronger is being saved — this is the top team left.")
 
         # The recommendation is a recommendation, not a lock — the selectbox
         # defaults to it but lets a gut call be recorded, because a pick made in
