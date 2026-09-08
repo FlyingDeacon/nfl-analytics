@@ -60,7 +60,7 @@ st.markdown("""
     <div class="icon">🔪</div>
     <div>
         <div class="title">CHOPPED Survivor</div>
-        <div class="subtitle">One pick a week · no team twice · a loss ends your season · last entrant takes the pot</div>
+        <div class="subtitle">One pick a week · no team twice · one mulligan · winner takes the whole pot</div>
     </div>
 </div>
 <div class="gold-rule"></div>
@@ -166,6 +166,9 @@ for eid, name, *_ in ENTRIES:
     mine = graded[graded["entry"] == eid].sort_values("week")
     lost = mine[mine["result"] == "loss"]
     this_week = mine[mine["week"] == cur_week]
+    # One loss is survivable — the mulligan is a do-over after your FIRST failure.
+    # The second one is what chops you, so elimination is keyed on losses[1] and
+    # a single loss only spends the do-over.
     state[eid] = {
         "name": name,
         "history": mine,
@@ -173,45 +176,70 @@ for eid, name, *_ in ENTRIES:
         # Teams unavailable when solving THIS week: everything already spent in
         # some other week. The current week's own pick is not a constraint on it.
         "spent_elsewhere": frozenset(mine[mine["week"] != cur_week]["team"]),
-        "out_week": int(lost["week"].min()) if not lost.empty else None,
+        "mulligan_week": int(lost["week"].iloc[0]) if len(lost) >= 1 else None,
+        "out_week": int(lost["week"].iloc[1]) if len(lost) >= 2 else None,
         "locked": this_week.iloc[0] if not this_week.empty else None,
     }
+    state[eid]["mulligan"] = state[eid]["mulligan_week"] is None
 
 alive = [s for s in state.values()
          if s["out_week"] is None or s["out_week"] >= cur_week]
 
 # ── This week at a glance ─────────────────────────────────────────────────────
-deadline = week_deadline(sched, cur_week)
-_when = (f"{deadline:%a %b} {deadline.day}, "
-         f"{(deadline.hour % 12) or 12}:{deadline.minute:02d} "
-         f"{'AM' if deadline.hour < 12 else 'PM'} ET"
-         if deadline is not None else "schedule not loaded")
+def _clock(ts) -> str:
+    """'Sun Sep 13, 1:00 PM ET'. Hand-built because %-I / %-d are not portable."""
+    if ts is None:
+        return "schedule not loaded"
+    return (f"{ts:%a %b} {ts.day}, {(ts.hour % 12) or 12}:{ts.minute:02d} "
+            f"{'AM' if ts.hour < 12 else 'PM'} ET")
+
+
+# The league deadline is per pick — you have until your own team kicks off — so
+# the week-level number is only the earliest a pick could possibly be due.
+first_kick = week_deadline(sched, cur_week)
 
 if cur_week <= COMPASSION_THROUGH:
-    _default = compassion_default(sched, cur_week)
-    _miss_value = _default or "—"
-    _miss_sub = (f"The Compassion Clause defaults you to {_default}, the home team of "
-                 f"this week's last game. One time only, and it expires after "
+    # The default is per entry: the rule double-defaults to the away team if you
+    # have already spent the home side, so two entries can be owed two teams.
+    _defaults = {s["name"]: compassion_default(sched, cur_week, used_teams=s["used"])
+                 for s in state.values()}
+    _uniq = set(_defaults.values())
+    _miss_value = (next(iter(_uniq)) or "You're out") if len(_uniq) == 1 else "Differs"
+    _who = ", ".join("{}: {}".format(n, t or "no team left")
+                     for n, t in _defaults.items())
+    _miss_sub = (f"The Compassion Clause assigns you the home team of this week's last "
+                 f"game — {_who}. Once only, and it expires after "
                  f"Week {COMPASSION_THROUGH}.")
 else:
     _miss_value = "You're out"
     _miss_sub = (f"Past Week {COMPASSION_THROUGH} a missed pick is an automatic loss and "
                  "the commissioner removes your best remaining team.")
 
+_mull = ", ".join(f"{s['name']}: " + ("mulligan intact" if s["mulligan"]
+                                      else f"used Wk {s['mulligan_week']}")
+                  for s in state.values())
+
 b1, b2, b3 = st.columns(3)
 b1.markdown(
     f'<div class="stat-card"><div class="label">Picking</div>'
     f'<div class="value">Week {cur_week} of {LAST_WEEK}</div>'
-    f'<div class="sub">Locks {_when}</div></div>', unsafe_allow_html=True)
+    f'<div class="sub">First kickoff {_clock(first_kick)} — but each pick is due '
+    f'only at its own team\'s kickoff</div></div>', unsafe_allow_html=True)
 b2.markdown(
     f'<div class="stat-card"><div class="label">Still alive</div>'
     f'<div class="value">{len(alive)} of {len(ENTRIES)}</div>'
-    f'<div class="sub">{", ".join(s["name"] for s in alive) or "both entries are out"}'
-    f'</div></div>', unsafe_allow_html=True)
+    f'<div class="sub">{_mull or "both entries are out"}</div></div>',
+    unsafe_allow_html=True)
 b3.markdown(
     f'<div class="stat-card"><div class="label">If you forget to pick</div>'
     f'<div class="value">{_miss_value}</div>'
     f'<div class="sub">{_miss_sub}</div></div>', unsafe_allow_html=True)
+
+st.warning(
+    f"**Locking a pick here does not enter it.** Email the team to "
+    f"**choppedfootball@gmail.com** before that team kicks off — that is the only "
+    f"way the league accepts a pick. Changes are allowed right up until both the "
+    f"old and the new team have kicked off.", icon="📧")
 
 if cur_week != LIVE_WEEK:
     st.caption(f"👀 Looking ahead — the live week is **{LIVE_WEEK}**. "
@@ -261,14 +289,17 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
         # ── Out of the pool ───────────────────────────────────────────────────
         if s["out_week"] is not None and s["out_week"] < cur_week:
             gone = s["history"][s["history"]["week"] == s["out_week"]].iloc[0]
-            st.error(f"Knocked out in Week {s['out_week']} — **{gone['team']}** lost to "
-                     f"{gone['opponent']}.", icon="💀")
+            st.error(f"Chopped in Week {s['out_week']} — **{gone['team']}** lost to "
+                     f"{gone['opponent']}, and the mulligan was already gone "
+                     f"(Week {s['mulligan_week']}).", icon="💀")
             st.caption(f"{len(s['used'])} teams spent. Nothing left to decide, but the "
                        "log below still shows how the run went.")
             continue
 
+        _mull_note = ("🛟 mulligan intact" if s["mulligan"] else
+                      f"⚠️ mulligan spent in Week {s['mulligan_week']} — the next loss ends it")
         st.caption(f"{len(ALL_TEAMS) - len(s['used'])} teams still unspent · "
-                   f"{len(s['used'])} used")
+                   f"{len(s['used'])} used · {_mull_note}")
 
         # ── Already locked for this week ──────────────────────────────────────
         if s["locked"] is not None:
@@ -290,13 +321,16 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
                     clear_pick(cur_week, eid)
                     st.rerun()
 
-            # No forward plan for a pick that has already lost — this entry's
-            # season ended on the card above, not in Week cur_week + 1.
-            rest = (pd.DataFrame() if lk["result"] == "loss"
+            # A loss only ends the season when the mulligan was already gone, so
+            # the forward plan is suppressed in exactly that case and not merely
+            # because the pick above it lost.
+            rest = (pd.DataFrame() if s["out_week"] == cur_week
                     else _plan(frozenset(s["used"]), cur_week + 1, PROJ_KEY))
             if not rest.empty:
-                with st.expander(f"Plan from Week {cur_week + 1} "
-                                 f"({survival_probability(rest):.1%} to run the table)"):
+                with st.expander(
+                        f"Plan from Week {cur_week + 1} "
+                        f"({survival_probability(rest, s['mulligan']):.1%} to reach "
+                        f"Week {LAST_WEEK})"):
                     st.dataframe(
                         rest.assign(**{
                             "Matchup": rest.apply(
@@ -319,7 +353,7 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
         # whenever it isn't — an unexplained 74% next to a 82% reads as a bug.
         _why = []
         if mode == "aggressive" and "pot_ev" in opts.columns:
-            _why.append(f'{best["pot_ev"]:.2f} expected pot share · only '
+            _why.append(f'{best["pot_ev"]:.2f} claim on the pot · only '
                         f'{best["popularity"]:.0%} of the field is on it')
         if best["cost_vs_best"] > 0:
             _why.append(f'costs {best["cost_vs_best"]:.2%} of season survival')
@@ -333,6 +367,12 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
             f'<div class="sub">{best["win_prob"]:.0%} to win '
             f'{"vs" if best["is_home"] else "@"} {best["opponent"]}</div>{_toll}</div>',
             unsafe_allow_html=True)
+
+        # The deadline that actually applies to this pick, which is later than the
+        # week's first kickoff whenever the recommendation is not in the early
+        # window — worth knowing before assuming a Sunday 1pm cutoff.
+        st.caption(f"📧 Email **{best['team']}** to choppedfootball@gmail.com by "
+                   f"{_clock(week_deadline(sched, cur_week, team=best['team']))}.")
 
         # The recommendation is a recommendation, not a lock — the selectbox
         # defaults to it but lets a gut call be recorded, because a pick made in
@@ -381,9 +421,11 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
                                   "from the win probability, not read off a real grid."),
                          "EV": st.column_config.NumberColumn(
                              "EV", format="%.2f",
-                             help="Expected share of the pot, where 1.00 is the pool "
-                                  "average. Above 1.00 means you gain ground on the "
-                                  "field in the weeks you survive."),
+                             help="Your claim on the pot relative to an average "
+                                  "entrant, where 1.00 is that average. CHOPPED is "
+                                  "winner-take-all, so this is not a share you would "
+                                  "actually be paid — it is how much ground you gain "
+                                  "on the field in the weeks you survive."),
                      })
 
         # Survival and pot share can disagree, and when they do it is worth
@@ -408,8 +450,11 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
 
         plan_df = _plan_around(s["spent_elsewhere"], cur_week, best["team"], PROJ_KEY)
         if not plan_df.empty:
-            with st.expander(f"Full plan to Week {LAST_WEEK} "
-                             f"({survival_probability(plan_df):.1%} to run the table)"):
+            with st.expander(
+                    f"Full plan to Week {LAST_WEEK} "
+                    f"({survival_probability(plan_df, s['mulligan']):.1%} to get there"
+                    + (" with the mulligan" if s["mulligan"] else " with no mulligan left")
+                    + ")"):
                 p = plan_df.copy()
                 p["Matchup"] = p.apply(
                     lambda r: f'{r["team"]} {"vs" if r["is_home"] else "@"} {r["opponent"]}',
@@ -594,7 +639,7 @@ have burned.
 """)
 
 st.markdown(f"""
-**Both entries, same two habits**
+**Both entries, same three habits**
 
 **1 · Spend the cheap wins, hoard the expensive ones.** Almost every good week comes
 from playing somebody against the same handful of bad teams — right now that is
@@ -605,28 +650,49 @@ how people lose this pool.
 **2 · Work backwards from Week {_worst_week}.** It is the thinnest week left: the best
 team available is only {_worst_pct}. Whoever you are saving for a rainy day, that
 is the day. Do not arrive there holding only teams you were avoiding.
+
+**3 · Never spend the mulligan on forgetting.** It is worth more than any single pick:
+it converts your first loss into a free week. Burning it because an email did not get
+sent means the first genuine upset ends you, and upsets are the one thing no plan
+prevents.
 """)
 
-with st.expander("The rules that make those habits pay"):
+with st.expander("The rules, as written"):
     st.markdown(f"""
-**There is no forgiven loss.** A pick that loses ends your season. The only safety net
-is the Goofball Compassion Clause, and it covers a pick you *forgot to submit* through
-Week {COMPASSION_THROUGH} — it defaults you to the home team of that week's last game,
-one time only. From **Week {COMPASSION_THROUGH + 1}** on, a missed or invalid pick is an
-automatic loss *and* the commissioner removes your best remaining team, which is a
-double penalty: you are out, and on the way out you lose your answer to the thin weeks.
+**The mulligan is a do-over for your first failure — including a loss.** Incorrect
+(your team lost) and invalid (late, a repeat team, or never sent) both count as
+failures, and the *second* one chops you. That is why the survival numbers on this
+page are quoted as "at most one loss" whenever the mulligan is still intact; a
+clean-sweep number would be the wrong bar and roughly a fifth of the real answer.
 
-**The tiebreaker rewards the same discipline.** Ties are broken by the combined wins of
-your **remaining** teams divided by how many you have left. Hoarding strong teams both
-raises your late-season floor and wins ties, so there is no tension between playing to
-survive and playing to win the tiebreak — it is one plan, not two.
+**The Goofball Compassion Clause is a different thing.** It covers only a missed or
+invalid pick, once, and only through Week {COMPASSION_THROUGH}: you get assigned the
+home team of that week's last game — or the away team if you have already used the
+home side, and an automatic loss if you have used both. From
+**Week {COMPASSION_THROUGH + 1}** on, a missed pick is an automatic loss *and* the
+commissioner takes your best remaining team, judged on record and point differential.
+Double penalty: you are out, and on the way out you lose your answer to the thin weeks.
 
-**Ties on the field count as wins.** A pick only fails if your team actually loses,
-which slightly favours taking a road favourite over passing on a week.
+**Winner takes all — the pot is never split.** If several of you go out in the same
+week it goes to a tiebreaker: combined wins of your **remaining** teams (a tie is half
+a point) divided by how many teams you have left. Hoarding strong teams both raises
+your late-season floor and wins that tiebreak, so it is one plan, not two.
+
+**Ties on the field count as wins** for both teams, so a pick only fails if your team
+actually loses.
+
+**Week 18 is not necessarily the end.** If more than one entrant is still standing
+after the regular season, it continues into the playoffs — teams are *not* reloaded and
+an unused mulligan carries forward. The plans on this page stop at Week
+{LAST_WEEK} because that is where the schedule does, so treat a thin late-season
+inventory as a real cost rather than a rounding error.
+
+**Picks go by email, and only by email.** choppedfootball@gmail.com, before your team
+kicks off. You may change a pick as long as neither the old nor the new team has
+kicked off yet.
 """)
 
 st.caption(
-    "Survival percentages look brutal because running 18 straight weeks is genuinely hard — "
-    "but every entrant faces the same gauntlet, and you only need to outlast them, not the "
-    "schedule."
+    "You only need to outlast the other entrants, not the schedule — and with the "
+    "mulligan intact you can be wrong once and still be standing."
 )

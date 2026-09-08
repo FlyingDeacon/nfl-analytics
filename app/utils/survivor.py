@@ -1,11 +1,22 @@
 """Survivor-pool planning for the CHOPPED league.
 
-CHOPPED is a knockout pool: each week you name one team to win straight up, a
-team can be used only ONCE all season, and a pick that loses ends your season.
-Nothing forgives a losing pick — the league's one safety net (the Goofball
-Compassion Clause) covers a pick you forgot to submit, and only through Week 5,
-by defaulting you to the home team of that week's last game. Last entrant
-standing takes the pot.
+CHOPPED is a knockout pool: each week you name one team to win straight up and a
+team can be used only ONCE all season. Winner takes the whole pot — the league
+does not split it, so a tie at the end is settled by the tiebreaker rather than
+shared.
+
+Two separate safety nets, and they are easy to confuse:
+
+* The **mulligan** is one do-over after your first failure, where a failure is
+  either an incorrect pick (your team lost) or an invalid one (late, a repeat, or
+  never sent). You are chopped on the second. So the number that matters is not
+  "survive every week" but "fail at most once", which is a far kinder bar — see
+  survival_probability(mulligans=1).
+* The **Goofball Compassion Clause** covers only a missed or invalid pick, once,
+  and only through Week 5. It assigns you the home team of that week's last game
+  (the away team if you have already used the home side), and that assigned pick
+  then wins or loses like any other. From Week 6 a missed pick is an automatic
+  loss AND the commissioner removes your best remaining team.
 
 The "use each team once" rule is what makes this more than a weekly win
 probability lookup. Spending the best team on the board in Week 1 buys a ~92%
@@ -166,9 +177,26 @@ def optimal_plan(tw: pd.DataFrame, used_teams: set[str], start_week: int,
     return plan.merge(tw, on=["week", "team"], how="left").reset_index(drop=True)
 
 
-def survival_probability(plan: pd.DataFrame) -> float:
-    """Chance of winning every week in the plan."""
-    return float(plan["win_prob"].prod()) if not plan.empty else 0.0
+def survival_probability(plan: pd.DataFrame, mulligan: bool = False) -> float:
+    """Chance of surviving the plan, optionally spending the league's one do-over.
+
+    Without it this is just the product of the weekly win probabilities. With it
+    the bar is P(at most one loss), which is what CHOPPED actually asks of you
+    and is several times larger — quoting the clean-sweep number to someone who
+    still holds their mulligan makes the pool look unwinnable when it is not.
+
+    P(exactly one loss) factorises out of the same product: losing week i instead
+    of winning it multiplies the sweep by (1 - p_i) / p_i, so the whole thing is
+    one pass. Weeks are independent here — a plan never plays two teams in the
+    same game.
+    """
+    if plan.empty:
+        return 0.0
+    p = plan["win_prob"].clip(P_FLOOR, P_CEIL)
+    sweep = float(p.prod())
+    if not mulligan:
+        return sweep
+    return min(1.0, sweep * (1.0 + float(((1.0 - p) / p).sum())))
 
 
 # Public survivor pools chase the biggest favourite, and they concentrate hard:
@@ -397,26 +425,47 @@ def current_week(schedule: pd.DataFrame, today=None, season: int = 2026) -> int:
     return int(live.index.min()) if not live.empty else int(last.index.max())
 
 
-def week_deadline(schedule: pd.DataFrame, week: int, season: int = 2026):
-    """First kickoff of the week — the moment a pick has to be in by."""
+def week_deadline(schedule: pd.DataFrame, week: int, season: int = 2026,
+                  team: str | None = None):
+    """When a pick has to be emailed in by.
+
+    The league deadline is the kickoff of *the team you are picking*, not the
+    first game of the week, so naming a Monday-night team on Monday afternoon is
+    perfectly legal. Passing `team` gives that team's kickoff; without it you get
+    the week's first kickoff, which is the only safe answer before you have
+    chosen.
+    """
     games = _regular_season(schedule, season)
     games = games[games["week"] == week]
+    if team is not None:
+        games = games[(games["home_team"] == team) | (games["away_team"] == team)]
     if games.empty:
         return None
     return _kickoffs(games).min()
 
 
-def compassion_default(schedule: pd.DataFrame, week: int, season: int = 2026):
-    """Home team of the week's last game — what a missed pick defaults to.
+def compassion_default(schedule: pd.DataFrame, week: int, season: int = 2026,
+                       used_teams: set[str] | None = None):
+    """What a missed pick gets assigned: the home team of the week's last game.
 
     Worth showing rather than leaving in the rulebook: it is the only pick the
     league will make for you, and it is usually not one you would have chosen.
+
+    If you have already spent that home team the rule double-defaults to the away
+    side, and if that is gone too it is an automatic loss — returned as None,
+    because "there is no team left to save you" is the answer the page needs to
+    show rather than a team you cannot legally play.
     """
     games = _regular_season(schedule, season)
     games = games[games["week"] == week]
     if games.empty:
         return None
-    return str(games.loc[_kickoffs(games).idxmax(), "home_team"])
+    last = games.loc[_kickoffs(games).idxmax()]
+    spent = used_teams or set()
+    for side in ("home_team", "away_team"):
+        if str(last[side]) not in spent:
+            return str(last[side])
+    return None
 
 
 def grade_picks(picks: pd.DataFrame, schedule: pd.DataFrame,
