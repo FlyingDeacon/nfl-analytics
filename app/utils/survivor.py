@@ -135,14 +135,29 @@ def _cost_matrix(tw: pd.DataFrame, teams: list[str], weeks: list[int]) -> np.nda
 
 
 def optimal_plan(tw: pd.DataFrame, used_teams: set[str], start_week: int,
-                 end_week: int = 18, forced: tuple[int, str] | None = None
-                 ) -> pd.DataFrame:
+                 end_week: int = 18, forced: tuple[int, str] | None = None,
+                 blocked: dict | None = None) -> pd.DataFrame:
     """Assignment of one unused team to each remaining week, maximising survival.
 
     Maximising the product of weekly win probabilities is the same as minimising
     the sum of -log(p), which is a linear assignment problem over the
     team x week grid. `forced` pins one (week, team) pair so callers can price
     "what does this week's pick cost me later" by comparing plans.
+
+    `blocked` maps a week to teams that may not be used in it — how the second
+    entry is kept off the first one's whole season rather than just off this
+    week, so the two blueprints never both depend on the same team in the same
+    week.
+
+    Note that the mulligan deliberately does NOT appear here. It is tempting to
+    re-solve for P(at most one loss) on the theory that a free loss should buy a
+    deliberate soft week, but the objective does not work that way: writing
+    F = P(1 + S) with S = sum((1-p)/p) and varying a single week gives
+    F = P_rest * (1 + p*S_rest), which is increasing in p. Lumpiness is only
+    rewarded at a fixed product, and the spread term is discounted by 1 + S ~ 5.6,
+    so no realistic trade of product for spread pays. Checked empirically over 40
+    random mid-season states: the plan never changed. The mulligan changes what
+    the number means, not which teams to pick.
 
     Returns week / team / opponent / is_home / win_prob, or an empty frame if
     no complete assignment exists.
@@ -153,6 +168,14 @@ def optimal_plan(tw: pd.DataFrame, used_teams: set[str], start_week: int,
         return pd.DataFrame(columns=["week", "team", "opponent", "is_home", "win_prob"])
 
     cost = _cost_matrix(tw, teams, weeks)
+
+    for bweek, bteams in (blocked or {}).items():
+        if bweek not in weeks:
+            continue
+        wi = weeks.index(bweek)
+        for bteam in ({bteams} if isinstance(bteams, str) else bteams):
+            if bteam in teams:
+                cost[teams.index(bteam), wi] = INFEASIBLE
 
     if forced is not None:
         fweek, fteam = forced
@@ -331,7 +354,8 @@ def pick_ev(win_probs: pd.Series, popularity: pd.Series, opponents: pd.Series,
 
 
 def week_options(tw: pd.DataFrame, used_teams: set[str], week: int,
-                 end_week: int = 18, pool_size: int | None = None) -> pd.DataFrame:
+                 end_week: int = 18, pool_size: int | None = None,
+                 blocked: dict | None = None) -> pd.DataFrame:
     """Every legal pick this week, priced by what it costs the rest of the season.
 
     A team's weekly win probability alone is a trap in survivor: the safest team
@@ -346,15 +370,22 @@ def week_options(tw: pd.DataFrame, used_teams: set[str], week: int,
     where 1.00 is the pool average. Survival and pot share genuinely disagree
     sometimes, and neither is a strict improvement on the other, so both are
     reported rather than folded into one number.
+
+    `blocked` is passed straight through to the planner, and the prices are
+    computed under the same constraints the plan is: costing a pick against an
+    unconstrained season while recommending a constrained one would put a number
+    next to a pick that no plan on the page agrees with.
     """
-    best = optimal_plan(tw, used_teams, week, end_week)
+    best = optimal_plan(tw, used_teams, week, end_week, blocked=blocked)
     best_surv = survival_probability(best)
 
     avail = tw[(tw["week"] == week) & (~tw["team"].isin(used_teams))]
+    if blocked:
+        avail = avail[~avail["team"].isin(blocked.get(week, ()))]
     rows = []
     for _, g in avail.iterrows():
         plan = optimal_plan(tw, used_teams, week, end_week,
-                            forced=(week, g["team"]))
+                            forced=(week, g["team"]), blocked=blocked)
         surv = survival_probability(plan)
         rows.append({
             "team": g["team"], "opponent": g["opponent"], "is_home": g["is_home"],

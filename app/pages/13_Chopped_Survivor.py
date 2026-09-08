@@ -30,9 +30,11 @@ render_sidebar_nav(current_page="13_Chopped_Survivor")
 # changing one would orphan that entry's history.
 ENTRIES = (
     ("blake", "Blake", "aggressive",
-     "**Aggressive.** Give up a little win probability for the teams the field is not on."),
+     "**Aggressive.** Same season-long plan, then the least-picked team among those "
+     "still close to it — buying separation from the field with a little survival."),
     ("alaina", "Alaina", "safe",
-     "**Safe.** The highest-survival pick on the board, every week."),
+     "**Safe.** The pick that maximises survival *to Week 18*, not this Sunday — "
+     "teams are reserved for the weeks that need them."),
 )
 # Whose pick is solved first, which is not the order they are displayed in. The
 # entry playing for the best chance to survive should never be the one pushed off
@@ -89,18 +91,31 @@ def _crest(abbr: str, size: int = 26) -> str:
             if url else f"<b>{abbr}</b>")
 
 
+def _as_blocked(pairs: tuple) -> dict:
+    """(week, team) pairs -> {week: {teams}}, the planner's blocking format.
+
+    Kept as a flat tuple at the call sites because st.cache_data has to hash it
+    and a dict of sets is not hashable.
+    """
+    out = {}
+    for week, team in pairs:
+        out.setdefault(week, set()).add(team)
+    return out
+
+
 @st.cache_data(show_spinner="Pricing every legal pick…")
-def _options(used: frozenset, week: int, pool: int, key: tuple):
-    return week_options(tw, set(used), week, pool_size=pool)
+def _options(used: frozenset, week: int, pool: int, blocked: tuple, key: tuple):
+    return week_options(tw, set(used), week, pool_size=pool,
+                        blocked=_as_blocked(blocked))
 
 
 @st.cache_data(show_spinner=False)
-def _plan(used: frozenset, week: int, key: tuple):
-    return optimal_plan(tw, set(used), week)
+def _plan(used: frozenset, week: int, blocked: tuple, key: tuple):
+    return optimal_plan(tw, set(used), week, blocked=_as_blocked(blocked))
 
 
 @st.cache_data(show_spinner=False)
-def _plan_around(used: frozenset, week: int, team: str, key: tuple):
+def _plan_around(used: frozenset, week: int, team: str, blocked: tuple, key: tuple):
     """The rest of the season re-solved around a pick we have committed to.
 
     Needed because the recommendation and the plan below it have to describe the
@@ -108,7 +123,8 @@ def _plan_around(used: frozenset, week: int, team: str, key: tuple):
     weeks after it change too, and showing the old plan would quietly contradict
     the pick sitting above it.
     """
-    return optimal_plan(tw, set(used), week, forced=(week, team))
+    return optimal_plan(tw, set(used), week, forced=(week, team),
+                        blocked=_as_blocked(blocked))
 
 
 def _recommend(opts: pd.DataFrame, mode: str) -> pd.Series:
@@ -262,23 +278,39 @@ recs = {}
 # Solved before anything is drawn, because priority order and display order are
 # not the same: a locked pick claims its team first (it is a fact, not a
 # suggestion), then Alaina, then Blake around whatever is left.
-board = {}       # eid -> {"opts": DataFrame, "best": Series} or None
-claimed = {s["locked"]["team"] for s in state.values() if s["locked"] is not None}
+#
+# Divergence is applied to the whole remaining season, not just to this week.
+# Both entries solve the same schedule, so left alone their blueprints are
+# near-identical — the same premium team earmarked for the same thin week — and
+# a split that only covers Week N quietly collides again in Week N+1. Blocking
+# each entry from the other's entire blueprint is what makes the second entry a
+# genuinely different season rather than the first one with a swap.
+board = {}          # eid -> {"opts", "best", "plan"} or None
+blocked_pairs = [(cur_week, s["locked"]["team"])
+                 for s in state.values() if s["locked"] is not None]
 
 for eid in PRIORITY:
     s = state[eid]
-    if s["locked"] is not None or (s["out_week"] is not None and s["out_week"] < cur_week):
+    if s["out_week"] is not None and s["out_week"] < cur_week:
         continue
-    mode = next(m for i, _n, m, _s in ENTRIES if i == eid)
-    opts = _options(s["spent_elsewhere"], cur_week, pool_size, PROJ_KEY)
-    if diverge:
-        opts = opts[~opts["team"].isin(claimed)].reset_index(drop=True)
-    if opts.empty:
-        board[eid] = None
-        continue
-    best = _recommend(opts, mode)
-    claimed.add(best["team"])
-    board[eid] = {"opts": opts, "best": best}
+    blk = tuple(blocked_pairs) if diverge else ()
+
+    if s["locked"] is not None:
+        plan = _plan(frozenset(s["used"]), cur_week + 1, blk, PROJ_KEY)
+    else:
+        mode = next(m for i, _n, m, _s in ENTRIES if i == eid)
+        opts = _options(s["spent_elsewhere"], cur_week, pool_size, blk, PROJ_KEY)
+        if opts.empty:
+            board[eid] = None
+            s["blueprint"] = pd.DataFrame()
+            continue
+        best = _recommend(opts, mode)
+        plan = _plan_around(s["spent_elsewhere"], cur_week, best["team"], blk, PROJ_KEY)
+        board[eid] = {"opts": opts, "best": best, "plan": plan}
+
+    s["blueprint"] = plan
+    if diverge and not plan.empty:
+        blocked_pairs.extend((int(w), t) for w, t in zip(plan["week"], plan["team"]))
 
 for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
     s = state[eid]
@@ -324,8 +356,7 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
             # A loss only ends the season when the mulligan was already gone, so
             # the forward plan is suppressed in exactly that case and not merely
             # because the pick above it lost.
-            rest = (pd.DataFrame() if s["out_week"] == cur_week
-                    else _plan(frozenset(s["used"]), cur_week + 1, PROJ_KEY))
+            rest = pd.DataFrame() if s["out_week"] == cur_week else s["blueprint"]
             if not rest.empty:
                 with st.expander(
                         f"Plan from Week {cur_week + 1} "
@@ -373,6 +404,19 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
         # window — worth knowing before assuming a Sunday 1pm cutoff.
         st.caption(f"📧 Email **{best['team']}** to choppedfootball@gmail.com by "
                    f"{_clock(week_deadline(sched, cur_week, team=best['team']))}.")
+
+        # The whole point of solving the season instead of the week: some team
+        # with a better number than the recommendation is sitting right there and
+        # is being passed over on purpose, because it is the only good answer to a
+        # thin week later on. Left unsaid that reads as the model being wrong, so
+        # name the teams and the weeks they are being saved for.
+        _later = {t: int(w) for w, t in zip(solved["plan"]["week"], solved["plan"]["team"])
+                  if int(w) > cur_week}
+        _held = [(r["team"], _later[r["team"]]) for _, r in opts.iterrows()
+                 if r["team"] in _later and r["win_prob"] > best["win_prob"]]
+        if _held:
+            st.caption("🔒 Held back: " + " · ".join(
+                f"**{t}** for Wk {w}" for t, w in _held[:4]))
 
         # The recommendation is a recommendation, not a lock — the selectbox
         # defaults to it but lets a gut call be recorded, because a pick made in
@@ -448,10 +492,10 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
                 f'the most ground when it hits. The pick above is still the '
                 f'survival-maximising one.')
 
-        plan_df = _plan_around(s["spent_elsewhere"], cur_week, best["team"], PROJ_KEY)
+        plan_df = solved["plan"]
         if not plan_df.empty:
             with st.expander(
-                    f"Full plan to Week {LAST_WEEK} "
+                    f"Season blueprint to Week {LAST_WEEK} "
                     f"({survival_probability(plan_df, s['mulligan']):.1%} to get there"
                     + (" with the mulligan" if s["mulligan"] else " with no mulligan left")
                     + ")"):
@@ -463,10 +507,13 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
                 st.dataframe(p[["week", "Matchup", "Win %"]].rename(columns={"week": "Wk"}),
                              hide_index=True, use_container_width=True)
                 st.caption(
-                    "This entry's own best path from here, so the two plans will show the "
-                    "same team in some later week. That is fine — divergence is a weekly "
-                    "decision, not a fixed schedule. Lock this week's picks and the split "
-                    "is recomputed next week against what you actually spent.")
+                    "Not a schedule to obey — it is the assignment of teams to weeks "
+                    "that makes this week's pick worth taking, which is what stops a "
+                    "greedy Week 1 from stranding you in Week 14. It is re-solved every "
+                    "week against what you have actually spent."
+                    + (" With *Split the two entries* on, this blueprint is also barred "
+                       "from every team the other entry has reserved, all season."
+                       if diverge else ""))
 
 if len(recs) == 2 and len(set(recs.values())) == 1:
     st.warning(
@@ -621,17 +668,26 @@ rounding error.
 What it buys is the weeks you both survive. Surviving alongside 80% of the pool
 moves you nowhere; surviving a week that halves the field is how a pot is actually
 won. The **EV** column is that number: 1.00 is the pool average.
+
+With *Split the two entries* on, this side is also barred from every team Alaina has
+reserved **for the week she reserved it**, not just from this Sunday's pick. So the
+two blueprints are genuinely different seasons rather than the same one with a swap
+— and the same team can still appear on both, in different weeks.
 """)
 with _b:
     st.markdown(f"""
-**Alaina — take the safest road**
+**Alaina — hold the safest road**
 
-Take the 0.00-cost pick every single week, no exceptions, and take it first — this
-side gets first claim on the board and Blake works around it, so you are never the
-one pushed off the best team. This is the highest survival path that exists given
-the schedule, and its whole value is that it never gets clever. You are trying to
-still be alive in Week {_worst_week}, and most entrants will not be, because they
-will have spent {_hoarded} on an early blowout they did not need.
+Take the 0.00-cost pick, and take it first: this side gets first claim on the board
+and Blake works around it, so you are never the one pushed off a team you needed.
+
+The thing worth understanding is that 0.00 is *not* the biggest favourite. Every
+week is priced by solving all 18 weeks at once and assigning one team to each — so
+the cost column already knows that using {_hoarded} today is what leaves you with
+nothing in Week {_worst_week}. Taking the 0.00 pick every week is not eighteen
+greedy decisions; it is one plan, re-solved each week against what you have actually
+spent. That is why a team with a better number can sit on the board untouched, and
+why the **Season blueprint** above shows which week it is being saved for.
 
 The discipline this asks for is refusing an 82% week when the tool says 78%. That
 gap is not the tool being wrong — it is the tool charging you for the team you would

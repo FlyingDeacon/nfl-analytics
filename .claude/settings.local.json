@@ -273,7 +273,9 @@
       "Bash(/usr/bin/python3 -c \"import numpy; print\\(numpy.__version__\\); print\\(hasattr\\(numpy,''trapz''\\), hasattr\\(numpy,''trapezoid''\\)\\)\")",
       "Bash(.venv/bin/python -m py_compile app/pages/13_Chopped_Survivor.py app/utils/survivor.py app/utils/chopped_log.py)",
       "Bash(.venv/bin/python -c \"import pypdf; print\\(''''pypdf'''', pypdf.__version__\\)\")",
-      "Bash(.venv/bin/python -c \"import fitz; print\\(''''fitz ok''''\\)\")"
+      "Bash(.venv/bin/python -c \"import fitz; print\\(''''fitz ok''''\\)\")",
+      "Bash(python -m py_compile app/pages/13_Chopped_Survivor.py app/utils/survivor.py)",
+      "Bash(.venv/bin/python -m py_compile app/pages/13_Chopped_Survivor.py)"
     ]
   }
 }
