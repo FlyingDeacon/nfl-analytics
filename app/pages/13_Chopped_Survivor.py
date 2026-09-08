@@ -28,8 +28,24 @@ render_sidebar_nav(current_page="13_Chopped_Survivor")
 # so each side is given a different job rather than the same optimiser twice.
 # Edit the display names here; the ids are what the pick log is keyed on and
 # changing one would orphan that entry's history.
-ENTRIES = (("brandon", "Brandon", "**Chalk.** Take the mathematically best pick every week."),
-           ("wife", "Wife", "**Hedge.** Take the best team the other entry is not using."))
+ENTRIES = (
+    ("blake", "Blake", "aggressive",
+     "**Aggressive.** Give up a little win probability for the teams the field is not on."),
+    ("alaina", "Alaina", "safe",
+     "**Safe.** The highest-survival pick on the board, every week."),
+)
+# Whose pick is solved first, which is not the order they are displayed in. The
+# entry playing for the best chance to survive should never be the one pushed off
+# the optimal team, so Alaina claims hers first and Blake diverges around it —
+# which is what the aggressive side wants anyway.
+PRIORITY = ("alaina", "blake")
+
+# How far the aggressive entry will stray. Capped both ways on purpose: it may
+# drop at most this much win probability below the safest team on the board, and
+# never below the floor regardless. "Slightly aggressive" has to mean "takes the
+# less popular of two close teams", not "takes an upset".
+AGGRESSION_TOLERANCE = 0.08
+AGGRESSION_FLOOR = 0.60
 
 LAST_WEEK = 18
 RESULT_ICON = {"win": "✅", "loss": "❌", "pending": "⏳"}
@@ -95,6 +111,25 @@ def _plan_around(used: frozenset, week: int, team: str, key: tuple):
     return optimal_plan(tw, set(used), week, forced=(week, team))
 
 
+def _recommend(opts: pd.DataFrame, mode: str) -> pd.Series:
+    """The row to put on the card, given how much risk this entry is playing for.
+
+    `opts` arrives sorted by season survival, so the safe answer is simply the
+    top row. The aggressive answer is the biggest expected slice of the pot among
+    the teams that are still close to it — surviving and winning are not the same
+    thing in a pool, and a 71% team nobody else has thins the field in the weeks
+    it comes in.
+    """
+    safe = opts.iloc[0]
+    if mode != "aggressive" or "pot_ev" not in opts.columns:
+        return safe
+    near = opts[(opts["win_prob"] >= safe["win_prob"] - AGGRESSION_TOLERANCE)
+                & (opts["win_prob"] >= AGGRESSION_FLOOR)]
+    if near.empty:
+        return safe
+    return near.loc[near["pot_ev"].idxmax()]
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # SETTINGS  (sidebar, so the weekly decision owns the top of the page)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -116,9 +151,9 @@ pool_size = int(st.sidebar.number_input(
          "people you would be splitting with."))
 diverge = st.sidebar.toggle(
     "Split the two entries", value=True, key="cs_diverge",
-    help="Both entries solve the same schedule, so left alone they converge on the "
-         "same answer — and get knocked out by the same upset. This steers the "
-         "second entry to its best pick that the first is not using.")
+    help="Both entries solve the same schedule, so on a lopsided week they can land "
+         "on the same team — and get knocked out by the same upset. This keeps Blake "
+         "off whatever Alaina is using.")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SEASON STATE
@@ -127,7 +162,7 @@ picks = load_picks()
 graded = grade_picks(picks, sched)
 
 state = {}
-for eid, name, _ in ENTRIES:
+for eid, name, *_ in ENTRIES:
     mine = graded[graded["entry"] == eid].sort_values("week")
     lost = mine[mine["result"] == "loss"]
     this_week = mine[mine["week"] == cur_week]
@@ -195,9 +230,29 @@ st.info(
 # THE TWO ENTRIES
 # ══════════════════════════════════════════════════════════════════════════════
 recs = {}
-taken = None      # entry 1's pick this week, so entry 2 can be steered off it
 
-for col, (eid, name, style) in zip(st.columns(2), ENTRIES):
+# Solved before anything is drawn, because priority order and display order are
+# not the same: a locked pick claims its team first (it is a fact, not a
+# suggestion), then Alaina, then Blake around whatever is left.
+board = {}       # eid -> {"opts": DataFrame, "best": Series} or None
+claimed = {s["locked"]["team"] for s in state.values() if s["locked"] is not None}
+
+for eid in PRIORITY:
+    s = state[eid]
+    if s["locked"] is not None or (s["out_week"] is not None and s["out_week"] < cur_week):
+        continue
+    mode = next(m for i, _n, m, _s in ENTRIES if i == eid)
+    opts = _options(s["spent_elsewhere"], cur_week, pool_size, PROJ_KEY)
+    if diverge:
+        opts = opts[~opts["team"].isin(claimed)].reset_index(drop=True)
+    if opts.empty:
+        board[eid] = None
+        continue
+    best = _recommend(opts, mode)
+    claimed.add(best["team"])
+    board[eid] = {"opts": opts, "best": best}
+
+for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
     s = state[eid]
     with col:
         st.markdown(f"### {name}")
@@ -228,7 +283,6 @@ for col, (eid, name, style) in zip(st.columns(2), ENTRIES):
                 f'<div style="font-size:1.8rem;font-weight:800;margin:6px 0 2px;">'
                 f'{_crest(lk["team"], 34)} {lk["team"]} {icon}</div>'
                 f'<div class="sub">{score}</div></div>', unsafe_allow_html=True)
-            taken = taken or lk["team"]
             recs[name] = lk["team"]
 
             if lk["result"] == "pending":
@@ -254,21 +308,23 @@ for col, (eid, name, style) in zip(st.columns(2), ENTRIES):
             continue
 
         # ── Still to pick ─────────────────────────────────────────────────────
-        opts = _options(s["spent_elsewhere"], cur_week, pool_size, PROJ_KEY)
-        if diverge and taken is not None:
-            opts = opts[opts["team"] != taken].reset_index(drop=True)
-        if opts.empty:
+        solved = board.get(eid)
+        if solved is None:
             st.warning("No legal picks left for this week.")
             continue
-
-        best = opts.iloc[0]
+        opts, best = solved["opts"], solved["best"]
         recs[name] = best["team"]
-        if taken is None:
-            taken = best["team"]
 
-        _toll = (f'<div class="sub" style="margin-top:4px;">Costs '
-                 f'{best["cost_vs_best"]:.2%} of season survival to stay off {taken}</div>'
-                 if diverge and taken != best["team"] and best["cost_vs_best"] > 0 else "")
+        # Say out loud why this is not simply the safest team on the board,
+        # whenever it isn't — an unexplained 74% next to a 82% reads as a bug.
+        _why = []
+        if mode == "aggressive" and "pot_ev" in opts.columns:
+            _why.append(f'{best["pot_ev"]:.2f} expected pot share · only '
+                        f'{best["popularity"]:.0%} of the field is on it')
+        if best["cost_vs_best"] > 0:
+            _why.append(f'costs {best["cost_vs_best"]:.2%} of season survival')
+        _toll = (f'<div class="sub" style="margin-top:4px;">{" · ".join(_why)}</div>'
+                 if _why else "")
         st.markdown(
             f'<div class="stat-card" style="padding:16px 12px;">'
             f'<div class="label">Recommended · Week {cur_week}</div>'
@@ -285,7 +341,12 @@ for col, (eid, name, style) in zip(st.columns(2), ENTRIES):
                               f'{"vs" if r["is_home"] else "@"} {r["opponent"]} '
                               f'(cost {r["cost_vs_best"] * 100:.2f})')
                   for _, r in opts.iterrows()}
-        choice = st.selectbox("Pick to lock in", list(labels), index=0,
+        # Defaults to the card above rather than the first row: `opts` is sorted
+        # by survival, and the aggressive entry's recommendation deliberately is
+        # not the top of that list.
+        teams = list(labels)
+        choice = st.selectbox("Pick to lock in", teams,
+                              index=teams.index(best["team"]),
                               format_func=labels.get, key=f"cs_choice_{eid}")
         if cur_week == LIVE_WEEK:
             if st.button(f"🔒 Lock in {choice} for Week {cur_week}",
@@ -331,9 +392,11 @@ for col, (eid, name, style) in zip(st.columns(2), ENTRIES):
         # Only when the edge is real: the EV leader is often ahead by less than a
         # rounding step, and trading eight points of win probability for 0.6% of
         # the pot is not a decision worth putting in front of anyone.
+        # Only for the safe entry: the aggressive one has already taken the EV
+        # pick, so pointing at it there would just be reading its own card back.
         EV_EDGE_MIN = 0.02
         ev_best = opts.loc[opts["pot_ev"].idxmax()]
-        if (ev_best["team"] != best["team"]
+        if (mode == "safe" and ev_best["team"] != best["team"]
                 and ev_best["pot_ev"] - best["pot_ev"] >= EV_EDGE_MIN):
             st.caption(
                 f'⚖️ Highest **EV** this week is **{ev_best["team"]}** '
@@ -501,30 +564,33 @@ _top_targets = (", ".join(f"{t} ({n})" for t, n in _targets.head(4).items())
 _a, _b = st.columns(2)
 with _a:
     st.markdown(f"""
-**{ENTRIES[0][1]} — play the chalk**
+**Blake — press the edge**
 
-Take the 0.00-cost pick every single week, no exceptions. This is the highest
-survival path that exists given the schedule, and its whole value is that it never
-gets clever. You are not trying to be different from the pool here; you are trying
-to still be alive in Week {_worst_week}, and most entrants will not be, because they
+Where two teams are close, take the one the pool is not on. The card only ever
+strays inside guardrails: at most {AGGRESSION_TOLERANCE:.0%} of win probability
+below the safest team on the board, and never below {AGGRESSION_FLOOR:.0%} to win
+outright. That is deliberately narrow — this is not hunting upsets, it is refusing
+to be on the same team as everybody else when the cost of being different is a
+rounding error.
+
+What it buys is the weeks you both survive. Surviving alongside 80% of the pool
+moves you nowhere; surviving a week that halves the field is how a pot is actually
+won. The **EV** column is that number: 1.00 is the pool average.
+""")
+with _b:
+    st.markdown(f"""
+**Alaina — take the safest road**
+
+Take the 0.00-cost pick every single week, no exceptions, and take it first — this
+side gets first claim on the board and Blake works around it, so you are never the
+one pushed off the best team. This is the highest survival path that exists given
+the schedule, and its whole value is that it never gets clever. You are trying to
+still be alive in Week {_worst_week}, and most entrants will not be, because they
 will have spent {_hoarded} on an early blowout they did not need.
 
 The discipline this asks for is refusing an 82% week when the tool says 78%. That
 gap is not the tool being wrong — it is the tool charging you for the team you would
 have burned.
-""")
-with _b:
-    st.markdown(f"""
-**{ENTRIES[1][1]} — play the hedge**
-
-Take the best team the other entry is not using. It will usually cost a fraction of a
-percent this week, and it buys the only thing that matters with two entries: you
-cannot both die to the same upset. If the chalk pick goes down on a last-second
-field goal, one of you is still standing.
-
-Over the season this naturally builds a different inventory of remaining teams, so
-by Week 8 the two entries are not near-copies with one swap — they are genuinely
-covering different outcomes.
 """)
 
 st.markdown(f"""
