@@ -43,6 +43,19 @@ st.markdown("""
     justify-content: center;
     margin: 0;
 }
+/* Streamlit gives every column a 320px min-width before it wraps, so on a laptop-
+   width window three columns wrap 2-then-1: the third card lands full-width and
+   short instead of matching the square pair above it. Equal height alone can't
+   fix that — a card on its own row is a different shape no matter how tall it
+   is. Forcing this specific row to stay in one line (and letting the columns
+   shrink instead of wrap) keeps all three the same shape at any window width. */
+div[data-testid="stHorizontalBlock"]:has(.cs-fill) {
+    flex-wrap: nowrap !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.cs-fill) > div[data-testid="stColumn"] {
+    min-width: 0 !important;
+    flex: 1 1 0 !important;
+}
 /* The two pick cards sit above a stack of controls, so they cannot be grown to
    the column height the way the summary cards are — they would swallow the page.
    They are instead given a floor tall enough for the tallest of the three states
