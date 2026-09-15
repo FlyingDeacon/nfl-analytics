@@ -206,7 +206,7 @@ cur_week = st.sidebar.number_input(
          f"look ahead — nothing you do here writes a pick.")
 cur_week = int(cur_week)
 pool_size = int(st.sidebar.number_input(
-    "Entries in the pool", min_value=2, max_value=1000, value=50, step=1,
+    "Entries in the pool", min_value=2, max_value=1000, value=87, step=1,
     key="cs_pool",
     help="Drives the EV column. Pot share is what you are actually playing for, "
          "and how much being different is worth depends entirely on how many "
