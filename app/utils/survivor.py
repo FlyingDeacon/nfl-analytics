@@ -226,8 +226,26 @@ def survival_probability(plan: pd.DataFrame, mulligan: bool = False) -> float:
 # the most popular pick in a typical week draws roughly a third of the field.
 # Raising the favourite's edge over a coin flip to a power reproduces that shape
 # from win probability alone, which is what lets the planner estimate a pool it
-# cannot see. 3.0 puts the Week 1 chalk near 30%, matching published grids.
-POPULARITY_CONCENTRATION = 3.0
+# cannot see.
+#
+# Fitted against the two weeks of pick counts this league has published: the top
+# two teams took 74.7% of the field in Week 1 and 73.6% in Week 2, where the old
+# value of 3.0 predicted 55% and 41% — badly under-concentrated, which inflated
+# the apparent value of being contrarian. 5.0 reproduces Week 1 almost exactly
+# (74%) and matches the aggregate concentration that pick_ev's pot-share integral
+# actually consumes.
+#
+# Be clear about what this cannot do. Week 2 put 36.8% on San Francisco and 36.8%
+# on Tampa Bay — equal weight on an 84.6% favourite and a 76.0% one. A power law
+# on win probability is monotonic by construction, so no exponent reproduces that;
+# at 5.0 it says 48% / 12%. Pools also price brand names, which teams they have
+# already spent, and each other's picks, none of which is visible here. Per-team
+# squared error is in fact flattest near 4.0, so treat anything in 4-5 as inside
+# the noise of two data points rather than as a tuned constant.
+#
+# The fix for that is not a better exponent, it is entering the observed shares
+# once the league publishes them — which is all this was ever a stand-in for.
+POPULARITY_CONCENTRATION = 5.0
 
 
 def popularity_estimate(win_probs: pd.Series,

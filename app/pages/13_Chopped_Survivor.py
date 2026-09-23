@@ -206,11 +206,13 @@ cur_week = st.sidebar.number_input(
          f"look ahead — nothing you do here writes a pick.")
 cur_week = int(cur_week)
 pool_size = int(st.sidebar.number_input(
-    "Entries in the pool", min_value=2, max_value=1000, value=87, step=1,
+    "Entries still alive", min_value=2, max_value=1000, value=74, step=1,
     key="cs_pool",
     help="Drives the EV column. Pot share is what you are actually playing for, "
          "and how much being different is worth depends entirely on how many "
-         "people you would be splitting with."))
+         "people you would be splitting with. Count the entries that can still "
+         "win, not the entries that bought in — after Week 2 that is 74 of the "
+         "original 87, the other 13 having been chopped."))
 diverge = st.sidebar.toggle(
     "Split the two entries", value=True, key="cs_diverge",
     help="Both entries solve the same schedule, so on a lopsided week they can land "

@@ -3,7 +3,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0027940,Von Miller,OLB,WAS,1,1,0,0,0,0.0,1,0,0,0,0
 00-0027962,Cameron Jordan,LB,NO,1,2,1,2,0,1.5,2,0,1,0,0
 00-0027969,Cameron Heyward,DE,PIT,1,2,0,1,0,0.0,0,0,1,0,0
-00-0028292,Nick Bellore,LB,WAS,1,1,1,0,0,0.0,0,0,0,0,0
+00-0028292,Nick Bellore,LB,WAS,1,2,0,0,0,0.0,0,0,0,0,0
 00-0028872,Johnny Hekker,P,TEN,1,1,0,0,0,0.0,0,0,0,0,0
 00-0029255,Bobby Wagner,MLB,WAS,1,4,5,1,0,0.0,0,0,0,0,0
 00-0029562,Lavonte David,OLB,TB,1,3,6,1,0,0.0,0,0,0,0,0
@@ -85,7 +85,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033907,Dawuane Smoot,DE,JAX,1,1,1,1,0,1.0,1,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,1,1,3,0,0,0.0,0,0,0,0,0
 00-0033928,Jourdan Lewis,CB,JAX,1,3,2,0,0,0.0,1,1,3,0,0
-00-0033935,Trey Hendrickson,DE,CIN,1,3,0,1,0,1.0,3,0,0,0,0
+00-0033935,Trey Hendrickson,LB,CIN,1,3,0,1,0,1.0,3,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,1,1,0,1,0,1.0,3,0,0,0,0
 00-0033947,Deatrich Wise,DE,WAS,1,2,1,1,0,0.0,1,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,1,0,2,0,0,0.0,1,0,0,0,0
@@ -145,6 +145,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034856,Denzel Ward,CB,CLE,1,2,0,0,0,0.0,0,0,1,0,0
 00-0034874,Roquan Smith,ILB,BAL,1,8,2,0,0,0.0,0,0,0,0,0
 00-0034967,Rashan Gary,LB,GB,1,3,4,1,0,1.5,3,0,0,0,0
+00-0034968,Darnell Savage,SAF,JAX,1,0,0,0,0,0.0,0,0,1,0,0
 00-0034973,Maxx Crosby,DE,LV,1,1,1,1,0,1.0,2,0,1,0,0
 00-0034974,Julian Love,SAF,SEA,1,8,2,1,0,1.0,1,0,0,0,0
 00-0035021,Ashton Dulin,WR,IND,1,1,0,0,0,0.0,0,0,0,0,0
@@ -189,7 +190,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035669,Nick Scott,SAF,CAR,1,2,3,0,0,0.0,0,0,1,0,0
 00-0035672,Cody Barton,LB,TEN,1,5,4,1,0,0.0,0,0,0,0,0
 00-0035674,Jerry Tillery,DT,KC,1,1,0,1,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,TEN,1,0,2,0,0,0.0,0,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,TEN,1,0,2,0,0,0.0,0,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,1,4,2,1,0,1.0,1,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,1,0,3,0,0,0.0,0,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,1,7,9,0,0,0.0,0,0,0,0,0
@@ -213,7 +214,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036139,Rico Dowdle,RB,CAR,1,1,0,0,0,0.0,0,0,0,0,0
 00-0036159,Joshua Uche,LB,PHI,1,0,1,0,0,0.0,0,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,1,1,0,0,0,0.0,0,0,2,0,0
-00-0036192,A.J. Epenesa,DE,BUF,1,1,0,0,0,0.0,0,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,1,1,0,0,0,0.0,0,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,1,1,4,0,0,0.0,0,0,0,0,0
 00-0036220,Derrick Brown,DT,CAR,1,3,1,0,0,0.0,0,0,0,0,0
 00-0036221,Brandon Jones,SAF,DEN,1,1,5,0,0,0.0,0,0,0,0,0
@@ -245,7 +246,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036349,Kam Curl,SAF,LAR,1,7,2,0,0,0.0,0,0,0,0,0
 00-0036361,Trevon Diggs,CB,DAL,1,1,0,0,0,0.0,0,0,0,0,0
 00-0036366,Neville Gallimore,DT,IND,1,0,0,0,0,0.0,0,0,1,0,0
-00-0036374,L'Jarius Sneed,SAF,TEN,1,3,0,0,0,0.0,0,0,1,0,0
+00-0036374,L'Jarius Sneed,CB,TEN,1,3,0,0,0,0.0,0,0,1,0,0
 00-0036375,Amik Robertson,CB,DET,1,3,0,0,0,0.0,0,0,0,0,0
 00-0036378,Michael Danna,LB,KC,1,0,1,1,0,0.0,0,0,0,0,0
 00-0036380,Alohi Gilman,SAF,LAC,1,4,5,0,0,0.0,0,0,0,0,0
@@ -278,7 +279,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036648,Nick Niemann,LB,GB,1,1,3,0,0,0.0,0,0,0,0,0
 00-0036658,Isaiah McDuffie,LB,GB,1,1,3,0,0,0.0,0,0,0,0,0
 00-0036683,Devon Key,SAF,DEN,1,1,0,0,0,0.0,0,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,1,1,1,0,0,0.0,0,0,0,0,0
+00-0036711,Charles Snowden,DE,LV,1,1,1,0,0,0.0,0,0,0,0,0
 00-0036741,Jack Stoll,TE,NO,1,1,0,0,0,0.0,0,0,0,0,0
 00-0036813,Christian Elliss,LB,NE,1,5,3,0,0,0.0,0,0,0,0,0
 00-0036825,Feleipe Franks,TE,ATL,1,1,0,0,0,0.0,0,0,0,0,0
@@ -363,7 +364,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037294,Jordan Jackson,DT,DEN,1,0,1,0,0,0.0,0,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,1,3,1,0,0,0.0,0,0,0,0,0
 00-0037307,Ja'Sir Taylor,CB,LAC,1,1,1,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,1,2,0,1,0,0.0,0,0,0,0,0
+00-0037310,James Houston,LB,DAL,1,2,0,1,0,0.0,0,0,0,0,0
 00-0037311,Ko Kieft,TE,TB,1,1,0,0,0,0.0,0,0,0,0,0
 00-0037316,Mark Robinson,LB,NE,1,0,1,0,0,0.0,0,0,0,0,0
 00-0037321,Chase Lucas,CB,SF,1,1,0,0,0,0.0,0,0,0,0,0
@@ -381,7 +382,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037616,Nick Cross,SAF,IND,1,4,2,1,0,1.0,1,0,0,0,0
 00-0037633,Jacob Hummel,LB,BAL,1,1,0,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,1,0,3,0,0,0.0,0,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,1,3,2,1,0,0.0,1,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,1,3,2,1,0,0.0,1,0,0,0,0
 00-0037667,Kerby Joseph,SAF,DET,1,1,0,0,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,1,4,4,0,0,0.0,0,0,0,0,0
 00-0037752,Tycen Anderson,SAF,CIN,1,2,2,0,0,0.0,0,0,0,0,0
@@ -397,7 +398,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037843,Daniel Hardy,DE,CHI,1,1,2,0,0,0.0,0,0,0,0,0
 00-0038038,Kyle Hamilton,SAF,BAL,1,6,3,0,1,0.0,0,0,2,0,0
 00-0038039,Jack Jones,CB,MIA,1,3,5,0,0,0.0,0,0,1,0,0
-00-0038100,Percy Butler,SAF,WAS,1,1,2,0,0,0.0,0,0,0,0,0
+00-0038100,Percy Butler,SAF,WAS,1,1,1,0,0,0.0,0,0,0,0,0
 00-0038101,Akayleb Evans,CB,CAR,1,1,0,0,0,0.0,0,0,0,0,0
 00-0038106,Eyioma Uwazurike,DT,DEN,1,0,3,0,0,0.0,0,0,0,0,0
 00-0038116,Arnold Ebiketie,LB,ATL,1,3,2,1,0,0.0,0,0,0,0,0
@@ -626,7 +627,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040720,Jahdae Barron,CB,DEN,1,1,0,0,0,0.0,0,0,0,0,0
 00-0040721,Alfred Collins,DT,SF,1,0,1,0,0,0.0,0,0,0,0,0
 00-0040722,Mike Green,LB,BAL,1,1,0,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,1,1,0,0,0,0.0,1,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,1,1,0,0,0,0.0,1,0,0,0,0
 00-0040731,Trey Amos,CB,WAS,1,2,0,0,0,0.0,0,0,1,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,1,1,0,1,0,0.0,0,0,0,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,1,6,2,0,0,0.0,0,0,1,0,0
@@ -707,7 +708,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033860,Davon Godchaux,DT,NO,2,1,0,0,0,0.0,0,0,0,0,0
 00-0033868,Myles Garrett,DE,CLE,2,1,3,2,0,1.5,2,0,0,0,0
 00-0033870,Solomon Thomas,DE,DAL,2,2,4,0,0,0.0,1,0,0,0,0
-00-0033872,Jamal Adams,LB,LV,2,3,0,0,0,0.0,0,0,0,0,0
+00-0033872,Jamal Adams,LB,LV,2,3,1,0,0,0.0,0,0,0,0,0
 00-0033874,Marshon Lattimore,CB,WAS,2,5,1,0,0,0.0,0,0,1,0,0
 00-0033875,Haason Reddick,OLB,TB,2,1,1,0,0,0.0,1,0,0,0,0
 00-0033876,Derek Barnett,DE,HOU,2,0,0,0,0,0.0,2,0,0,0,0
@@ -719,8 +720,8 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033902,Tanoh Kpassagnon,DE,CHI,2,1,0,0,0,0.0,0,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,2,4,2,0,0,0.0,0,0,0,0,0
 00-0033928,Jourdan Lewis,CB,JAX,2,5,3,2,0,0.0,0,0,1,0,0
-00-0033935,Trey Hendrickson,DE,CIN,2,2,1,1,0,1.0,3,0,1,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,2,2,2,0,0,0.0,0,0,0,0,0
+00-0033935,Trey Hendrickson,LB,CIN,2,2,1,1,0,1.0,3,0,1,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,2,2,2,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,2,1,0,0,0,0.0,0,0,0,0,0
 00-0033947,Deatrich Wise,DE,WAS,2,0,1,0,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,2,4,2,1,0,0.0,0,0,0,0,0
@@ -776,13 +777,13 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034815,Fred Warner,MLB,SF,2,6,4,1,1,0.0,0,0,1,0,0
 00-0034818,Derrick Nnadi,NT,KC,2,1,3,0,0,0.0,0,0,0,0,0
 00-0034825,Arden Key,DE,TEN,2,0,1,0,0,0.0,0,0,0,0,0
-00-0034828,Harold Landry III,LB,NE,2,2,1,1,0,1.0,2,0,0,0,0
+00-0034828,Harold Landry III,LB,NE,2,2,2,1,0,1.0,2,0,0,0,0
 00-0034832,Bradley Chubb,OLB,MIA,2,3,2,1,0,1.0,1,0,0,0,0
 00-0034843,Mike Hughes,CB,ATL,2,2,0,0,0,0.0,0,0,0,0,0
 00-0034856,Denzel Ward,CB,CLE,2,0,1,0,0,0.0,0,0,0,0,0
 00-0034874,Roquan Smith,ILB,BAL,2,7,7,3,0,0.0,2,0,0,0,0
 00-0034967,Rashan Gary,LB,GB,2,2,1,1,0,1.0,1,0,0,0,0
-00-0034968,Darnell Savage,DB,JAX,2,1,0,0,0,0.0,0,0,0,0,0
+00-0034968,Darnell Savage,SAF,JAX,2,1,0,0,0,0.0,0,0,0,0,0
 00-0034973,Maxx Crosby,DE,LV,2,0,4,1,0,0.0,0,0,0,0,0
 00-0034974,Julian Love,SAF,SEA,2,0,1,0,0,0.0,0,0,1,0,0
 00-0034987,E.J. Speed,LB,HOU,2,1,0,0,0,0.0,0,0,0,0,0
@@ -821,11 +822,11 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035669,Nick Scott,SAF,CAR,2,3,0,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,2,2,3,0,0,0.0,0,1,1,0,0
 00-0035674,Jerry Tillery,DT,KC,2,1,0,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,TEN,2,1,0,1,0,0.0,0,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,TEN,2,1,0,1,0,0.0,0,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,2,1,4,0,0,0.0,0,0,1,0,0
 00-0035683,Dexter Lawrence,DT,NYG,2,4,0,0,0,0.0,0,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,2,4,6,0,0,0.0,1,0,1,0,0
-00-0035697,Germaine Pratt,LB,LV,2,4,2,0,0,0.0,0,0,2,0,0
+00-0035697,Germaine Pratt,LB,LV,2,5,2,0,0,0.0,0,0,2,0,0
 00-0035699,Jamel Dean,CB,TB,2,3,0,0,0,0.0,0,0,0,0,0
 00-0035705,Jalen Thompson,DB,ARI,2,6,4,0,0,0.0,0,0,0,0,0
 00-0035707,Devin White,LB,LV,2,5,2,1,0,0.0,0,0,0,0,0
@@ -843,7 +844,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036171,Aaron Brewer,C,MIA,2,1,0,0,0,0.0,0,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,2,1,0,0,0,0.0,1,0,0,0,0
 00-0036187,Reggie Gilliam,RB,BUF,2,0,2,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,2,0,0,0,0,0.0,1,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,2,0,0,0,0,0.0,1,0,0,0,0
 00-0036193,Anfernee Jennings,LB,NE,2,1,1,0,0,0.0,0,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,2,7,2,0,0,0.0,0,0,0,0,0
 00-0036220,Derrick Brown,DT,CAR,2,3,0,0,0,0.0,1,0,2,0,0
@@ -861,10 +862,10 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036286,K'Lavon Chaisson,LB,NE,2,1,1,1,0,1.0,1,0,0,0,0
 00-0036288,Yetur Gross-Matos,DE,SF,2,1,0,0,0,0.0,0,0,0,0,0
 00-0036292,Jaylon Johnson,CB,CHI,2,1,0,0,0,0.0,0,0,0,0,0
-00-0036293,Jeremy Chinn,SAF,LV,2,7,0,1,0,0.0,0,0,1,0,0
+00-0036293,Jeremy Chinn,SAF,LV,2,5,0,1,0,0.0,0,0,1,0,0
 00-0036294,Logan Wilson,LB,CIN,2,4,4,0,0,0.0,0,0,1,0,0
 00-0036298,Akeem Davis-Gaither,LB,ARI,2,2,4,0,0,0.0,1,0,0,0,0
-00-0036302,Jaylinn Hawkins,SAF,NE,2,5,3,0,0,0.0,0,0,0,0,0
+00-0036302,Jaylinn Hawkins,SAF,NE,2,5,2,0,0,0.0,0,0,0,0,0
 00-0036306,Daniel Thomas,SAF,DET,2,1,0,0,0,0.0,0,0,0,0,0
 00-0036323,Patrick Queen,LB,PIT,2,3,3,1,0,0.0,1,0,0,0,0
 00-0036325,Robert Hunt,OT,CAR,2,1,0,0,0,0.0,0,0,0,0,0
@@ -880,7 +881,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036361,Trevon Diggs,CB,DAL,2,3,1,0,0,0.0,0,0,0,0,0
 00-0036362,Willie Gay Jr.,LB,MIA,2,1,2,1,0,0.0,0,0,0,0,0
 00-0036371,Leki Fotu,DT,LV,2,1,1,1,0,0.0,0,0,0,0,0
-00-0036374,L'Jarius Sneed,SAF,TEN,2,2,1,0,0,0.0,0,0,2,0,0
+00-0036374,L'Jarius Sneed,CB,TEN,2,2,1,0,0,0.0,0,0,2,0,0
 00-0036375,Amik Robertson,CB,DET,2,1,0,0,0,0.0,0,0,0,0,0
 00-0036380,Alohi Gilman,SAF,LAC,2,2,1,0,0,0.0,0,0,2,0,0
 00-0036388,Xavier McKinney,SAF,GB,2,3,0,0,0,0.0,0,0,1,0,0
@@ -994,7 +995,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037292,Andrew Ogletree,TE,IND,2,0,1,0,0,0.0,0,0,0,0,0
 00-0037294,Jordan Jackson,DT,DEN,2,1,0,0,0,0.0,0,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,2,5,4,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,2,1,1,1,0,1.0,1,0,0,0,0
+00-0037310,James Houston,LB,DAL,2,1,1,1,0,1.0,1,0,0,0,0
 00-0037315,Cameron Goode,LB,MIA,2,1,2,0,0,0.0,0,0,0,0,0
 00-0037316,Mark Robinson,LB,NE,2,1,0,0,0,0.0,0,0,0,0,0
 00-0037321,Chase Lucas,CB,SF,2,1,0,0,0,0.0,0,0,0,0,0
@@ -1015,7 +1016,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037617,Hassan Haskins,RB,LAC,2,2,0,0,0,0.0,0,0,0,0,0
 00-0037661,Ja'Marcus Ingram,CB,BUF,2,1,0,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,2,2,2,0,0,0.0,0,0,1,0,0
-00-0037665,Sam Williams,DE,DAL,2,0,1,0,0,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,2,0,1,0,0,0.0,0,0,0,0,0
 00-0037667,Kerby Joseph,SAF,DET,2,2,1,0,0,0.0,0,1,1,0,0
 00-0037743,Daxton Hill,DB,CIN,2,9,0,1,0,0.0,0,1,1,0,0
 00-0037752,Tycen Anderson,SAF,CIN,2,1,1,0,0,0.0,0,0,0,0,0
@@ -1184,7 +1185,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0039813,Evan Williams,SAF,GB,2,2,3,0,0,0.0,0,0,0,0,0
 00-0039815,Tyrice Knight,LB,SEA,2,5,3,0,0,0.0,0,0,0,0,0
 00-0039818,Kitan Oladapo,SAF,GB,2,1,0,0,0,0.0,0,0,0,0,0
-00-0039821,Andru Phillips,DB,NYG,2,8,3,1,0,0.0,0,1,2,0,0
+00-0039821,Andru Phillips,DB,NYG,2,8,3,2,0,0.0,0,1,2,0,0
 00-0039825,Jaden Hicks,SAF,KC,2,1,1,0,0,0.0,0,0,0,0,0
 00-0039826,Jeremiah Trotter Jr.,LB,PHI,2,1,0,0,0,0.0,0,0,0,0,0
 00-0039829,Darius Muasau,LB,NYG,2,1,0,0,0,0.0,0,0,0,0,0
@@ -1290,7 +1291,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040721,Alfred Collins,DT,SF,2,0,2,0,0,0.0,1,0,0,0,0
 00-0040722,Mike Green,LB,BAL,2,0,2,0,0,0.0,1,0,0,0,0
 00-0040724,T.J. Sanders,DT,BUF,2,1,0,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,2,0,0,0,0,0.0,2,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,2,0,0,0,0,0.0,2,0,0,0,0
 00-0040731,Trey Amos,CB,WAS,2,1,1,0,0,0.0,0,0,2,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,2,2,3,0,0,0.0,0,0,0,0,0
 00-0040746,Nic Scourton,LB,CAR,2,0,1,0,0,0.0,0,0,0,0,0
@@ -1382,8 +1383,8 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033907,Dawuane Smoot,DE,JAX,3,2,2,0,0,0.0,0,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,3,1,3,0,0,0.5,1,0,0,0,0
 00-0033928,Jourdan Lewis,CB,JAX,3,3,1,1,0,0.0,0,1,2,0,0
-00-0033935,Trey Hendrickson,DE,CIN,3,1,0,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,3,2,1,0,0,0.0,0,0,0,0,0
+00-0033935,Trey Hendrickson,LB,CIN,3,1,0,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,3,2,1,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,3,2,1,1,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,3,1,4,0,0,0.0,1,0,0,0,0
 00-0033964,Al-Quadin Muhammad,LB,DET,3,3,1,2,0,2.5,3,0,0,0,0
@@ -1485,7 +1486,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035663,Taylor Rapp,SAF,BUF,3,1,2,0,0,0.0,0,0,0,0,0
 00-0035669,Nick Scott,SAF,CAR,3,2,1,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,3,5,1,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,TEN,3,1,1,0,0,0.0,0,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,TEN,3,1,1,0,0,0.0,0,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,3,3,1,1,0,0.5,2,0,1,0,0
 00-0035683,Dexter Lawrence,DT,NYG,3,0,1,0,0,0.0,2,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,3,4,4,0,0,0.0,0,0,0,0,0
@@ -1508,7 +1509,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036159,Joshua Uche,LB,PHI,3,1,0,0,0,0.0,0,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,3,1,0,1,0,0.0,0,0,0,0,0
 00-0036182,Nick Westbrook-Ikhine,WR,MIA,3,1,0,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,3,2,0,0,0,0.0,0,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,3,2,0,0,0,0.0,0,0,0,0,0
 00-0036198,Mike Onwenu,G,NE,3,1,0,0,0,0.0,0,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,3,3,1,0,0,0.0,1,0,0,0,0
 00-0036204,LaCale London,DE,ATL,3,3,0,1,0,0.0,0,0,0,0,0
@@ -1539,7 +1540,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036349,Kam Curl,SAF,LAR,3,5,3,0,0,0.0,0,0,0,0,0
 00-0036361,Trevon Diggs,CB,DAL,3,2,0,0,0,0.0,0,0,0,0,0
 00-0036366,Neville Gallimore,DT,IND,3,1,0,1,0,1.0,2,0,0,0,0
-00-0036374,L'Jarius Sneed,SAF,TEN,3,0,1,0,0,0.0,0,0,0,0,0
+00-0036374,L'Jarius Sneed,CB,TEN,3,0,1,0,0,0.0,0,0,0,0,0
 00-0036375,Amik Robertson,CB,DET,3,2,0,0,0,0.0,0,0,0,0,0
 00-0036380,Alohi Gilman,SAF,LAC,3,2,0,0,0,0.0,0,0,0,0,0
 00-0036388,Xavier McKinney,SAF,GB,3,2,4,0,0,0.0,0,1,1,0,0
@@ -1576,7 +1577,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036813,Christian Elliss,LB,NE,3,0,1,0,0,0.0,0,0,0,0,0
 00-0036844,Garret Wallow,LB,DEN,3,0,1,0,0,0.0,0,0,0,0,0
 00-0036850,Cameron Sample,DE,CIN,3,2,1,0,0,0.0,0,0,0,0,0
-00-0036862,Ben Skowronek,WR,PIT,3,0,1,0,0,0.0,0,0,0,0,0
+00-0036862,Ben Skowronek,WR,PIT,3,0,2,0,0,0.0,0,0,0,0,0
 00-0036867,Chris Rumph II,LB,NO,3,2,2,0,0,0.0,0,0,0,0,0
 00-0036871,Nate Hobbs,CB,GB,3,2,0,1,0,0.0,0,0,0,0,0
 00-0036874,Pat Surtain II,CB,DEN,3,2,0,0,0,0.0,0,0,1,0,0
@@ -1652,7 +1653,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037294,Jordan Jackson,DT,DEN,3,1,2,0,0,0.0,1,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,3,1,0,0,1,0.0,0,0,0,0,0
 00-0037307,Ja'Sir Taylor,CB,LAC,3,0,1,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,3,1,1,0,0,0.0,0,0,0,0,0
+00-0037310,James Houston,LB,DAL,3,1,1,0,0,0.0,0,0,0,0,0
 00-0037311,Ko Kieft,TE,TB,3,0,2,0,0,0.0,0,0,0,0,0
 00-0037315,Cameron Goode,LB,MIA,3,0,1,0,0,0.0,0,0,0,0,0
 00-0037321,Chase Lucas,CB,SF,3,1,0,0,0,0.0,0,0,0,0,0
@@ -1674,7 +1675,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037616,Nick Cross,SAF,IND,3,4,2,1,0,0.0,0,0,0,0,0
 00-0037617,Hassan Haskins,RB,LAC,3,0,1,0,0,0.0,0,0,0,0,0
 00-0037633,Jacob Hummel,LB,BAL,3,0,1,0,0,0.0,0,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,3,2,0,0,0,0.0,1,0,1,0,0
+00-0037665,Sam Williams,LB,DAL,3,2,0,0,0,0.0,1,0,1,0,0
 00-0037667,Kerby Joseph,SAF,DET,3,3,0,0,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,3,2,0,0,0,0.0,0,0,0,0,0
 00-0037745,Velus Jones Jr.,WR,NO,3,1,0,0,0,0.0,0,0,0,0,0
@@ -1845,7 +1846,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0039733,Ruke Orhorhoro,DT,ATL,3,0,1,0,0,0.0,0,0,0,0,0
 00-0039734,Braden Fiske,DT,LAR,3,1,1,0,0,0.0,0,0,0,0,0
 00-0039740,Jalyx Hunt,LB,PHI,3,0,2,0,0,0.0,2,0,0,0,0
-00-0039741,Payton Wilson,LB,PIT,3,5,2,0,0,0.0,0,0,0,0,0
+00-0039741,Payton Wilson,LB,PIT,3,4,3,0,0,0.0,0,0,0,0,0
 00-0039749,Tyler Davis,DE,LAR,3,0,2,0,0,0.0,0,0,0,0,0
 00-0039770,Charles Woods,CB,NE,3,1,0,0,0,0.0,0,0,0,0,0
 00-0039774,Omar Speights,LB,LAR,3,4,0,0,0,0.0,0,0,0,0,0
@@ -1966,7 +1967,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040718,Travis Hunter,CB,JAX,3,3,2,0,0,0.0,0,0,0,0,0
 00-0040720,Jahdae Barron,CB,DEN,3,2,2,0,0,0.0,0,0,0,0,0
 00-0040722,Mike Green,LB,BAL,3,2,2,0,0,0.0,1,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,3,1,1,0,0,0.0,0,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,3,1,1,0,0,0.0,0,0,0,0,0
 00-0040731,Trey Amos,CB,WAS,3,0,0,1,0,0.0,0,0,1,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,3,3,3,0,0,0.0,0,0,0,0,0
 00-0040746,Nic Scourton,LB,CAR,3,0,1,0,0,0.0,0,0,1,0,0
@@ -1994,7 +1995,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031177,Brent Urban,DE,BAL,4,0,1,0,0,0.0,0,0,0,0,0
 00-0031270,Shelby Harris,DE,CLE,4,0,2,1,0,0.0,1,0,0,0,0
 00-0031357,C.J. Goodwin,CB,DAL,4,1,0,0,0,0.0,0,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,4,1,2,0,0,0.0,0,0,0,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,4,1,2,0,0,0.0,0,0,0,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,4,1,0,0,0,0.0,0,0,0,0,0
 00-0031484,Chris Manhertz,TE,NYG,4,1,1,0,0,0.0,0,0,0,0,0
 00-0031550,Shaq Thompson,OLB,BUF,4,2,0,0,0,0.0,0,0,1,0,0
@@ -2009,7 +2010,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0032052,Dante Fowler Jr.,DE,DAL,4,1,1,0,0,0.0,0,0,0,0,0
 00-0032146,Bud Dupree,OLB,LAC,4,2,1,0,0,0.0,0,0,0,0,0
 00-0032164,Arik Armstead,DE,JAX,4,2,0,1,1,1.0,0,0,0,0,0
-00-0032265,Mario Edwards,DT,HOU,4,2,0,1,0,0.0,1,0,0,0,0
+00-0032265,Mario Edwards,DE,HOU,4,2,0,1,0,0.0,1,0,0,0,0
 00-0032378,DeForest Buckner,DT,IND,4,4,4,2,0,0.0,1,0,0,0,0
 00-0032387,Jarran Reed,DT,SEA,4,0,2,0,0,0.0,0,0,0,0,0
 00-0032415,Matthew Judon,OLB,MIA,4,1,0,0,0,0.0,0,0,0,0,0
@@ -2063,8 +2064,8 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033907,Dawuane Smoot,DE,JAX,4,1,1,0,0,0.0,1,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,4,4,2,0,0,1.0,1,0,1,0,0
 00-0033928,Jourdan Lewis,CB,JAX,4,2,0,0,0,0.0,0,0,0,0,0
-00-0033935,Trey Hendrickson,DE,CIN,4,2,2,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,4,1,0,0,0,0.0,0,0,0,0,0
+00-0033935,Trey Hendrickson,LB,CIN,4,2,2,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,4,1,0,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,4,0,2,0,0,0.0,2,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,4,1,3,0,0,0.0,0,0,0,0,0
 00-0034163,Jacob Martin,DE,WAS,4,2,0,0,0,0.0,0,0,0,0,0
@@ -2124,7 +2125,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034874,Roquan Smith,ILB,BAL,4,2,0,0,0,0.0,0,0,0,0,0
 00-0034960,Jakobi Meyers,WR,LV,4,0,1,0,0,0.0,0,0,0,0,0
 00-0034967,Rashan Gary,LB,GB,4,2,2,0,0,0.0,0,0,0,0,0
-00-0034968,Darnell Savage,DB,WAS,4,1,0,0,0,0.0,0,0,0,0,0
+00-0034968,Darnell Savage,SAF,WAS,4,1,0,0,0,0.0,0,0,0,0,0
 00-0034973,Maxx Crosby,DE,LV,4,5,0,3,1,0.0,1,1,3,0,0
 00-0034974,Julian Love,SAF,SEA,4,6,0,0,0,0.0,0,0,1,0,0
 00-0034987,E.J. Speed,LB,HOU,4,2,2,0,0,0.0,1,0,0,0,0
@@ -2168,7 +2169,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035669,Nick Scott,SAF,CAR,4,3,2,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,4,4,3,0,0,0.0,0,0,0,0,0
 00-0035674,Jerry Tillery,DT,KC,4,1,0,1,0,1.0,1,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,TEN,4,2,1,0,0,0.0,0,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,TEN,4,2,1,0,0,0.0,0,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,4,1,0,1,0,0.0,0,1,1,0,0
 00-0035687,Bobby Okereke,ILB,NYG,4,3,1,0,0,0.0,0,0,0,0,0
 00-0035697,Germaine Pratt,LB,LV,4,3,2,1,0,0.0,0,0,0,0,0
@@ -2186,7 +2187,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036151,Bryce Huff,DE,SF,4,2,0,1,0,0.0,0,0,0,0,0
 00-0036159,Joshua Uche,LB,PHI,4,2,2,0,0,0.0,0,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,4,1,0,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,4,3,0,1,0,1.0,1,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,4,3,0,1,0,1.0,1,0,0,0,0
 00-0036193,Anfernee Jennings,LB,NE,4,1,2,0,0,0.0,0,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,4,4,6,0,0,0.0,0,0,0,0,0
 00-0036220,Derrick Brown,DT,CAR,4,1,3,0,0,0.0,0,0,0,0,0
@@ -2216,7 +2217,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036355,Justin Herbert,QB,LAC,4,1,0,0,0,0.0,0,0,0,0,0
 00-0036361,Trevon Diggs,CB,DAL,4,4,0,1,0,0.0,0,0,0,0,0
 00-0036366,Neville Gallimore,DT,IND,4,0,2,0,0,0.0,0,0,0,0,0
-00-0036374,L'Jarius Sneed,SAF,TEN,4,3,0,0,0,0.0,0,0,0,0,0
+00-0036374,L'Jarius Sneed,CB,TEN,4,3,0,0,0,0.0,0,0,0,0,0
 00-0036375,Amik Robertson,CB,DET,4,1,0,0,0,0.0,0,0,1,0,0
 00-0036380,Alohi Gilman,SAF,LAC,4,2,2,0,0,0.0,0,0,1,0,0
 00-0036388,Xavier McKinney,SAF,GB,4,3,4,0,0,0.0,0,0,0,0,0
@@ -2252,7 +2253,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036695,Naquan Jones,DT,LAC,4,1,1,1,0,0.0,0,0,0,0,0
 00-0036813,Christian Elliss,LB,NE,4,3,6,0,0,0.0,0,0,0,0,0
 00-0036825,Feleipe Franks,TE,ATL,4,1,1,0,0,0.0,0,0,0,0,0
-00-0036844,Garret Wallow,LB,DEN,4,0,1,0,0,0.0,0,0,0,0,0
+00-0036844,Garret Wallow,LB,DEN,4,0,2,0,0,0.0,0,0,0,0,0
 00-0036850,Cameron Sample,DE,CIN,4,0,1,0,0,0.0,1,0,0,0,0
 00-0036862,Ben Skowronek,WR,PIT,4,2,1,0,0,0.0,0,0,0,0,0
 00-0036867,Chris Rumph II,LB,NO,4,2,0,0,0,0.0,1,0,1,0,0
@@ -2267,7 +2268,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036914,Greg Rousseau,LB,BUF,4,1,1,0,0,0.0,0,0,0,0,0
 00-0036916,Milton Williams,DT,NE,4,1,0,0,0,0.0,0,0,0,0,0
 00-0036927,Pete Werner,LB,NO,4,3,0,0,0,0.0,0,0,0,0,0
-00-0036932,Micah Parsons,LB,GB,4,1,2,0,0,1.0,2,0,0,0,0
+00-0036932,Micah Parsons,LB,GB,4,1,2,0,0,1.0,3,0,0,0,0
 00-0036933,Zaven Collins,LB,ARI,4,2,1,1,0,0.0,0,0,0,0,0
 00-0036934,Jaelan Phillips,LB,MIA,4,1,1,0,0,0.0,0,0,0,0,0
 00-0036937,Paulson Adebo,CB,NYG,4,3,1,0,0,0.0,0,0,1,0,0
@@ -2333,7 +2334,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037292,Andrew Ogletree,TE,IND,4,0,1,0,0,0.0,0,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,4,0,1,0,0,0.0,0,0,0,0,0
 00-0037304,Connor Heyward,FB,PIT,4,0,1,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,4,1,1,1,1,1.0,0,0,0,0,0
+00-0037310,James Houston,LB,DAL,4,1,1,1,1,1.0,0,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,4,1,0,0,0,0.0,0,0,0,0,0
 00-0037321,Chase Lucas,CB,SF,4,1,0,0,0,0.0,0,0,0,0,0
 00-0037323,Rodney Thomas,SAF,IND,4,0,1,0,0,0.0,0,0,0,0,0
@@ -2356,7 +2357,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037616,Nick Cross,SAF,IND,4,5,8,0,0,0.5,1,0,0,0,0
 00-0037617,Hassan Haskins,RB,LAC,4,1,1,0,0,0.0,0,0,0,0,0
 00-0037633,Jacob Hummel,LB,BAL,4,2,3,0,0,0.0,0,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,4,1,0,0,0,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,4,1,0,0,0,0.0,0,0,0,0,0
 00-0037667,Kerby Joseph,SAF,DET,4,1,2,0,0,0.0,0,1,1,0,0
 00-0037743,Daxton Hill,DB,CIN,4,5,4,0,0,0.0,0,0,1,0,0
 00-0037745,Velus Jones Jr.,WR,NO,4,0,2,0,0,0.0,0,0,0,0,0
@@ -2431,9 +2432,9 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0038711,Mohamoud Diabate,LB,CLE,4,1,0,0,0,0.0,0,0,0,0,0
 00-0038715,Ronnie Hickman Jr.,SAF,CLE,4,4,5,1,0,0.0,0,0,0,0,0
 00-0038738,Hunter Luepke,RB,DAL,4,1,0,0,0,0.0,0,0,0,0,0
-00-0038742,Tyrus Wheat,DE,DET,4,0,1,0,0,0.0,0,0,0,0,0
+00-0038742,Tyrus Wheat,LB,DET,4,0,1,0,0,0.0,0,0,0,0,0
 00-0038778,Jalen Redmond,DL,MIN,4,2,1,2,0,2.0,2,0,0,0,0
-00-0038783,Nate Adkins,TE,DEN,4,1,0,0,0,0.0,0,0,0,0,0
+00-0038783,Nate Adkins,TE,DEN,4,0,1,0,0,0.0,0,0,0,0,0
 00-0038788,Art Green,CB,NYG,4,0,1,0,0,0.0,0,0,0,0,0
 00-0038791,Thomas Incoom,LB,CAR,4,0,1,0,0,0.0,0,0,0,0,0
 00-0038795,PJ Mustipher,DT,ARI,4,1,3,0,0,0.0,0,0,0,0,0
@@ -2634,7 +2635,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040722,Mike Green,LB,BAL,4,3,2,1,0,0.0,0,0,0,0,0
 00-0040723,Jack Kiser,LB,JAX,4,1,1,0,0,0.0,0,0,0,0,0
 00-0040724,T.J. Sanders,DT,BUF,4,0,1,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,4,4,1,2,0,0.0,0,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,4,4,1,2,0,0.0,0,0,0,0,0
 00-0040729,Jack Bech,WR,LV,4,0,1,0,0,0.0,0,0,0,0,0
 00-0040731,Trey Amos,CB,WAS,4,2,2,0,0,0.0,0,0,0,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,4,6,4,0,0,0.0,0,1,1,0,0
@@ -2660,7 +2661,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031270,Shelby Harris,DE,CLE,5,0,1,0,0,0.0,0,0,0,0,0
 00-0031357,C.J. Goodwin,CB,DAL,5,1,0,0,0,0.0,0,0,0,0,0
 00-0031360,Kyle Van Noy,MLB,BAL,5,1,0,1,0,1.0,1,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,5,1,1,0,0,0.0,0,0,0,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,5,1,1,0,0,0.0,0,0,0,0,0
 00-0031550,Shaq Thompson,OLB,BUF,5,4,1,1,1,1.0,1,0,0,0,0
 00-0031551,Eddie Goldman,NT,WAS,5,0,1,0,0,0.0,0,0,0,0,0
 00-0031576,Za'Darius Smith,DE,PHI,5,1,2,1,0,1.0,2,0,0,0,0
@@ -2673,7 +2674,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0032052,Dante Fowler Jr.,DE,DAL,5,1,0,1,0,1.0,5,0,1,0,0
 00-0032104,Ameer Abdullah,RB,IND,5,1,0,0,0,0.0,0,0,0,0,0
 00-0032164,Arik Armstead,DE,JAX,5,1,1,0,0,0.0,0,0,0,0,0
-00-0032265,Mario Edwards,DT,HOU,5,1,1,1,0,1.0,1,0,0,0,0
+00-0032265,Mario Edwards,DE,HOU,5,1,1,1,0,1.0,1,0,0,0,0
 00-0032378,DeForest Buckner,DT,IND,5,3,3,1,0,1.0,2,0,0,0,0
 00-0032388,Deion Jones,LB,TB,5,0,2,0,0,0.0,0,0,0,0,0
 00-0032415,Matthew Judon,OLB,MIA,5,1,1,0,0,0.0,1,0,0,0,0
@@ -2717,8 +2718,8 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033890,Budda Baker,S,ARI,5,4,2,0,0,0.0,0,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,5,2,1,1,0,0.0,0,1,3,0,0
 00-0033928,Jourdan Lewis,CB,JAX,5,0,1,0,0,0.0,0,0,1,0,0
-00-0033935,Trey Hendrickson,DE,CIN,5,2,0,1,1,2.0,2,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,5,0,3,0,0,0.0,0,0,0,0,0
+00-0033935,Trey Hendrickson,LB,CIN,5,2,0,1,1,2.0,2,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,5,0,3,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,5,3,1,1,0,1.0,1,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,5,0,1,0,0,0.0,0,0,1,0,0
 00-0033964,Al-Quadin Muhammad,LB,DET,5,0,2,0,0,0.0,3,0,0,0,0
@@ -2758,7 +2759,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034754,Oren Burks,ILB,CIN,5,0,3,0,0,0.0,0,0,0,0,0
 00-0034760,Nathan Shepherd,DE,NO,5,2,2,0,0,0.0,0,0,0,0,0
 00-0034778,Carlton Davis III,CB,NE,5,3,1,0,0,0.0,1,0,0,0,0
-00-0034782,Harrison Phillips,DT,NYJ,5,0,2,0,0,0.0,0,0,0,0,0
+00-0034782,Harrison Phillips,DT,NYJ,5,0,2,0,0,0.0,0,0,1,0,0
 00-0034789,Minkah Fitzpatrick,FS,MIA,5,6,3,0,0,0.0,0,1,1,0,0
 00-0034790,Derwin James,FS,LAC,5,2,1,0,0,0.0,0,0,0,0,0
 00-0034797,Jerome Baker,OLB,CLE,5,1,0,0,0,0.0,0,0,0,0,0
@@ -2803,7 +2804,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035669,Nick Scott,SAF,CAR,5,4,1,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,5,4,2,0,0,0.0,0,0,0,0,0
 00-0035674,Jerry Tillery,DT,KC,5,1,2,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,TEN,5,2,1,0,0,0.0,0,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,TEN,5,2,1,0,0,0.0,0,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,5,1,1,0,0,0.0,0,0,1,0,0
 00-0035687,Bobby Okereke,ILB,NYG,5,5,5,0,0,0.0,0,0,0,0,0
 00-0035692,Clelin Ferrell,DE,LAC,5,0,1,0,0,0.0,0,0,0,0,0
@@ -2821,7 +2822,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036159,Joshua Uche,LB,PHI,5,2,0,0,0,0.0,1,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,5,2,1,1,1,0.0,0,0,0,0,0
 00-0036187,Reggie Gilliam,RB,BUF,5,2,0,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,5,0,2,0,0,0.5,1,0,1,0,0
+00-0036192,A.J. Epenesa,LB,BUF,5,0,2,0,0,0.5,1,0,1,0,0
 00-0036193,Anfernee Jennings,LB,NE,5,0,1,0,0,0.0,0,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,5,3,2,1,0,0.0,0,0,0,0,0
 00-0036220,Derrick Brown,DT,CAR,5,1,2,1,0,1.0,1,0,0,0,0
@@ -2850,7 +2851,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036359,Damon Arnette,CB,HOU,5,2,0,0,0,0.0,0,0,0,0,0
 00-0036361,Trevon Diggs,CB,DAL,5,1,3,0,0,0.0,0,0,0,0,0
 00-0036366,Neville Gallimore,DT,IND,5,4,2,0,0,0.0,0,0,0,0,0
-00-0036374,L'Jarius Sneed,SAF,TEN,5,2,2,0,0,0.0,0,0,0,0,0
+00-0036374,L'Jarius Sneed,CB,TEN,5,2,2,0,0,0.0,0,0,0,0,0
 00-0036375,Amik Robertson,CB,DET,5,5,0,0,0,0.0,0,1,1,0,0
 00-0036378,Michael Danna,LB,KC,5,0,2,0,0,0.0,0,0,0,0,0
 00-0036380,Alohi Gilman,SAF,LAC,5,1,3,0,0,0.0,0,0,0,0,0
@@ -2881,7 +2882,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036653,Stone Forsythe,OT,LV,5,2,0,0,0,0.0,0,0,0,0,0
 00-0036672,Grant Stuard,LB,DET,5,0,1,0,0,0.0,0,0,0,0,0
 00-0036683,Devon Key,SAF,DEN,5,1,0,0,0,0.0,0,0,1,0,0
-00-0036711,Charles Snowden,LB,LV,5,1,1,0,0,0.0,0,0,0,0,0
+00-0036711,Charles Snowden,DE,LV,5,1,1,0,0,0.0,0,0,0,0,0
 00-0036728,Curtis Robinson,LB,SF,5,0,2,0,0,0.0,0,0,0,0,0
 00-0036813,Christian Elliss,LB,NE,5,4,4,0,0,0.0,0,0,0,0,0
 00-0036850,Cameron Sample,DE,CIN,5,1,2,0,0,0.0,0,0,0,0,0
@@ -2953,7 +2954,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037275,DaRon Bland,CB,DAL,5,6,1,0,0,0.0,0,0,0,0,0
 00-0037288,Christian Benford,CB,BUF,5,4,0,0,0,0.0,0,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,5,1,7,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,5,2,1,1,0,1.5,2,0,0,0,0
+00-0037310,James Houston,LB,DAL,5,2,1,1,0,1.5,2,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,5,3,0,0,0,0.0,0,0,1,0,0
 00-0037315,Cameron Goode,LB,MIA,5,0,1,0,0,0.0,0,0,0,0,0
 00-0037316,Mark Robinson,LB,NYJ,5,1,0,0,0,0.0,0,0,0,0,0
@@ -2975,7 +2976,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037611,Kayvon Thibodeaux,LB,NYG,5,1,0,1,0,0.0,0,0,0,0,0
 00-0037616,Nick Cross,SAF,IND,5,3,5,1,0,0.0,0,0,1,0,0
 00-0037617,Hassan Haskins,RB,LAC,5,0,1,0,0,0.0,0,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,5,2,0,1,0,1.0,1,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,5,2,0,1,0,1.0,1,0,0,0,0
 00-0037667,Kerby Joseph,SAF,DET,5,3,1,0,0,0.0,0,1,2,0,0
 00-0037743,Daxton Hill,DB,CIN,5,2,3,0,0,0.0,0,0,0,0,0
 00-0037752,Tycen Anderson,SAF,CIN,5,1,0,0,0,0.0,0,0,0,0,0
@@ -3220,7 +3221,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040721,Alfred Collins,DT,SF,5,2,0,0,1,0.0,1,0,0,0,0
 00-0040722,Mike Green,LB,BAL,5,0,2,0,0,0.0,0,0,0,0,0
 00-0040723,Jack Kiser,LB,JAX,5,0,1,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,5,1,2,0,0,0.0,2,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,5,1,2,0,0,0.0,2,0,0,0,0
 00-0040731,Trey Amos,CB,WAS,5,1,1,0,0,0.0,0,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,5,4,1,1,0,0.0,0,0,0,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,5,3,4,1,0,0.0,0,0,0,0,0
@@ -3245,7 +3246,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031177,Brent Urban,DE,BAL,6,2,0,1,0,0.0,0,0,0,0,0
 00-0031270,Shelby Harris,DE,CLE,6,1,0,1,0,0.0,0,0,0,0,0
 00-0031360,Kyle Van Noy,MLB,BAL,6,0,1,0,0,0.0,0,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,6,0,1,0,0,0.0,0,0,0,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,6,0,1,0,0,0.0,0,0,0,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,6,2,3,2,0,2.0,5,0,0,0,0
 00-0031550,Shaq Thompson,OLB,BUF,6,5,5,1,0,0.0,0,0,1,0,0
 00-0031557,Jordan Phillips,DT,BUF,6,1,0,0,0,0.0,0,0,0,0,0
@@ -3308,8 +3309,8 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033914,Alex Anzalone,MLB,DET,6,7,5,0,0,0.0,1,0,0,0,0
 00-0033926,Shaquill Griffin,CB,SEA,6,7,0,0,0,0.0,0,0,0,0,0
 00-0033928,Jourdan Lewis,CB,JAX,6,1,2,1,0,0.0,0,0,0,0,0
-00-0033935,Trey Hendrickson,DE,CIN,6,0,2,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,6,1,2,0,0,0.0,0,0,0,0,0
+00-0033935,Trey Hendrickson,LB,CIN,6,0,2,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,6,1,2,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,6,2,0,0,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,6,2,1,2,0,0.0,1,0,0,0,0
 00-0033964,Al-Quadin Muhammad,LB,DET,6,1,1,1,0,1.0,1,0,0,0,0
@@ -3362,7 +3363,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034856,Denzel Ward,CB,CLE,6,2,1,1,0,0.0,0,0,1,0,0
 00-0034959,Andrew Beck,FB,NYJ,6,1,0,0,0,0.0,0,0,0,0,0
 00-0034967,Rashan Gary,LB,GB,6,0,1,0,0,0.0,2,0,0,0,0
-00-0034968,Darnell Savage,DB,WAS,6,2,2,0,0,0.0,0,0,0,0,0
+00-0034968,Darnell Savage,SAF,WAS,6,2,2,0,0,0.0,0,0,0,0,0
 00-0034973,Maxx Crosby,DE,LV,6,3,0,2,0,2.0,3,0,0,0,0
 00-0034993,Marcus Epps,SAF,PHI,6,2,0,0,0,0.0,0,0,0,0,0
 00-0035133,Keisean Nixon,DB,GB,6,3,2,1,0,0.0,0,0,2,0,0
@@ -3400,12 +3401,12 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035667,Greg Gaines,DT,TB,6,1,0,0,0,0.0,0,0,0,0,0
 00-0035669,Nick Scott,SAF,CAR,6,3,1,0,0,0.0,0,0,1,0,0
 00-0035672,Cody Barton,LB,TEN,6,0,3,0,0,0.0,0,1,1,0,0
-00-0035678,Dre'Mont Jones,DE,TEN,6,1,4,1,0,1.0,2,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,TEN,6,1,4,1,0,1.0,2,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,6,1,4,0,0,0.0,0,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,6,2,4,0,0,0.0,0,0,1,0,0
 00-0035697,Germaine Pratt,LB,IND,6,7,3,0,0,0.0,0,0,0,0,0
 00-0035699,Jamel Dean,CB,TB,6,3,1,1,1,1.0,1,1,1,0,0
-00-0035705,Jalen Thompson,DB,ARI,6,3,3,0,0,0.0,0,0,0,0,0
+00-0035705,Jalen Thompson,DB,ARI,6,3,4,0,0,0.0,0,0,0,0,0
 00-0035707,Devin White,LB,LV,6,4,4,1,1,1.0,1,1,1,0,0
 00-0035713,Brian Burns,LB,NYG,6,3,4,2,0,2.0,2,0,0,0,0
 00-0035718,Quinnen Williams,DT,NYJ,6,0,3,0,1,0.0,0,0,0,0,0
@@ -3417,7 +3418,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035942,Christian Rozeboom,LB,CAR,6,3,3,0,0,0.0,0,0,0,0,0
 00-0036151,Bryce Huff,DE,SF,6,0,0,1,0,0.0,0,0,0,0,0
 00-0036159,Joshua Uche,LB,PHI,6,1,0,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,6,1,2,0,0,0.0,0,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,6,1,2,0,0,0.0,0,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,6,3,0,1,0,1.0,2,1,1,0,0
 00-0036220,Derrick Brown,DT,CAR,6,2,1,1,0,0.0,1,0,0,0,0
 00-0036221,Brandon Jones,SAF,DEN,6,3,4,0,0,0.5,1,0,0,0,0
@@ -3432,7 +3433,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036286,K'Lavon Chaisson,LB,NE,6,0,0,0,0,0.0,1,0,0,0,0
 00-0036293,Jeremy Chinn,SAF,LV,6,4,2,1,0,0.0,0,0,0,0,0
 00-0036294,Logan Wilson,LB,CIN,6,1,3,0,0,0.0,0,0,0,0,0
-00-0036298,Akeem Davis-Gaither,LB,ARI,6,4,4,0,0,0.0,0,0,1,0,0
+00-0036298,Akeem Davis-Gaither,LB,ARI,6,4,3,0,0,0.0,0,0,1,0,0
 00-0036300,Mykal Walker,LB,NYJ,6,0,2,0,0,0.0,0,0,0,0,0
 00-0036305,Trevis Gipson,LB,SF,6,1,0,0,0,0.0,0,0,0,0,0
 00-0036307,Kindle Vildor,CB,TB,6,2,1,0,0,0.0,0,1,2,0,0
@@ -3447,7 +3448,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036361,Trevon Diggs,CB,DAL,6,2,1,0,0,0.0,0,0,0,0,0
 00-0036366,Neville Gallimore,DT,IND,6,1,0,0,0,0.0,1,0,0,0,0
 00-0036371,Leki Fotu,DT,LV,6,1,0,1,0,1.0,1,0,0,0,0
-00-0036374,L'Jarius Sneed,SAF,TEN,6,5,4,0,0,0.0,0,0,0,0,0
+00-0036374,L'Jarius Sneed,CB,TEN,6,5,4,0,0,0.0,0,0,0,0,0
 00-0036375,Amik Robertson,CB,DET,6,1,1,0,0,0.0,0,0,0,0,0
 00-0036378,Michael Danna,LB,KC,6,1,1,0,0,0.0,1,0,0,0,0
 00-0036380,Alohi Gilman,SAF,BAL,6,4,3,0,0,0.0,0,0,0,0,0
@@ -3498,7 +3499,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036909,Khyiris Tonga,DT,NE,6,1,2,1,0,0.0,0,0,0,0,0
 00-0036914,Greg Rousseau,LB,BUF,6,1,0,0,0,0.0,0,0,0,0,0
 00-0036916,Milton Williams,DT,NE,6,1,1,0,0,0.0,0,0,0,0,0
-00-0036922,Patrick Johnson,LB,PHI,6,1,1,1,0,1.0,1,0,0,0,0
+00-0036922,Patrick Johnson,DE,PHI,6,1,1,1,0,1.0,1,0,0,0,0
 00-0036927,Pete Werner,LB,NO,6,5,0,1,0,1.0,1,0,1,0,0
 00-0036932,Micah Parsons,LB,GB,6,0,3,0,0,0.0,0,0,0,0,0
 00-0036933,Zaven Collins,LB,ARI,6,2,0,1,0,0.0,1,0,0,0,0
@@ -3531,7 +3532,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037074,Quay Walker,LB,GB,6,5,3,0,0,0.0,0,0,0,0,0
 00-0037082,Dominique Robinson,DE,CHI,6,2,1,0,0,0.5,1,0,0,0,0
 00-0037083,Kingsley Enagbare,LB,GB,6,0,2,0,0,0.0,0,0,0,0,0
-00-0037091,Bo Melton,CB,GB,6,0,1,0,0,0.0,0,0,0,0,0
+00-0037091,Bo Melton,WR,GB,6,0,1,0,0,0.0,0,0,0,0,0
 00-0037096,Elijah Hicks,SAF,CHI,6,0,1,0,0,0.0,0,0,0,0,0
 00-0037112,Jake Tonges,TE,SF,6,1,1,0,0,0.0,0,0,0,0,0
 00-0037130,Reed Blankenship,SAF,PHI,6,6,0,0,0,0.0,0,0,0,0,0
@@ -3561,10 +3562,10 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037275,DaRon Bland,CB,DAL,6,2,1,0,0,0.0,0,0,0,0,0
 00-0037280,Matthew Butler,DT,MIA,6,1,0,0,0,0.0,0,0,0,0,0
 00-0037288,Christian Benford,CB,BUF,6,2,1,0,0,0.0,0,0,0,0,0
-00-0037298,Sam Roberts,DT,ATL,6,1,3,0,0,1.0,1,0,0,0,0
+00-0037298,Sam Roberts,DE,ATL,6,1,3,0,0,1.0,1,0,0,0,0
 00-0037304,Connor Heyward,FB,PIT,6,0,1,0,0,0.0,0,0,0,0,0
 00-0037307,Ja'Sir Taylor,CB,LAC,6,2,0,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,6,2,3,0,0,0.0,0,0,0,0,0
+00-0037310,James Houston,LB,DAL,6,2,3,0,0,0.0,0,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,6,2,1,0,0,0.0,0,0,2,0,0
 00-0037315,Cameron Goode,LB,MIA,6,1,0,0,0,0.0,0,0,0,0,0
 00-0037316,Mark Robinson,LB,NYJ,6,1,0,0,0,0.0,0,0,0,0,0
@@ -3586,7 +3587,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037661,Ja'Marcus Ingram,CB,BUF,6,1,0,0,0,0.0,0,0,0,0,0
 00-0037662,C.J. Brewer,DT,TB,6,0,2,0,0,0.5,1,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,6,4,1,1,0,1.0,1,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,6,4,0,0,0,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,6,4,0,0,0,0.0,0,0,0,0,0
 00-0037667,Kerby Joseph,SAF,DET,6,4,0,0,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,6,5,4,0,0,0.0,0,0,0,0,0
 00-0037752,Tycen Anderson,SAF,CIN,6,0,2,0,0,0.0,0,0,0,0,0
@@ -3655,7 +3656,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0038711,Mohamoud Diabate,LB,CLE,6,2,0,0,0,0.0,0,0,0,0,0
 00-0038715,Ronnie Hickman Jr.,SAF,CLE,6,4,4,0,0,0.0,0,0,0,0,0
 00-0038720,Julian Hill,TE,MIA,6,0,1,0,0,0.0,0,0,0,0,0
-00-0038742,Tyrus Wheat,DE,DET,6,0,1,0,0,0.0,0,0,0,0,0
+00-0038742,Tyrus Wheat,LB,DET,6,0,1,0,0,0.0,0,0,0,0,0
 00-0038765,Ty Okada,SAF,SEA,6,1,0,0,0,0.0,0,0,0,0,0
 00-0038788,Art Green,CB,NYG,6,0,1,0,0,0.0,0,0,0,0,0
 00-0038791,Thomas Incoom,LB,CAR,6,1,0,0,0,0.0,0,0,0,0,0
@@ -3850,7 +3851,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040718,Travis Hunter,CB,JAX,6,2,0,0,0,0.0,0,0,0,0,0
 00-0040721,Alfred Collins,DT,SF,6,0,1,0,0,0.0,0,0,0,0,0
 00-0040722,Mike Green,LB,BAL,6,0,2,1,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,6,1,0,1,1,0.0,2,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,6,1,0,1,1,0.0,2,0,0,0,0
 00-0040731,Trey Amos,CB,WAS,6,3,4,0,0,0.0,0,0,1,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,6,6,3,1,0,0.0,0,0,0,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,6,4,3,0,0,0.0,1,0,0,0,0
@@ -3874,7 +3875,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031254,Denico Autry,DT,HOU,7,2,0,1,0,1.0,1,0,0,0,0
 00-0031270,Shelby Harris,DE,CLE,7,1,2,0,0,0.0,1,0,0,0,0
 00-0031357,C.J. Goodwin,CB,DAL,7,0,1,0,0,0.0,0,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,7,1,4,1,0,1.0,1,0,2,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,7,1,4,1,0,1.0,1,0,2,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,7,2,0,2,0,1.0,1,0,0,0,0
 00-0031492,Jason Myers,K,SEA,7,1,0,0,0,0.0,0,0,0,0,0
 00-0031565,Danielle Hunter,DE,HOU,7,2,2,0,0,0.0,1,0,0,0,0
@@ -3941,7 +3942,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033907,Dawuane Smoot,DE,JAX,7,1,0,0,0,0.0,0,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,7,3,1,0,0,0.0,0,0,0,0,0
 00-0033928,Jourdan Lewis,CB,JAX,7,4,2,0,0,0.0,0,0,1,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,7,2,1,0,0,0.0,0,1,1,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,7,2,1,0,0,0.0,0,1,1,0,0
 00-0033943,Josh Reynolds,WR,NYJ,7,1,0,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,7,0,0,0,0,0.0,1,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,7,0,1,0,0,0.0,0,1,1,0,0
@@ -3994,10 +3995,10 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034867,Malik Turner,WR,SF,7,3,0,0,0,0.0,0,0,0,0,0
 00-0034959,Andrew Beck,FB,NYJ,7,1,0,0,0,0.0,0,0,0,0,0
 00-0034967,Rashan Gary,LB,GB,7,2,0,1,1,1.0,2,0,0,0,0
-00-0034968,Darnell Savage,DB,WAS,7,1,2,0,0,0.0,0,0,1,0,0
+00-0034968,Darnell Savage,SAF,WAS,7,1,2,0,0,0.0,0,0,1,0,0
 00-0034973,Maxx Crosby,DE,LV,7,1,2,0,0,0.0,0,0,0,0,0
 00-0034982,Dre Greenlaw,LB,DEN,7,1,5,0,0,0.0,1,0,0,0,0
-00-0034987,E.J. Speed,LB,HOU,7,5,1,0,0,0.0,0,0,0,0,0
+00-0034987,E.J. Speed,LB,HOU,7,5,1,1,0,0.0,0,0,0,0,0
 00-0035133,Keisean Nixon,DB,GB,7,2,0,0,0,0.0,0,0,1,0,0
 00-0035144,Mack Wilson,LB,ARI,7,3,0,0,0,0.0,0,0,0,0,0
 00-0035166,Azeez Al-Shaair,LB,HOU,7,2,4,0,0,0.0,0,0,1,0,0
@@ -4033,7 +4034,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035669,Nick Scott,SAF,CAR,7,2,5,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,7,1,3,0,0,0.0,0,0,0,0,0
 00-0035674,Jerry Tillery,DT,KC,7,1,0,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,TEN,7,1,2,1,0,1.0,1,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,TEN,7,1,2,1,0,1.0,1,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,7,0,1,0,0,0.0,1,0,1,0,0
 00-0035687,Bobby Okereke,ILB,NYG,7,4,2,0,0,0.0,0,0,0,0,0
 00-0035697,Germaine Pratt,LB,IND,7,2,2,0,0,0.0,0,0,0,0,0
@@ -4082,7 +4083,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036355,Justin Herbert,QB,LAC,7,0,1,0,0,0.0,0,0,0,0,0
 00-0036366,Neville Gallimore,DT,IND,7,1,3,1,0,0.0,0,0,1,0,0
 00-0036371,Leki Fotu,DT,LV,7,0,2,1,0,0.0,0,0,0,0,0
-00-0036374,L'Jarius Sneed,SAF,TEN,7,2,0,0,0,0.0,0,0,0,0,0
+00-0036374,L'Jarius Sneed,CB,TEN,7,2,0,0,0,0.0,0,0,0,0,0
 00-0036375,Amik Robertson,CB,DET,7,3,0,0,1,0.0,0,0,1,0,0
 00-0036378,Michael Danna,LB,KC,7,0,1,0,0,0.0,1,0,0,0,0
 00-0036388,Xavier McKinney,SAF,GB,7,2,6,0,0,0.0,0,0,1,0,0
@@ -4113,7 +4114,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036672,Grant Stuard,LB,DET,7,0,2,0,0,0.0,0,0,0,0,0
 00-0036683,Devon Key,SAF,DEN,7,2,1,0,0,0.0,0,0,0,0,0
 00-0036695,Naquan Jones,DT,LAC,7,1,1,0,0,0.0,0,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,7,0,1,1,0,0.0,0,0,0,0,0
+00-0036711,Charles Snowden,DE,LV,7,0,1,1,0,0.0,0,0,0,0,0
 00-0036727,Adam Prentice,FB,DEN,7,0,1,0,0,0.0,0,0,0,0,0
 00-0036728,Curtis Robinson,LB,SF,7,1,0,0,0,0.0,0,0,0,0,0
 00-0036802,Jon Rhattigan,LB,LV,7,1,0,0,0,0.0,0,0,0,0,0
@@ -4133,7 +4134,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036903,Bobby Brown III,DT,CAR,7,2,0,0,0,0.0,0,0,0,0,0
 00-0036909,Khyiris Tonga,DT,NE,7,1,1,0,0,0.0,0,0,0,0,0
 00-0036916,Milton Williams,DT,NE,7,3,2,1,0,1.0,1,0,0,0,0
-00-0036922,Patrick Johnson,LB,PHI,7,2,1,0,0,0.0,1,0,0,0,0
+00-0036922,Patrick Johnson,DE,PHI,7,2,1,0,0,0.0,1,0,0,0,0
 00-0036927,Pete Werner,LB,NO,7,0,2,0,0,0.0,0,0,0,0,0
 00-0036932,Micah Parsons,LB,GB,7,3,1,4,0,3.0,5,0,0,0,0
 00-0036933,Zaven Collins,LB,ARI,7,1,0,1,0,1.0,1,0,0,0,0
@@ -4190,11 +4191,11 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037275,DaRon Bland,CB,DAL,7,5,2,0,0,0.0,0,1,1,1,0
 00-0037280,Matthew Butler,DT,MIA,7,1,0,0,0,0.0,0,0,0,0,0
 00-0037292,Andrew Ogletree,TE,IND,7,1,0,0,0,0.0,0,0,0,0,0
-00-0037298,Sam Roberts,DT,ATL,7,2,1,1,0,0.0,1,0,0,0,0
+00-0037298,Sam Roberts,DE,ATL,7,2,1,1,0,0.0,1,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,7,2,3,0,0,0.0,0,0,0,0,0
 00-0037302,Austin Deculus,OT,LAC,7,0,1,0,0,0.0,0,0,0,0,0
 00-0037307,Ja'Sir Taylor,CB,LAC,7,1,0,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,7,1,1,0,0,0.0,1,0,0,0,0
+00-0037310,James Houston,LB,DAL,7,1,1,0,0,0.0,1,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,7,4,0,0,0,0.0,0,0,0,0,0
 00-0037315,Cameron Goode,LB,MIA,7,1,0,0,0,0.0,0,0,0,0,0
 00-0037321,Chase Lucas,CB,SF,7,0,0,0,0,0.0,1,0,1,0,0
@@ -4285,7 +4286,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0038694,Brandon Pili,DT,SEA,7,0,1,0,0,0.0,0,0,0,0,0
 00-0038715,Ronnie Hickman Jr.,SAF,CLE,7,1,1,0,0,0.0,0,1,1,0,0
 00-0038738,Hunter Luepke,RB,DAL,7,0,1,0,0,0.0,0,0,0,0,0
-00-0038742,Tyrus Wheat,DE,DET,7,1,2,1,1,1.5,1,0,0,0,0
+00-0038742,Tyrus Wheat,LB,DET,7,1,2,1,1,1.5,1,0,0,0,0
 00-0038765,Ty Okada,SAF,SEA,7,6,3,1,0,1.0,1,0,1,0,0
 00-0038778,Jalen Redmond,DL,MIN,7,2,2,1,0,0.0,0,0,0,0,0
 00-0038788,Art Green,CB,NYG,7,0,1,0,0,0.0,0,0,0,0,0
@@ -4468,7 +4469,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040716,Craig Woodson,SAF,NE,7,0,1,0,0,0.0,0,0,0,0,0
 00-0040718,Travis Hunter,CB,JAX,7,0,0,0,0,0.0,0,0,1,0,0
 00-0040721,Alfred Collins,DT,SF,7,0,0,0,0,0.0,1,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,7,3,1,2,0,1.0,1,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,7,3,1,2,0,1.0,1,0,0,0,0
 00-0040731,Trey Amos,CB,WAS,7,3,0,0,0,0.0,0,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,7,0,2,0,0,0.0,0,0,2,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,7,2,2,0,0,0.0,1,0,0,0,0
@@ -4495,7 +4496,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031279,Jake Matthews,OT,ATL,8,0,1,0,0,0.0,0,0,0,0,0
 00-0031357,C.J. Goodwin,CB,DAL,8,0,1,0,0,0.0,0,0,0,0,0
 00-0031360,Kyle Van Noy,MLB,BAL,8,1,1,1,0,0.0,1,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,8,1,1,0,0,0.0,0,0,0,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,8,1,1,0,0,0.0,0,0,0,0,0
 00-0031550,Shaq Thompson,OLB,BUF,8,3,1,0,0,0.0,0,0,0,0,0
 00-0031551,Eddie Goldman,NT,WAS,8,0,1,0,0,0.0,0,0,0,0,0
 00-0031557,Jordan Phillips,DT,BUF,8,1,0,1,0,1.0,1,0,0,0,0
@@ -4548,8 +4549,8 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033884,Tre'Davious White,CB,BUF,8,1,0,0,0,0.0,0,0,0,0,0
 00-0033886,T.J. Watt,OLB,PIT,8,2,4,0,0,0.0,1,0,0,0,0
 00-0033905,Larry Ogunjobi,DT,BUF,8,1,2,0,0,0.0,0,0,0,0,0
-00-0033935,Trey Hendrickson,DE,CIN,8,1,0,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,8,2,2,0,0,0.0,0,0,0,0,0
+00-0033935,Trey Hendrickson,LB,CIN,8,1,0,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,8,2,2,0,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,8,2,1,1,0,0.0,0,0,1,0,0
 00-0034051,Christian Kuntz,LS,PIT,8,1,0,0,0,0.0,0,0,0,0,0
 00-0034145,Chris Lammons,DB,IND,8,4,0,0,0,0.0,0,1,1,0,0
@@ -4589,7 +4590,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034874,Roquan Smith,ILB,BAL,8,7,5,0,0,0.0,0,0,0,0,0
 00-0034959,Andrew Beck,FB,NYJ,8,0,1,0,0,0.0,0,0,0,0,0
 00-0034967,Rashan Gary,LB,GB,8,3,1,2,0,2.0,2,0,0,0,0
-00-0034968,Darnell Savage,DB,WAS,8,2,0,0,1,0.0,0,0,0,0,0
+00-0034968,Darnell Savage,SAF,WAS,8,2,0,0,1,0.0,0,0,0,0,0
 00-0034987,E.J. Speed,LB,HOU,8,2,0,0,0,0.0,0,0,0,0,0
 00-0034993,Marcus Epps,SAF,PHI,8,2,0,0,0,0.0,0,0,0,0,0
 00-0035021,Ashton Dulin,WR,IND,8,1,0,0,0,0.0,0,0,0,0,0
@@ -4627,7 +4628,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035669,Nick Scott,SAF,CAR,8,5,3,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,8,2,1,1,0,0.0,0,0,1,0,0
 00-0035674,Jerry Tillery,DT,KC,8,2,2,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,TEN,8,2,0,1,0,1.0,2,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,TEN,8,2,0,1,0,1.0,2,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,8,3,4,1,0,0.0,0,0,2,0,0
 00-0035683,Dexter Lawrence,DT,NYG,8,0,3,0,0,0.5,1,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,8,7,1,0,0,1.0,0,0,0,0,0
@@ -4646,7 +4647,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036181,Teair Tart,DT,LAC,8,1,1,0,0,0.0,0,0,0,0,0
 00-0036182,Nick Westbrook-Ikhine,WR,MIA,8,1,1,0,0,0.0,0,0,0,0,0
 00-0036187,Reggie Gilliam,RB,BUF,8,0,2,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,8,3,1,1,0,1.0,1,1,1,0,0
+00-0036192,A.J. Epenesa,LB,BUF,8,3,1,1,0,1.0,1,1,1,0,0
 00-0036193,Anfernee Jennings,LB,NE,8,1,0,1,0,1.0,1,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,8,7,2,0,0,0.0,0,0,0,0,0
 00-0036220,Derrick Brown,DT,CAR,8,0,1,0,0,0.0,0,0,0,0,0
@@ -4738,7 +4739,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037074,Quay Walker,LB,GB,8,1,4,0,0,0.0,0,0,2,0,0
 00-0037075,Devonte Wyatt,DT,GB,8,1,1,0,0,0.0,0,0,0,0,0
 00-0037083,Kingsley Enagbare,LB,GB,8,2,1,1,0,0.0,1,0,0,0,0
-00-0037091,Bo Melton,CB,GB,8,1,0,0,0,0.0,0,0,0,0,0
+00-0037091,Bo Melton,WR,GB,8,1,0,0,0,0.0,0,0,0,0,0
 00-0037094,Jonathan Ford,DT,CHI,8,0,1,0,0,0.0,0,0,0,0,0
 00-0037096,Elijah Hicks,SAF,CHI,8,0,1,0,0,0.0,0,0,0,0,0
 00-0037106,Jaylon Jones,DB,CHI,8,3,0,0,1,0.0,0,0,0,0,0
@@ -4770,7 +4771,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037283,John Ridgeway,DT,NO,8,0,1,0,0,0.0,0,0,0,0,0
 00-0037288,Christian Benford,CB,BUF,8,2,1,0,0,0.0,0,0,0,0,0
 00-0037292,Andrew Ogletree,TE,IND,8,1,1,0,0,0.0,0,0,0,0,0
-00-0037298,Sam Roberts,DT,ATL,8,1,5,0,0,0.0,0,0,0,0,0
+00-0037298,Sam Roberts,DE,ATL,8,1,5,0,0,0.0,0,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,8,0,1,0,0,0.0,0,0,0,0,0
 00-0037304,Connor Heyward,FB,PIT,8,2,2,0,0,0.0,0,0,0,0,0
 00-0037307,Ja'Sir Taylor,CB,LAC,8,2,0,0,0,0.0,0,0,0,0,0
@@ -4793,7 +4794,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037633,Jacob Hummel,LB,BAL,8,0,0,1,0,0.0,0,0,0,0,0
 00-0037661,Ja'Marcus Ingram,CB,BUF,8,1,0,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,8,3,0,0,0,0.0,0,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,8,1,0,1,0,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,8,1,0,1,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,8,5,0,0,0,0.0,0,0,0,0,0
 00-0037753,Cam Taylor-Britt,CB,CIN,8,1,3,0,0,0.0,1,0,2,0,0
 00-0037756,Travis Jones,DT,BAL,8,0,1,0,0,0.0,0,0,0,0,0
@@ -5026,7 +5027,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040720,Jahdae Barron,CB,DEN,8,2,0,0,0,0.0,0,1,1,0,0
 00-0040721,Alfred Collins,DT,SF,8,0,2,0,0,0.0,1,0,0,0,0
 00-0040722,Mike Green,LB,BAL,8,1,0,1,0,1.0,1,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,8,0,1,0,0,0.0,1,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,8,0,1,0,0,0.0,1,0,0,0,0
 00-0040731,Trey Amos,CB,WAS,8,0,2,0,0,0.0,0,0,1,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,8,6,6,0,0,0.0,0,0,1,0,0
 00-0040744,Jaylahn Tuimolaou,DE,IND,8,0,0,0,0,0.0,1,0,0,0,0
@@ -5050,7 +5051,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031177,Brent Urban,DE,BAL,9,0,1,0,0,0.5,2,0,0,0,0
 00-0031357,C.J. Goodwin,CB,DAL,9,2,0,0,0,0.0,0,0,0,0,0
 00-0031360,Kyle Van Noy,MLB,BAL,9,1,0,1,0,0.0,0,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,9,3,2,2,0,1.0,1,0,1,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,9,3,2,2,0,1.0,1,0,1,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,9,0,2,0,0,0.5,1,0,0,0,0
 00-0031551,Eddie Goldman,NT,WAS,9,1,2,0,0,0.0,0,0,0,0,0
 00-0031557,Jordan Phillips,DT,BUF,9,1,0,1,0,0.0,0,0,0,0,0
@@ -5154,7 +5155,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034854,KhaDarel Hodge,WR,ATL,9,0,1,0,0,0.0,0,0,0,0,0
 00-0034874,Roquan Smith,ILB,BAL,9,9,3,0,0,0.0,0,0,1,0,0
 00-0034967,Rashan Gary,LB,GB,9,0,3,0,0,0.0,0,0,0,0,0
-00-0034968,Darnell Savage,DB,WAS,9,1,1,0,0,0.0,0,0,0,0,0
+00-0034968,Darnell Savage,SAF,WAS,9,1,1,0,0,0.0,0,0,0,0,0
 00-0034973,Maxx Crosby,DE,LV,9,3,1,3,0,1.0,1,0,1,0,0
 00-0034982,Dre Greenlaw,LB,DEN,9,1,7,0,0,1.0,1,0,0,0,0
 00-0034999,Ty Summers,LB,DET,9,0,1,0,0,0.0,0,0,0,0,0
@@ -5186,7 +5187,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035647,Montez Sweat,DE,CHI,9,2,0,1,0,1.0,1,0,2,0,0
 00-0035669,Nick Scott,SAF,CAR,9,1,2,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,9,2,4,0,0,0.0,0,1,1,1,0
-00-0035678,Dre'Mont Jones,DE,TEN,9,2,2,1,0,1.5,4,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,TEN,9,2,2,1,0,1.5,4,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,9,0,0,1,0,0.0,0,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,9,6,7,1,0,0.0,0,0,0,0,0
 00-0035692,Clelin Ferrell,DE,SF,9,1,2,1,0,1.0,1,0,0,0,0
@@ -5208,7 +5209,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036176,Mason Kinsey,WR,TEN,9,1,0,0,0,0.0,0,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,9,2,0,0,0,0.0,0,0,0,0,0
 00-0036187,Reggie Gilliam,RB,BUF,9,1,1,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,9,0,0,0,0,0.0,2,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,9,0,0,0,0,0.0,2,0,0,0,0
 00-0036193,Anfernee Jennings,LB,NE,9,0,0,0,0,0.0,1,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,9,4,3,0,0,0.0,0,0,0,0,0
 00-0036204,LaCale London,DE,ATL,9,4,1,2,1,2.0,1,0,0,0,0
@@ -5262,7 +5263,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036672,Grant Stuard,LB,DET,9,1,0,1,0,0.0,0,0,0,0,0
 00-0036677,Zayne Anderson,SAF,GB,9,0,1,0,0,0.0,0,0,0,0,0
 00-0036683,Devon Key,SAF,DEN,9,2,0,0,0,0.0,0,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,9,1,0,0,0,0.0,0,0,0,0,0
+00-0036711,Charles Snowden,DE,LV,9,1,0,0,0,0.0,0,0,0,0,0
 00-0036728,Curtis Robinson,LB,SF,9,1,0,0,0,0.0,0,0,0,0,0
 00-0036802,Jon Rhattigan,LB,LV,9,0,1,0,0,0.0,0,0,0,0,0
 00-0036813,Christian Elliss,LB,NE,9,1,4,0,0,0.0,1,0,0,0,0
@@ -5331,16 +5332,16 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037288,Christian Benford,CB,BUF,9,2,1,1,0,1.0,1,0,0,0,0
 00-0037291,Jalen Nailor,WR,MIN,9,1,0,0,0,0.0,0,0,0,0,0
 00-0037292,Andrew Ogletree,TE,IND,9,2,0,0,0,0.0,0,0,0,0,0
-00-0037298,Sam Roberts,DT,ATL,9,2,2,0,0,0.0,0,0,0,0,0
+00-0037298,Sam Roberts,DE,ATL,9,2,2,0,0,0.0,0,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,9,0,2,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,9,1,1,0,0,0.0,0,0,0,0,0
+00-0037310,James Houston,LB,DAL,9,1,1,0,0,0.0,0,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,9,4,1,0,0,0.0,0,1,1,0,0
 00-0037332,D'Anthony Bell,SAF,SEA,9,0,2,0,0,0.0,0,0,0,0,0
 00-0037364,Arron Mosby,DE,GB,9,1,0,0,0,0.0,0,0,0,0,0
 00-0037384,Ja'Quan McMillian,CB,DEN,9,2,0,0,0,0.0,0,0,1,0,0
 00-0037457,Jake Hansen,LB,HOU,9,2,1,0,0,0.0,0,0,0,0,0
 00-0037461,Tristin McCollum,DB,LV,9,2,1,1,0,0.0,0,0,1,0,0
-00-0037512,Isaiah Pola-Mao,SAF,LV,9,6,2,0,0,0.0,0,1,2,0,0
+00-0037512,Isaiah Pola-Mao,SAF,LV,9,6,2,1,0,0.0,0,1,2,0,0
 00-0037527,Segun Olubi,LB,IND,9,1,0,0,0,0.0,0,0,0,0,0
 00-0037545,Rashid Shaheed,WR,NO,9,1,0,0,0,0.0,0,0,0,0,0
 00-0037549,Darrell Baker Jr.,CB,TEN,9,2,2,0,0,0.0,0,0,1,0,0
@@ -5421,7 +5422,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0038694,Brandon Pili,DT,SEA,9,1,1,0,1,0.0,0,0,0,0,0
 00-0038735,Princeton Fant,TE,DAL,9,0,1,0,0,0.0,0,0,0,0,0
 00-0038738,Hunter Luepke,RB,DAL,9,0,1,0,0,0.0,0,0,0,0,0
-00-0038742,Tyrus Wheat,DE,DET,9,0,1,0,0,0.0,0,0,0,0,0
+00-0038742,Tyrus Wheat,LB,DET,9,0,1,0,0,0.0,0,0,0,0,0
 00-0038765,Ty Okada,SAF,SEA,9,2,3,0,0,0.0,0,1,1,0,0
 00-0038769,Chris Stoll,LS,SEA,9,0,1,0,0,0.0,0,0,0,0,0
 00-0038778,Jalen Redmond,DL,MIN,9,1,2,1,0,1.0,1,0,0,0,0
@@ -5461,7 +5462,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0039172,Jake Bates,K,DET,9,0,1,0,0,0.0,0,0,0,0,0
 00-0039232,Nate Wiggins,CB,BAL,9,4,2,0,0,0.0,0,0,0,0,0
 00-0039234,T.J. Tampa,CB,BAL,9,1,0,0,0,0.0,0,0,0,0,0
-00-0039305,Jack Westover,FB,NE,9,1,0,0,0,0.0,0,0,0,0,0
+00-0039305,Jack Westover,TE,NE,9,1,0,0,0,0.0,0,0,0,0,0
 00-0039309,Byron Murphy II,DT,SEA,9,0,4,0,0,0.5,1,0,0,0,0
 00-0039324,Christian Roland-Wallace,CB,KC,9,1,2,0,0,0.0,0,0,0,0,0
 00-0039332,C.J. Ravenell,DE,TEN,9,0,1,0,1,0.0,0,0,0,0,0
@@ -5611,7 +5612,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040720,Jahdae Barron,CB,DEN,9,2,0,0,0,0.0,0,0,0,0,0
 00-0040722,Mike Green,LB,BAL,9,0,2,0,0,0.5,1,0,0,0,0
 00-0040723,Jack Kiser,LB,JAX,9,1,1,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,9,2,1,1,0,1.0,1,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,9,2,1,1,0,1.0,1,0,0,0,0
 00-0040729,Jack Bech,WR,LV,9,1,0,0,0,0.0,0,0,0,0,0
 00-0040731,Trey Amos,CB,WAS,9,4,3,0,0,0.0,0,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,9,4,1,1,0,0.0,0,0,0,0,0
@@ -5650,7 +5651,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0032103,Denzel Perryman,MLB,LAC,10,2,1,0,0,0.0,0,0,0,0,0
 00-0032146,Bud Dupree,OLB,LAC,10,1,0,1,0,1.0,1,0,0,0,0
 00-0032164,Arik Armstead,DE,JAX,10,1,1,1,0,1.0,1,0,0,0,0
-00-0032265,Mario Edwards,DT,HOU,10,0,1,0,0,0.0,0,0,0,0,0
+00-0032265,Mario Edwards,DE,HOU,10,0,1,0,0,0.0,0,0,0,0,0
 00-0032388,Deion Jones,LB,TB,10,2,0,0,0,0.0,0,0,0,0,0
 00-0032398,Chris Moore,WR,WAS,10,1,0,0,0,0.0,0,0,0,0,0
 00-0032415,Matthew Judon,OLB,MIA,10,0,1,0,0,0.0,0,0,0,0,0
@@ -5699,7 +5700,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033905,Larry Ogunjobi,DT,BUF,10,2,0,1,0,0.0,0,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,10,3,2,0,0,0.0,1,0,0,0,0
 00-0033918,Fabian Moreau,CB,MIN,10,2,0,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,10,2,2,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,10,2,2,0,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,10,1,2,0,0,0.0,0,0,0,0,0
 00-0034163,Jacob Martin,DE,WAS,10,2,0,0,0,0.0,2,0,0,0,0
 00-0034203,Darious Williams,CB,LAR,10,1,0,0,0,0.0,0,0,0,0,0
@@ -5747,7 +5748,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034874,Roquan Smith,ILB,BAL,10,3,3,0,0,0.0,1,0,1,0,0
 00-0034959,Andrew Beck,FB,NYJ,10,1,0,0,0,0.0,0,0,0,0,0
 00-0034967,Rashan Gary,LB,GB,10,1,3,0,0,0.0,0,0,0,0,0
-00-0034968,Darnell Savage,DB,WAS,10,1,0,0,0,0.0,0,0,0,0,0
+00-0034968,Darnell Savage,SAF,WAS,10,1,0,0,0,0.0,0,0,0,0,0
 00-0034973,Maxx Crosby,DE,LV,10,2,3,0,0,0.0,0,0,0,0,0
 00-0034982,Dre Greenlaw,LB,DEN,10,2,3,1,1,0.0,0,0,1,0,0
 00-0034987,E.J. Speed,LB,HOU,10,3,3,1,0,0.0,0,0,0,0,0
@@ -5781,7 +5782,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035656,Khalen Saunders,DT,JAX,10,0,1,0,0,0.0,0,0,0,0,0
 00-0035667,Greg Gaines,DT,TB,10,1,1,0,0,0.0,0,0,0,0,0
 00-0035669,Nick Scott,SAF,CAR,10,4,2,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,BAL,10,0,0,0,0,0.0,2,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,BAL,10,0,0,0,0,0.0,2,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,10,5,3,2,0,1.0,1,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,10,0,1,0,0,0.0,0,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,10,1,5,0,0,0.0,0,0,0,0,0
@@ -5864,7 +5865,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036672,Grant Stuard,LB,DET,10,1,1,0,0,0.0,0,0,0,0,0
 00-0036677,Zayne Anderson,SAF,GB,10,0,1,0,0,0.0,0,0,0,0,0
 00-0036683,Devon Key,SAF,DEN,10,0,1,0,0,0.0,0,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,10,5,1,1,0,1.0,2,0,1,0,0
+00-0036711,Charles Snowden,DE,LV,10,5,1,1,0,1.0,2,0,1,0,0
 00-0036727,Adam Prentice,FB,DEN,10,0,1,0,0,0.0,0,0,0,0,0
 00-0036728,Curtis Robinson,LB,SF,10,2,0,0,0,0.0,0,0,0,0,0
 00-0036816,Riley Patterson,K,MIA,10,1,0,0,0,0.0,0,0,0,0,0
@@ -5880,7 +5881,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036914,Greg Rousseau,LB,BUF,10,0,3,0,0,0.0,1,0,0,0,0
 00-0036916,Milton Williams,DT,NE,10,0,3,1,0,0.0,1,0,0,0,0
 00-0036919,Kenny Gainwell,RB,PIT,10,1,0,0,0,0.0,0,0,0,0,0
-00-0036922,Patrick Johnson,LB,PHI,10,1,1,0,0,0.0,0,0,0,0,0
+00-0036922,Patrick Johnson,DE,PHI,10,1,1,0,0,0.0,0,0,0,0,0
 00-0036927,Pete Werner,LB,NO,10,3,3,1,0,0.0,0,0,0,0,0
 00-0036932,Micah Parsons,LB,GB,10,1,1,0,0,0.0,0,0,0,0,0
 00-0036934,Jaelan Phillips,LB,PHI,10,3,2,1,0,0.0,2,0,0,0,0
@@ -5924,7 +5925,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037262,Thomas Booker,DT,LV,10,2,0,0,0,0.0,0,0,0,0,0
 00-0037263,Tyler Allgeier,RB,ATL,10,0,1,0,0,0.0,0,0,0,0,0
 00-0037268,Zyon McCollum,CB,TB,10,4,1,0,0,0.0,0,0,1,0,0
-00-0037298,Sam Roberts,DT,ATL,10,0,1,0,0,0.0,0,0,0,0,0
+00-0037298,Sam Roberts,DE,ATL,10,0,1,0,0,0.0,0,0,0,0,0
 00-0037304,Connor Heyward,FB,PIT,10,0,1,0,0,0.0,0,0,0,0,0
 00-0037307,Ja'Sir Taylor,CB,NYJ,10,0,1,0,0,0.0,0,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,10,1,2,0,0,0.0,0,0,2,0,0
@@ -6009,7 +6010,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0038710,Blake Whiteheart,TE,CLE,10,0,3,0,0,0.0,0,0,0,0,0
 00-0038711,Mohamoud Diabate,LB,CLE,10,0,3,0,0,0.0,0,0,0,0,0
 00-0038715,Ronnie Hickman Jr.,SAF,CLE,10,2,2,0,0,0.0,0,1,1,0,0
-00-0038742,Tyrus Wheat,DE,DET,10,0,1,0,0,0.0,0,0,0,0,0
+00-0038742,Tyrus Wheat,LB,DET,10,0,1,0,0,0.0,0,0,0,0,0
 00-0038764,Patrick O'Connell,LB,SEA,10,1,3,0,0,0.0,0,0,0,0,0
 00-0038765,Ty Okada,SAF,SEA,10,5,2,0,0,0.0,0,0,1,0,0
 00-0038778,Jalen Redmond,DL,MIN,10,5,3,0,0,0.0,0,0,0,0,0
@@ -6220,7 +6221,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031270,Shelby Harris,DE,CLE,11,1,1,0,0,0.0,0,0,0,0,0
 00-0031357,C.J. Goodwin,CB,DAL,11,1,0,0,0,0.0,0,0,0,0,0
 00-0031360,Kyle Van Noy,MLB,BAL,11,1,0,1,0,1.0,2,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,11,1,0,0,0,0.0,0,0,0,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,11,1,0,0,0,0.0,0,0,0,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,11,0,2,0,0,0.0,1,0,0,0,0
 00-0031551,Eddie Goldman,NT,WAS,11,2,2,2,0,0.0,0,0,0,0,0
 00-0031557,Jordan Phillips,DT,BUF,11,1,0,0,0,0.0,0,0,0,0,0
@@ -6231,7 +6232,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0032103,Denzel Perryman,MLB,LAC,11,3,3,1,0,0.0,0,0,0,0,0
 00-0032146,Bud Dupree,OLB,LAC,11,0,3,0,0,0.0,0,0,0,0,0
 00-0032164,Arik Armstead,DE,JAX,11,2,1,2,0,1.0,1,0,0,0,0
-00-0032265,Mario Edwards,DT,HOU,11,2,0,0,0,0.0,0,0,0,0,0
+00-0032265,Mario Edwards,DE,HOU,11,2,0,0,0,0.0,0,0,0,0,0
 00-0032388,Deion Jones,LB,TB,11,1,1,0,0,0.0,0,0,0,0,0
 00-0032395,Graham Glasgow,C,DET,11,0,1,0,0,0.0,0,0,0,0,0
 00-0032415,Matthew Judon,OLB,MIA,11,0,1,0,0,0.0,0,0,0,0,0
@@ -6278,7 +6279,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033908,Cooper Kupp,WR,SEA,11,1,0,0,0,0.0,0,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,11,4,2,1,0,0.0,0,0,0,0,0
 00-0033918,Fabian Moreau,CB,MIN,11,1,1,0,0,0.0,0,0,1,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,11,0,1,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,11,0,1,0,0,0.0,0,0,0,0,0
 00-0033964,Al-Quadin Muhammad,LB,DET,11,2,0,0,0,0.0,0,0,0,0,0
 00-0034067,Scott Daly,LS,CHI,11,0,1,0,0,0.0,0,0,0,0,0
 00-0034163,Jacob Martin,DE,WAS,11,1,1,1,0,1.0,1,0,0,0,0
@@ -6324,7 +6325,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034869,Sam Darnold,QB,SEA,11,1,0,0,0,0.0,0,0,0,0,0
 00-0034874,Roquan Smith,ILB,BAL,11,2,2,0,0,0.0,0,0,1,0,0
 00-0034967,Rashan Gary,LB,GB,11,2,1,0,0,0.0,0,0,0,0,0
-00-0034968,Darnell Savage,DB,WAS,11,1,1,0,0,0.0,0,0,0,0,0
+00-0034968,Darnell Savage,SAF,WAS,11,1,1,0,0,0.0,0,0,0,0,0
 00-0034973,Maxx Crosby,DE,LV,11,3,2,1,1,1.0,2,0,0,0,0
 00-0034982,Dre Greenlaw,LB,DEN,11,1,3,0,0,0.0,0,0,0,0,0
 00-0034987,E.J. Speed,LB,HOU,11,2,3,0,0,0.0,0,0,1,0,0
@@ -6364,7 +6365,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035667,Greg Gaines,DT,TB,11,0,1,0,0,0.0,0,0,0,0,0
 00-0035669,Nick Scott,SAF,CAR,11,2,6,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,11,2,4,1,0,1.0,1,0,3,0,0
-00-0035678,Dre'Mont Jones,DE,BAL,11,1,0,0,0,0.0,2,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,BAL,11,1,0,0,0,0.0,2,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,11,5,2,1,0,0.0,0,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,11,1,0,0,0,0.0,2,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,11,5,1,0,0,0.0,0,0,0,0,0
@@ -6385,7 +6386,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036087,Myles Bryant,CB,HOU,11,4,5,1,0,0.0,0,0,0,0,0
 00-0036151,Bryce Huff,DE,SF,11,0,1,0,0,0.0,2,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,11,4,1,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,11,1,2,0,0,0.0,0,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,11,1,2,0,0,0.0,0,0,0,0,0
 00-0036193,Anfernee Jennings,LB,NE,11,1,0,0,0,0.0,0,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,11,4,5,0,0,0.0,0,0,0,0,0
 00-0036204,LaCale London,DE,ATL,11,3,0,1,0,1.0,1,0,0,0,0
@@ -6444,7 +6445,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036658,Isaiah McDuffie,LB,GB,11,5,6,0,0,0.5,1,0,0,0,0
 00-0036677,Zayne Anderson,SAF,GB,11,0,1,0,0,0.0,0,0,0,0,0
 00-0036683,Devon Key,SAF,DEN,11,2,1,0,0,0.0,0,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,11,1,1,0,0,0.0,0,0,0,0,0
+00-0036711,Charles Snowden,DE,LV,11,1,1,0,0,0.0,0,0,0,0,0
 00-0036716,Amen Ogbongbemiga,LB,CHI,11,1,0,0,0,0.0,0,0,0,0,0
 00-0036727,Adam Prentice,FB,DEN,11,1,0,0,0,0.0,0,0,0,0,0
 00-0036728,Curtis Robinson,LB,SF,11,5,7,0,0,0.0,0,0,0,0,0
@@ -6487,7 +6488,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037079,Riq Woolen,CB,SEA,11,1,1,0,0,0.0,0,0,1,0,0
 00-0037082,Dominique Robinson,DE,CHI,11,1,0,0,0,0.0,0,0,0,0,0
 00-0037083,Kingsley Enagbare,LB,GB,11,0,2,0,0,0.0,1,0,0,0,0
-00-0037091,Bo Melton,CB,GB,11,0,1,0,0,0.0,0,0,0,0,0
+00-0037091,Bo Melton,WR,GB,11,0,1,0,0,0.0,0,0,0,0,0
 00-0037096,Elijah Hicks,SAF,CHI,11,0,1,0,0,0.0,0,0,0,0,0
 00-0037112,Jake Tonges,TE,SF,11,1,1,0,0,0.0,0,0,0,0,0
 00-0037129,Josh Blackwell,CB,CHI,11,0,1,0,0,0.0,0,0,0,0,0
@@ -6515,7 +6516,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037275,DaRon Bland,CB,DAL,11,6,4,0,0,0.0,0,0,2,0,0
 00-0037288,Christian Benford,CB,BUF,11,1,0,0,0,0.0,0,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,11,1,0,0,0,0.0,0,0,1,0,0
-00-0037310,James Houston,DE,DAL,11,1,1,1,0,1.0,1,0,0,0,0
+00-0037310,James Houston,LB,DAL,11,1,1,1,0,1.0,1,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,11,1,0,0,0,0.0,0,0,1,0,0
 00-0037315,Cameron Goode,LB,MIA,11,1,0,0,0,0.0,0,0,0,0,0
 00-0037321,Chase Lucas,CB,SF,11,0,1,0,0,0.0,0,0,0,0,0
@@ -6533,7 +6534,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037615,Nakobe Dean,LB,PHI,11,1,2,1,0,1.0,2,0,0,0,0
 00-0037633,Jacob Hummel,LB,BAL,11,0,1,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,11,1,1,1,0,1.0,2,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,11,1,0,0,0,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,11,1,0,0,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,11,3,3,1,0,0.0,0,0,1,0,0
 00-0037752,Tycen Anderson,SAF,CIN,11,1,0,0,0,0.0,0,0,0,0,0
 00-0037753,Cam Taylor-Britt,CB,CIN,11,3,1,0,0,0.0,0,0,0,0,0
@@ -6820,7 +6821,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040720,Jahdae Barron,CB,DEN,11,2,2,0,0,0.0,0,0,0,0,0
 00-0040722,Mike Green,LB,BAL,11,0,1,0,0,0.0,0,0,0,0,0
 00-0040724,T.J. Sanders,DT,BUF,11,1,2,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,11,2,2,2,0,0.0,0,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,11,2,2,2,0,0.0,0,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,11,2,1,0,0,0.0,0,0,1,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,11,1,1,0,0,0.0,0,0,1,0,0
 00-0040746,Nic Scourton,LB,CAR,11,3,2,1,0,0.0,0,0,0,0,0
@@ -6841,7 +6842,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031270,Shelby Harris,DE,CLE,12,0,1,0,0,0.5,1,0,0,0,0
 00-0031357,C.J. Goodwin,CB,DAL,12,0,2,0,0,0.0,0,0,0,0,0
 00-0031360,Kyle Van Noy,MLB,BAL,12,0,1,0,0,0.0,1,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,12,2,0,0,0,0.0,0,0,0,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,12,2,0,0,0,0.0,0,0,0,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,12,1,1,1,0,0.0,2,0,0,0,0
 00-0031550,Shaq Thompson,OLB,BUF,12,0,4,0,0,0.0,0,0,0,0,0
 00-0031565,Danielle Hunter,DE,HOU,12,3,3,2,0,2.0,3,0,0,0,0
@@ -6850,7 +6851,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031957,Rakeem Nunez-Roches,DT,NYG,12,1,1,1,0,1.0,1,0,0,0,0
 00-0032052,Dante Fowler Jr.,DE,DAL,12,0,0,0,0,0.0,0,0,1,0,0
 00-0032164,Arik Armstead,DE,JAX,12,0,1,0,0,0.0,0,0,0,0,0
-00-0032265,Mario Edwards,DT,HOU,12,0,1,0,0,0.5,1,0,0,0,0
+00-0032265,Mario Edwards,DE,HOU,12,0,1,0,0,0.5,1,0,0,0,0
 00-0032424,DJ Reader,DT,DET,12,1,3,0,0,0.0,0,0,0,0,0
 00-0032442,Elandon Roberts,OLB,LV,12,2,1,1,0,0.0,0,0,0,0,0
 00-0032759,Sheldon Rankins,DT,HOU,12,2,2,1,0,0.0,0,0,0,0,0
@@ -6885,7 +6886,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033860,Davon Godchaux,DT,NO,12,1,0,0,0,0.0,0,0,0,0,0
 00-0033868,Myles Garrett,DE,CLE,12,3,1,4,2,3.0,6,0,0,0,0
 00-0033870,Solomon Thomas,DE,DAL,12,0,2,0,0,0.0,0,0,0,0,0
-00-0033872,Jamal Adams,LB,LV,12,1,0,0,0,0.0,0,0,0,0,0
+00-0033872,Jamal Adams,LB,LV,12,1,0,1,0,0.0,0,0,0,0,0
 00-0033873,Patrick Mahomes,QB,KC,12,1,0,0,0,0.0,0,0,0,0,0
 00-0033876,Derek Barnett,DE,HOU,12,1,0,1,0,1.0,1,0,0,0,0
 00-0033877,Malik Hooker,FS,DAL,12,1,4,0,0,0.0,0,0,0,0,0
@@ -6897,7 +6898,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033907,Dawuane Smoot,DE,JAX,12,1,1,0,0,0.0,1,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,12,2,4,0,0,0.0,0,0,0,0,0
 00-0033918,Fabian Moreau,CB,MIN,12,1,0,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,12,1,3,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,12,1,3,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,12,2,1,0,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,12,1,5,0,0,0.5,1,0,0,0,0
 00-0033964,Al-Quadin Muhammad,LB,DET,12,0,2,0,0,0.0,0,0,0,0,0
@@ -6979,7 +6980,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035667,Greg Gaines,DT,TB,12,2,0,0,0,0.0,0,0,0,0,0
 00-0035669,Nick Scott,SAF,CAR,12,1,7,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,12,1,2,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,BAL,12,2,2,1,0,1.5,2,0,1,0,0
+00-0035678,Dre'Mont Jones,LB,BAL,12,2,2,1,0,1.5,2,0,1,0,0
 00-0035680,Quincy Williams,LB,NYJ,12,2,4,0,0,0.0,0,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,12,1,0,0,0,0.0,1,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,12,6,2,0,0,0.0,0,0,1,0,0
@@ -7001,7 +7002,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036151,Bryce Huff,DE,SF,12,1,0,0,0,0.0,2,0,0,0,0
 00-0036176,Mason Kinsey,WR,TEN,12,1,0,0,0,0.0,0,0,0,0,0
 00-0036187,Reggie Gilliam,RB,BUF,12,0,1,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,12,1,2,0,0,0.0,0,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,12,1,2,0,0,0.0,0,0,0,0,0
 00-0036193,Anfernee Jennings,LB,NE,12,0,1,0,0,0.0,0,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,12,6,7,0,0,0.0,0,1,1,1,0
 00-0036204,LaCale London,DE,ATL,12,1,0,0,0,0.0,0,0,0,0,0
@@ -7053,7 +7054,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036649,Quinton Bohanna,DT,SEA,12,0,2,0,0,0.0,0,0,0,0,0
 00-0036658,Isaiah McDuffie,LB,GB,12,4,4,0,0,0.5,1,1,1,0,0
 00-0036677,Zayne Anderson,SAF,GB,12,1,1,0,0,0.0,0,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,12,2,1,1,0,0.0,0,1,1,0,0
+00-0036711,Charles Snowden,DE,LV,12,2,1,1,0,0.0,0,1,1,0,0
 00-0036716,Amen Ogbongbemiga,LB,CHI,12,2,12,0,0,0.0,0,0,0,0,0
 00-0036728,Curtis Robinson,LB,SF,12,1,2,0,0,0.0,0,0,0,0,0
 00-0036802,Jon Rhattigan,LB,LV,12,0,1,0,0,0.0,0,0,0,0,0
@@ -7124,7 +7125,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037291,Jalen Nailor,WR,MIN,12,1,0,0,0,0.0,0,0,0,0,0
 00-0037292,Andrew Ogletree,TE,IND,12,0,1,0,0,0.0,0,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,12,3,3,1,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,12,0,0,0,0,0.0,1,0,0,0,0
+00-0037310,James Houston,LB,DAL,12,0,0,0,0,0.0,1,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,12,7,0,0,0,0.0,0,0,0,0,0
 00-0037323,Rodney Thomas,SAF,IND,12,1,1,0,0,0.0,0,0,0,0,0
 00-0037332,D'Anthony Bell,SAF,SEA,12,2,2,0,0,0.0,0,0,0,0,0
@@ -7142,7 +7143,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037616,Nick Cross,SAF,IND,12,5,3,0,0,0.0,2,0,0,0,0
 00-0037633,Jacob Hummel,LB,BAL,12,1,0,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,12,0,4,0,0,0.0,0,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,12,1,0,0,1,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,12,1,0,0,1,0.0,0,0,0,0,0
 00-0037711,Jeremiah Pharms Jr.,DT,NE,12,0,1,0,0,0.0,1,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,12,3,1,0,0,0.0,0,0,1,0,0
 00-0037752,Tycen Anderson,SAF,CIN,12,1,0,0,0,0.0,0,0,0,0,0
@@ -7205,7 +7206,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0038711,Mohamoud Diabate,LB,CLE,12,0,1,0,0,0.0,0,0,0,0,0
 00-0038715,Ronnie Hickman Jr.,SAF,CLE,12,2,3,0,0,0.0,0,0,0,0,0
 00-0038738,Hunter Luepke,RB,DAL,12,1,2,0,0,0.0,0,0,0,0,0
-00-0038742,Tyrus Wheat,DE,DET,12,2,2,0,0,0.0,0,0,0,0,0
+00-0038742,Tyrus Wheat,LB,DET,12,2,2,0,0,0.0,0,0,0,0,0
 00-0038752,Jake Bobo,WR,SEA,12,0,1,0,0,0.0,0,0,0,0,0
 00-0038764,Patrick O'Connell,LB,SEA,12,4,5,1,0,1.0,1,0,0,0,0
 00-0038765,Ty Okada,SAF,SEA,12,2,0,0,0,0.0,0,0,0,0,0
@@ -7302,7 +7303,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0039821,Andru Phillips,DB,NYG,12,3,2,1,0,0.0,0,0,0,0,0
 00-0039825,Jaden Hicks,SAF,KC,12,3,0,0,0,0.0,0,0,1,0,0
 00-0039826,Jeremiah Trotter Jr.,LB,PHI,12,1,1,0,0,0.0,0,0,0,0,0
-00-0039831,Kamal Hadden,DB,GB,12,1,3,0,0,0.0,0,0,0,0,0
+00-0039831,Kamal Hadden,CB,GB,12,1,3,0,0,0.0,0,0,0,0,0
 00-0039834,Kamren Kinchens,SAF,LAR,12,5,2,0,0,0.0,0,0,1,0,0
 00-0039838,Calen Bullock,SAF,HOU,12,5,0,0,1,0.0,0,2,2,0,0
 00-0039840,Austin Booker,DE,CHI,12,1,1,0,0,0.0,1,0,0,0,0
@@ -7399,7 +7400,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040721,Alfred Collins,DT,SF,12,0,1,0,0,0.0,0,0,0,0,0
 00-0040722,Mike Green,LB,BAL,12,2,3,1,0,1.0,2,0,0,0,0
 00-0040724,T.J. Sanders,DT,BUF,12,0,1,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,12,1,2,0,0,0.0,0,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,12,1,2,0,0,0.0,0,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,12,6,2,0,0,0.0,0,0,0,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,12,3,5,1,0,0.0,0,0,0,0,0
 00-0040743,Tyler Shough,QB,NO,12,1,0,0,0,0.0,0,0,0,0,0
@@ -7425,7 +7426,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031270,Shelby Harris,DE,CLE,13,3,1,1,0,0.0,0,0,0,0,0
 00-0031357,C.J. Goodwin,CB,DAL,13,1,0,0,0,0.0,0,0,0,0,0
 00-0031360,Kyle Van Noy,MLB,BAL,13,1,1,0,0,0.0,1,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,13,5,1,2,0,2.0,2,0,0,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,13,5,1,2,0,2.0,2,0,0,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,13,2,0,1,1,1.0,2,0,0,0,0
 00-0031550,Shaq Thompson,OLB,BUF,13,5,4,0,0,0.0,0,0,0,0,0
 00-0031551,Eddie Goldman,NT,WAS,13,1,3,0,0,0.0,0,0,0,0,0
@@ -7441,7 +7442,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0032103,Denzel Perryman,MLB,LAC,13,5,1,1,0,0.0,0,0,0,0,0
 00-0032104,Ameer Abdullah,RB,IND,13,1,0,0,0,0.0,0,0,0,0,0
 00-0032146,Bud Dupree,OLB,LAC,13,2,0,1,0,1.0,1,0,0,0,0
-00-0032265,Mario Edwards,DT,HOU,13,0,1,0,0,0.0,0,0,0,0,0
+00-0032265,Mario Edwards,DE,HOU,13,0,1,0,0,0.0,0,0,0,0,0
 00-0032388,Deion Jones,LB,TB,13,1,0,0,0,0.0,0,0,0,0,0
 00-0032415,Matthew Judon,OLB,MIA,13,1,0,0,0,0.0,2,0,1,0,0
 00-0032424,DJ Reader,DT,DET,13,0,1,0,0,0.0,0,0,0,0,0
@@ -7494,7 +7495,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033914,Alex Anzalone,MLB,DET,13,5,4,1,0,0.0,0,0,0,0,0
 00-0033918,Fabian Moreau,CB,MIN,13,1,1,0,0,0.0,0,0,1,0,0
 00-0033928,Jourdan Lewis,CB,JAX,13,0,1,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,13,0,4,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,13,0,4,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,13,1,0,1,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,13,2,1,0,0,0.0,1,0,1,0,0
 00-0033964,Al-Quadin Muhammad,LB,DET,13,0,1,0,0,0.0,0,0,0,0,0
@@ -7615,7 +7616,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036181,Teair Tart,DT,LAC,13,2,0,0,0,0.0,0,0,1,0,0
 00-0036182,Nick Westbrook-Ikhine,WR,MIA,13,1,0,0,0,0.0,0,0,0,0,0
 00-0036187,Reggie Gilliam,RB,BUF,13,1,0,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,13,0,1,0,0,0.0,0,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,13,0,1,0,0,0.0,0,0,0,0,0
 00-0036193,Anfernee Jennings,LB,NE,13,1,2,1,0,0.0,0,0,0,0,0
 00-0036196,Gabe Davis,WR,BUF,13,1,0,0,0,0.0,0,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,13,4,0,0,0,0.0,0,0,0,0,0
@@ -7685,7 +7686,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036683,Devon Key,SAF,DEN,13,1,1,0,1,0.0,0,0,0,0,0
 00-0036704,Caleb Johnson,LB,MIA,13,1,0,0,0,0.0,0,0,0,0,0
 00-0036705,Sam Kamara,DT,CLE,13,0,1,0,0,0.0,0,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,13,1,0,0,0,0.0,0,0,0,0,0
+00-0036711,Charles Snowden,DE,LV,13,1,0,0,0,0.0,0,0,0,0,0
 00-0036716,Amen Ogbongbemiga,LB,CHI,13,2,0,0,0,0.0,0,0,1,0,0
 00-0036727,Adam Prentice,FB,DEN,13,1,1,0,0,0.0,0,0,0,0,0
 00-0036728,Curtis Robinson,LB,SF,13,3,3,0,0,0.0,0,0,0,0,0
@@ -7699,7 +7700,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036902,Joseph Ossai,DE,CIN,13,3,1,2,1,2.0,4,0,0,0,0
 00-0036904,Robert Rochell,CB,CAR,13,1,0,0,0,0.0,0,0,0,0,0
 00-0036914,Greg Rousseau,LB,BUF,13,1,0,1,0,0.0,0,0,0,0,0
-00-0036922,Patrick Johnson,LB,PHI,13,1,0,0,0,0.0,0,0,0,0,0
+00-0036922,Patrick Johnson,DE,PHI,13,1,0,0,0,0.0,0,0,0,0,0
 00-0036927,Pete Werner,LB,NO,13,2,2,0,0,0.0,0,0,0,0,0
 00-0036932,Micah Parsons,LB,GB,13,3,4,3,0,2.5,4,0,0,0,0
 00-0036933,Zaven Collins,LB,ARI,13,0,1,0,0,0.0,0,0,0,0,0
@@ -7753,7 +7754,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037291,Jalen Nailor,WR,MIN,13,2,0,0,1,0.0,0,0,0,0,0
 00-0037292,Andrew Ogletree,TE,IND,13,0,1,0,0,0.0,0,0,0,0,0
 00-0037307,Ja'Sir Taylor,CB,NYJ,13,1,2,0,0,0.0,0,0,1,0,0
-00-0037310,James Houston,DE,DAL,13,0,2,0,0,0.0,1,0,0,0,0
+00-0037310,James Houston,LB,DAL,13,0,2,0,0,0.0,1,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,13,6,1,0,0,0.0,0,0,0,0,0
 00-0037315,Cameron Goode,LB,MIA,13,0,0,0,0,0.0,0,0,1,0,0
 00-0037318,Baylon Spector,LB,BUF,13,0,1,0,0,0.0,0,0,0,0,0
@@ -7777,7 +7778,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037662,C.J. Brewer,DT,TB,13,1,0,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,13,3,2,0,0,0.0,0,0,0,0,0
 00-0037664,Alec Pierce,WR,IND,13,0,0,0,0,0.0,0,0,1,0,0
-00-0037665,Sam Williams,DE,DAL,13,2,2,1,0,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,13,2,2,1,0,0.0,0,0,0,0,0
 00-0037711,Jeremiah Pharms Jr.,DT,NE,13,1,0,1,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,13,3,3,0,0,0.0,0,0,2,0,0
 00-0037752,Tycen Anderson,SAF,CIN,13,1,0,0,0,0.0,0,0,0,0,0
@@ -8061,8 +8062,8 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040722,Mike Green,LB,BAL,13,2,3,0,0,0.0,2,0,0,0,0
 00-0040723,Jack Kiser,LB,JAX,13,0,3,0,0,0.0,0,0,0,0,0
 00-0040724,T.J. Sanders,DT,BUF,13,1,0,0,0,0.0,0,0,1,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,13,1,1,0,0,0.0,1,0,0,0,0
-00-0040733,Nick Emmanwori,SAF,SEA,13,3,1,0,0,0.0,0,0,1,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,13,1,1,0,0,0.0,1,0,0,0,0
+00-0040733,Nick Emmanwori,SAF,SEA,13,3,1,1,0,0.0,0,0,1,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,13,3,2,0,0,0.0,0,1,1,0,0
 00-0040744,Jaylahn Tuimolaou,DE,IND,13,0,0,0,0,0.0,2,0,0,0,0
 00-0040746,Nic Scourton,LB,CAR,13,1,0,0,0,0.0,0,0,0,0,0
@@ -8101,7 +8102,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0032052,Dante Fowler Jr.,DE,DAL,14,1,1,0,0,0.0,0,0,0,0,0
 00-0032103,Denzel Perryman,MLB,LAC,14,1,2,1,0,0.0,0,0,0,0,0
 00-0032164,Arik Armstead,DE,JAX,14,0,1,0,0,0.0,0,0,0,0,0
-00-0032265,Mario Edwards,DT,HOU,14,0,2,0,0,0.0,1,0,0,0,0
+00-0032265,Mario Edwards,DE,HOU,14,0,2,0,0,0.0,1,0,0,0,0
 00-0032387,Jarran Reed,DT,SEA,14,1,1,0,0,0.0,0,0,0,0,0
 00-0032388,Deion Jones,LB,TB,14,0,1,0,0,0.0,0,0,0,0,0
 00-0032415,Matthew Judon,OLB,MIA,14,2,1,0,0,0.0,0,0,0,0,0
@@ -8158,7 +8159,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033914,Alex Anzalone,MLB,DET,14,4,3,0,0,0.0,0,0,3,0,0
 00-0033918,Fabian Moreau,CB,MIN,14,2,0,0,0,0.0,0,0,0,0,0
 00-0033928,Jourdan Lewis,CB,JAX,14,0,1,1,0,0.0,0,0,1,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,14,1,1,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,14,1,1,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,14,2,1,0,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,14,3,1,1,1,0.0,0,0,0,0,0
 00-0033964,Al-Quadin Muhammad,LB,DET,14,3,0,3,0,3.0,4,0,0,0,0
@@ -8247,7 +8248,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035667,Greg Gaines,DT,TB,14,3,1,1,0,1.0,1,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,14,1,4,0,0,0.0,0,0,3,0,0
 00-0035674,Jerry Tillery,DT,KC,14,0,1,0,0,0.5,1,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,BAL,14,0,2,0,0,0.0,1,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,BAL,14,0,2,0,0,0.0,1,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,14,2,5,1,0,1.0,1,0,0,0,0
 00-0035681,Mike Edwards,SAF,KC,14,6,1,1,0,0.0,0,0,0,0,0
 00-0035697,Germaine Pratt,LB,IND,14,2,4,0,0,0.0,0,0,1,0,0
@@ -8267,7 +8268,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036181,Teair Tart,DT,LAC,14,1,1,0,0,0.0,0,0,0,0,0
 00-0036182,Nick Westbrook-Ikhine,WR,MIA,14,1,1,0,0,0.0,0,0,0,0,0
 00-0036187,Reggie Gilliam,RB,BUF,14,0,1,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,14,1,2,0,0,0.0,0,1,1,0,0
+00-0036192,A.J. Epenesa,LB,BUF,14,1,2,0,0,0.0,0,1,1,0,0
 00-0036199,Geno Stone,SAF,CIN,14,7,2,2,0,1.0,1,0,0,0,0
 00-0036204,LaCale London,DE,ATL,14,2,4,0,0,0.0,0,0,0,0,0
 00-0036221,Brandon Jones,SAF,DEN,14,1,0,0,0,0.0,0,0,0,0,0
@@ -8322,7 +8323,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036677,Zayne Anderson,SAF,GB,14,0,1,0,0,0.0,0,0,0,0,0
 00-0036704,Caleb Johnson,LB,MIA,14,0,1,0,0,0.0,0,0,0,0,0
 00-0036705,Sam Kamara,DT,CLE,14,0,2,1,0,0.0,0,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,14,1,1,1,0,0.0,0,0,0,0,0
+00-0036711,Charles Snowden,DE,LV,14,1,1,1,0,0.0,0,0,0,0,0
 00-0036727,Adam Prentice,FB,DEN,14,0,1,0,0,0.0,0,0,0,0,0
 00-0036802,Jon Rhattigan,LB,LV,14,0,1,0,0,0.0,0,0,0,0,0
 00-0036825,Feleipe Franks,TE,ATL,14,1,0,0,0,0.0,0,0,0,0,0
@@ -8392,7 +8393,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037288,Christian Benford,CB,BUF,14,1,0,1,0,1.0,1,1,1,1,0
 00-0037289,Malcolm Rodriguez,LB,DET,14,1,1,0,0,0.0,0,0,0,0,0
 00-0037292,Andrew Ogletree,TE,IND,14,0,1,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,14,2,0,1,0,1.0,1,0,0,0,0
+00-0037310,James Houston,LB,DAL,14,2,0,1,0,1.0,1,0,0,0,0
 00-0037315,Cameron Goode,LB,MIA,14,0,2,0,0,0.0,0,0,0,0,0
 00-0037318,Baylon Spector,LB,BUF,14,1,0,0,0,0.0,0,0,0,0,0
 00-0037332,D'Anthony Bell,SAF,SEA,14,1,0,0,0,0.0,0,0,0,0,0
@@ -8413,7 +8414,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037662,C.J. Brewer,DT,TB,14,1,0,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,14,0,1,0,0,0.0,0,0,0,0,0
 00-0037664,Alec Pierce,WR,IND,14,1,0,0,0,0.0,0,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,14,1,2,0,0,0.0,1,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,14,1,2,0,0,0.0,1,0,0,0,0
 00-0037692,Brandon Aubrey,K,DAL,14,1,0,0,0,0.0,0,0,0,0,0
 00-0037742,Treylon Burks,WR,WAS,14,0,1,0,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,14,2,3,0,0,0.0,0,0,1,0,0
@@ -8422,7 +8423,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037756,Travis Jones,DT,BAL,14,1,0,0,0,0.0,0,0,0,0,0
 00-0037799,Dondrea Tillman,LB,DEN,14,0,1,0,0,0.0,0,0,0,0,0
 00-0037813,Channing Tindall,LB,ARI,14,1,2,0,0,0.0,0,0,0,0,0
-00-0037817,Zach Tom,G,GB,14,1,0,0,0,0.0,0,0,0,0,0
+00-0037817,Zach Bako-Bewele,G,GB,14,1,0,0,0,0.0,0,0,0,0,0
 00-0037819,Leo Chenal,LB,KC,14,2,1,0,0,0.0,0,0,0,0,0
 00-0037825,Tyler Linderbaum,C,BAL,14,1,0,0,0,0.0,0,0,0,0,0
 00-0037839,Cobie Durant,CB,LAR,14,1,1,0,0,0.0,0,0,0,0,0
@@ -8476,7 +8477,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0038711,Mohamoud Diabate,LB,CLE,14,2,2,0,0,0.0,0,0,0,0,0
 00-0038715,Ronnie Hickman Jr.,SAF,CLE,14,3,1,0,0,0.0,0,0,0,0,0
 00-0038738,Hunter Luepke,RB,DAL,14,0,2,0,0,0.0,0,0,0,0,0
-00-0038742,Tyrus Wheat,DE,DET,14,2,0,0,0,0.0,1,0,1,0,0
+00-0038742,Tyrus Wheat,LB,DET,14,2,0,0,0,0.0,1,0,1,0,0
 00-0038764,Patrick O'Connell,LB,SEA,14,0,1,0,0,0.0,0,0,0,0,0
 00-0038765,Ty Okada,SAF,SEA,14,2,1,1,0,0.0,0,0,1,0,0
 00-0038778,Jalen Redmond,DL,MIN,14,2,3,2,0,1.0,0,0,0,0,0
@@ -8657,7 +8658,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040722,Mike Green,LB,BAL,14,1,2,1,0,0.0,0,0,0,0,0
 00-0040723,Jack Kiser,LB,JAX,14,1,2,0,0,0.0,0,0,0,0,0
 00-0040724,T.J. Sanders,DT,BUF,14,1,1,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,14,1,3,1,0,0.0,0,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,14,1,3,1,0,0.0,0,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,14,5,1,2,0,1.0,1,1,1,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,14,3,2,0,0,0.0,0,0,0,0,0
 00-0040744,Jaylahn Tuimolaou,DE,IND,14,3,3,1,0,0.0,0,0,0,0,0
@@ -8684,7 +8685,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031254,Denico Autry,DT,HOU,15,1,0,1,0,1.0,1,0,0,0,0
 00-0031270,Shelby Harris,DE,CLE,15,0,2,0,0,0.5,1,0,0,0,0
 00-0031360,Kyle Van Noy,MLB,BAL,15,1,0,0,0,0.0,1,1,1,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,15,1,3,0,0,0.0,0,0,0,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,15,1,3,0,0,0.0,0,0,0,0,0
 00-0031408,Mike Evans,WR,TB,15,1,0,0,0,0.0,0,0,0,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,15,4,0,1,0,0.0,0,0,0,0,0
 00-0031550,Shaq Thompson,OLB,BUF,15,2,1,1,0,0.0,0,0,0,0,0
@@ -8699,7 +8700,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0032104,Ameer Abdullah,RB,IND,15,1,0,0,0,0.0,0,0,0,0,0
 00-0032164,Arik Armstead,DE,JAX,15,0,1,0,0,0.0,0,0,0,0,0
 00-0032228,Joe Cardona,LS,MIA,15,1,0,0,0,0.0,0,0,0,0,0
-00-0032265,Mario Edwards,DT,HOU,15,1,1,0,0,0.0,0,0,0,0,0
+00-0032265,Mario Edwards,DE,HOU,15,1,1,0,0,0.0,0,0,0,0,0
 00-0032387,Jarran Reed,DT,SEA,15,3,2,1,0,0.0,0,0,0,0,0
 00-0032388,Deion Jones,LB,TB,15,4,4,0,0,0.0,0,0,0,0,0
 00-0032415,Matthew Judon,OLB,MIA,15,0,1,0,0,0.0,0,0,0,0,0
@@ -8753,7 +8754,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033918,Fabian Moreau,CB,MIN,15,1,0,0,0,0.0,0,0,0,0,0
 00-0033923,Kareem Hunt,RB,KC,15,1,0,0,0,0.0,0,0,0,0,0
 00-0033928,Jourdan Lewis,CB,JAX,15,0,2,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,15,1,0,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,15,1,0,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,15,1,0,0,0,0.0,1,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,15,0,1,0,0,0.0,0,0,0,0,0
 00-0033955,Jeremy McNichols,RB,WAS,15,1,0,0,0,0.0,0,0,0,0,0
@@ -8845,7 +8846,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035656,Khalen Saunders,DT,NYJ,15,1,0,0,0,0.0,0,0,0,0,0
 00-0035669,Nick Scott,SAF,CAR,15,6,4,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,15,1,4,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,BAL,15,1,1,0,0,0.0,5,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,BAL,15,1,1,0,0,0.0,5,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,15,0,3,1,0,0.0,0,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,15,1,1,0,0,0.0,0,0,0,0,0
 00-0035687,Bobby Okereke,ILB,NYG,15,2,5,0,0,0.0,0,0,0,0,0
@@ -8932,7 +8933,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036677,Zayne Anderson,SAF,GB,15,1,2,0,0,0.0,0,0,0,0,0
 00-0036683,Devon Key,SAF,DEN,15,1,0,0,0,0.0,0,0,0,0,0
 00-0036705,Sam Kamara,DT,CLE,15,1,0,2,0,0.0,0,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,15,0,4,0,0,0.0,0,0,0,0,0
+00-0036711,Charles Snowden,DE,LV,15,0,4,0,0,0.0,0,0,0,0,0
 00-0036727,Adam Prentice,FB,DEN,15,0,1,0,0,0.0,0,0,0,0,0
 00-0036728,Curtis Robinson,LB,SF,15,3,4,0,0,0.0,0,0,1,0,0
 00-0036802,Jon Rhattigan,LB,LV,15,0,1,0,0,0.0,0,0,0,0,0
@@ -9031,7 +9032,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037633,Jacob Hummel,LB,BAL,15,0,2,0,0,0.0,0,0,0,0,0
 00-0037661,Ja'Marcus Ingram,CB,HOU,15,0,1,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,15,1,1,0,0,0.0,0,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,15,0,0,1,0,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,15,0,0,1,0,0.0,0,0,0,0,0
 00-0037756,Travis Jones,DT,BAL,15,2,2,1,0,1.0,1,0,0,0,0
 00-0037758,Cordale Flott,CB,NYG,15,0,1,0,0,0.0,0,0,1,0,0
 00-0037799,Dondrea Tillman,LB,DEN,15,1,1,1,0,1.0,1,0,0,0,0
@@ -9094,7 +9095,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0038711,Mohamoud Diabate,LB,CLE,15,4,4,2,0,0.0,0,0,0,0,0
 00-0038715,Ronnie Hickman Jr.,SAF,CLE,15,3,4,0,0,0.0,0,0,1,0,0
 00-0038720,Julian Hill,TE,MIA,15,1,0,0,0,0.0,0,0,0,0,0
-00-0038742,Tyrus Wheat,DE,DET,15,1,0,0,0,0.0,0,0,0,0,0
+00-0038742,Tyrus Wheat,LB,DET,15,1,0,0,0,0.0,0,0,0,0,0
 00-0038764,Patrick O'Connell,LB,SEA,15,1,0,0,0,0.0,0,0,0,0,0
 00-0038765,Ty Okada,SAF,SEA,15,2,0,0,0,0.0,0,0,0,0,0
 00-0038778,Jalen Redmond,DL,MIN,15,2,3,0,0,0.0,0,0,0,0,0
@@ -9296,7 +9297,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040722,Mike Green,LB,BAL,15,1,0,1,0,1.0,1,0,0,0,0
 00-0040723,Jack Kiser,LB,JAX,15,2,1,0,0,0.0,0,0,0,0,0
 00-0040724,T.J. Sanders,DT,BUF,15,0,2,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,15,1,1,0,0,0.0,0,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,15,1,1,0,0,0.0,0,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,15,6,1,1,0,1.0,1,0,2,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,15,5,1,2,1,2.0,2,0,0,0,0
 00-0040744,Jaylahn Tuimolaou,DE,IND,15,2,1,0,0,0.0,0,0,0,0,0
@@ -9391,7 +9392,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033914,Alex Anzalone,MLB,DET,16,3,5,0,0,0.0,0,0,1,0,0
 00-0033918,Fabian Moreau,CB,MIN,16,1,0,0,0,0.0,0,0,0,0,0
 00-0033928,Jourdan Lewis,CB,JAX,16,2,2,0,0,0.0,0,0,1,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,16,0,1,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,16,0,1,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,16,3,1,0,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,16,1,1,0,0,0.0,0,0,0,0,0
 00-0034051,Christian Kuntz,LS,PIT,16,1,0,0,0,0.0,0,0,0,0,0
@@ -9484,7 +9485,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035669,Nick Scott,SAF,CAR,16,9,1,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,16,1,1,0,0,0.0,0,0,1,0,0
 00-0035674,Jerry Tillery,DT,KC,16,0,3,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,BAL,16,2,0,1,0,1.0,2,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,BAL,16,2,0,1,0,1.0,2,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,16,6,5,0,0,0.0,0,0,0,0,0
 00-0035681,Mike Edwards,SAF,KC,16,1,1,0,0,0.0,0,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,16,1,0,1,0,0.0,1,0,1,0,0
@@ -9505,7 +9506,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036114,A.J. Green,CB,MIA,16,1,0,0,0,0.0,0,0,0,0,0
 00-0036151,Bryce Huff,DE,SF,16,1,1,0,0,0.0,1,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,16,2,0,1,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,16,1,2,0,0,0.0,0,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,16,1,2,0,0,0.0,0,0,0,0,0
 00-0036193,Anfernee Jennings,LB,NE,16,1,0,1,0,1.0,1,0,0,0,0
 00-0036204,LaCale London,DE,ATL,16,1,0,1,0,0.0,0,0,0,0,0
 00-0036220,Derrick Brown,DT,CAR,16,3,2,1,0,1.0,1,0,0,0,0
@@ -9643,7 +9644,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037281,Damone Clark,LB,HOU,16,1,0,0,0,0.0,0,0,0,0,0
 00-0037283,John Ridgeway,DT,NO,16,1,3,1,0,0.0,0,0,0,0,0
 00-0037288,Christian Benford,CB,BUF,16,1,0,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,16,2,1,0,0,0.0,0,0,0,0,0
+00-0037310,James Houston,LB,DAL,16,2,1,0,0,0.0,0,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,16,3,1,0,0,0.0,0,0,2,0,0
 00-0037315,Cameron Goode,LB,MIA,16,0,4,0,0,0.0,0,0,0,0,0
 00-0037364,Arron Mosby,DE,GB,16,1,1,0,0,0.0,0,0,0,0,0
@@ -9664,7 +9665,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037633,Jacob Hummel,LB,BAL,16,1,0,0,0,0.0,0,0,0,0,0
 00-0037661,Ja'Marcus Ingram,CB,HOU,16,0,2,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,16,1,1,0,0,0.0,1,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,16,1,1,0,0,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,16,1,1,0,0,0.0,0,0,0,0,0
 00-0037742,Treylon Burks,WR,WAS,16,1,0,0,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,16,3,1,0,0,0.0,0,0,1,0,0
 00-0037752,Tycen Anderson,SAF,CIN,16,1,2,0,0,0.0,0,0,0,0,0
@@ -9862,7 +9863,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040011,Shemar James,LB,DAL,16,4,1,0,0,0.0,0,0,0,0,0
 00-0040016,Warren Brinson,DT,GB,16,1,0,0,0,0.0,1,0,0,0,0
 00-0040020,Micah Robinson,CB,TEN,16,1,0,0,0,0.0,0,0,0,0,0
-00-0040027,Brandon Johnson,CB,PHI,16,0,1,0,0,0.0,0,0,0,0,0
+00-0040027,Brandon Johnson,DB,PHI,16,0,1,0,0,0.0,0,0,0,0,0
 00-0040061,Connor O'Toole,LB,SEA,16,1,1,0,0,0.0,0,0,0,0,0
 00-0040072,Jeffrey Bassa,LB,KC,16,0,1,0,0,0.0,0,0,0,0,0
 00-0040089,Kevin Knowles,DB,KC,16,1,1,0,0,0.0,0,0,0,0,0
@@ -9946,7 +9947,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040721,Alfred Collins,DT,SF,16,1,1,1,1,1.0,0,0,0,0,0
 00-0040722,Mike Green,LB,BAL,16,0,1,0,0,0.0,1,0,0,0,0
 00-0040724,T.J. Sanders,DT,BUF,16,1,2,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,16,0,2,0,0,0.0,1,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,16,0,2,0,0,0.0,1,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,16,7,4,0,0,0.0,0,0,0,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,16,3,1,0,0,0.0,0,0,0,0,0
 00-0040746,Nic Scourton,LB,CAR,16,2,2,1,0,0.0,0,0,0,0,0
@@ -9971,7 +9972,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031254,Denico Autry,DT,HOU,17,1,0,1,1,1.0,0,0,0,0,0
 00-0031270,Shelby Harris,DE,CLE,17,0,0,0,0,0.0,1,0,1,0,0
 00-0031357,C.J. Goodwin,CB,DAL,17,1,1,0,0,0.0,0,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,17,1,1,3,0,1.5,3,0,0,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,17,1,1,3,0,1.5,3,0,0,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,17,3,3,1,1,1.0,1,0,0,0,0
 00-0031550,Shaq Thompson,OLB,BUF,17,3,1,1,0,0.0,0,0,0,0,0
 00-0031565,Danielle Hunter,DE,HOU,17,2,2,1,0,1.0,2,0,0,0,0
@@ -10035,7 +10036,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033907,Dawuane Smoot,DE,JAX,17,0,1,0,0,0.0,0,0,0,0,0
 00-0033914,Alex Anzalone,MLB,DET,17,2,1,1,0,1.0,1,0,0,0,0
 00-0033918,Fabian Moreau,CB,MIN,17,2,0,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,17,2,0,0,1,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,17,2,0,0,1,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,17,1,1,1,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,17,0,4,0,0,0.0,2,0,0,0,0
 00-0033964,Al-Quadin Muhammad,LB,DET,17,2,0,2,0,2.0,2,0,0,0,0
@@ -10131,7 +10132,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0035669,Nick Scott,SAF,CAR,17,5,2,0,0,0.0,0,0,0,0,0
 00-0035672,Cody Barton,LB,TEN,17,1,2,0,0,0.0,0,0,0,0,0
 00-0035674,Jerry Tillery,DT,KC,17,0,2,0,0,0.0,0,0,0,0,0
-00-0035678,Dre'Mont Jones,DE,BAL,17,0,6,0,0,0.0,1,0,0,0,0
+00-0035678,Dre'Mont Jones,LB,BAL,17,0,6,0,0,0.0,1,0,0,0,0
 00-0035680,Quincy Williams,LB,NYJ,17,5,1,0,0,0.0,0,0,0,0,0
 00-0035681,Mike Edwards,SAF,KC,17,0,1,0,0,0.0,0,0,0,0,0
 00-0035683,Dexter Lawrence,DT,NYG,17,2,1,1,0,0.0,0,0,0,0,0
@@ -10149,7 +10150,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036151,Bryce Huff,DE,SF,17,0,3,0,0,0.0,0,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,17,1,2,0,0,0.0,0,0,1,0,0
 00-0036187,Reggie Gilliam,RB,BUF,17,1,0,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,17,1,0,0,0,0.0,1,0,0,0,0
+00-0036192,A.J. Epenesa,LB,BUF,17,1,0,0,0,0.0,1,0,0,0,0
 00-0036193,Anfernee Jennings,LB,NE,17,2,2,0,0,0.0,1,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,17,3,1,0,0,0.0,0,0,0,0,0
 00-0036204,LaCale London,DE,ATL,17,1,3,0,0,0.0,0,0,0,0,0
@@ -10297,7 +10298,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037289,Malcolm Rodriguez,LB,DET,17,2,1,0,0,0.0,0,0,0,0,0
 00-0037301,Theo Jackson,DB,MIN,17,2,2,1,0,1.0,1,0,0,0,0
 00-0037307,Ja'Sir Taylor,CB,NYJ,17,3,0,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,17,1,2,0,0,0.0,0,0,0,0,0
+00-0037310,James Houston,LB,DAL,17,1,2,0,0,0.0,0,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,17,4,2,0,0,0.0,0,0,2,0,0
 00-0037315,Cameron Goode,LB,MIA,17,1,2,0,0,0.0,0,0,0,0,0
 00-0037320,Deane Leonard,CB,LAC,17,1,0,0,0,0.0,0,0,0,0,0
@@ -10318,7 +10319,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037633,Jacob Hummel,LB,BAL,17,0,1,0,0,0.0,0,0,0,0,0
 00-0037661,Ja'Marcus Ingram,CB,HOU,17,1,0,0,0,0.0,0,0,0,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,17,1,0,1,0,0.0,0,0,1,0,0
-00-0037665,Sam Williams,DE,DAL,17,0,0,1,0,0.0,0,0,1,0,0
+00-0037665,Sam Williams,LB,DAL,17,0,0,1,0,0.0,0,0,1,0,0
 00-0037711,Jeremiah Pharms Jr.,DT,NE,17,0,1,0,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,17,0,1,0,0,0.0,0,0,3,0,0
 00-0037756,Travis Jones,DT,BAL,17,1,3,1,0,1.5,1,0,0,0,0
@@ -10490,7 +10491,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0039821,Andru Phillips,DB,NYG,17,3,3,1,0,0.0,0,0,0,0,0
 00-0039825,Jaden Hicks,SAF,KC,17,1,1,0,0,0.0,0,0,0,0,0
 00-0039829,Darius Muasau,LB,NYG,17,2,3,0,0,0.0,0,0,0,0,0
-00-0039831,Kamal Hadden,DB,GB,17,0,1,0,0,0.0,0,0,0,0,0
+00-0039831,Kamal Hadden,CB,GB,17,0,1,0,0,0.0,0,0,0,0,0
 00-0039834,Kamren Kinchens,SAF,LAR,17,2,3,0,0,0.0,0,0,0,0,0
 00-0039835,Justin Eboigbe,DT,LAC,17,1,1,0,0,0.0,0,0,0,0,0
 00-0039838,Calen Bullock,SAF,HOU,17,0,1,0,0,0.0,0,0,1,0,0
@@ -10598,7 +10599,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040720,Jahdae Barron,CB,DEN,17,2,2,0,0,0.0,0,0,0,0,0
 00-0040721,Alfred Collins,DT,SF,17,0,2,0,0,0.0,0,0,1,0,0
 00-0040724,T.J. Sanders,DT,BUF,17,1,0,0,0,0.0,0,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,17,0,1,0,0,0.0,0,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,17,0,1,0,0,0.0,0,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,17,2,1,0,0,0.0,0,0,0,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,17,1,4,0,0,0.0,0,0,0,0,0
 00-0040746,Nic Scourton,LB,CAR,17,1,3,1,1,1.0,0,0,0,0,0
@@ -10623,7 +10624,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0031270,Shelby Harris,DE,CLE,18,2,0,0,0,0.0,0,0,1,0,0
 00-0031357,C.J. Goodwin,CB,DAL,18,1,0,0,0,0.0,0,0,0,0,0
 00-0031360,Kyle Van Noy,MLB,BAL,18,1,1,0,0,0.0,0,0,0,0,0
-00-0031364,Jadeveon Clowney,OLB,DAL,18,4,1,4,1,3.0,3,0,1,0,0
+00-0031364,Jadeveon Clowney,DE,DAL,18,4,1,4,1,3.0,3,0,1,0,0
 00-0031408,Mike Evans,WR,TB,18,1,0,0,0,0.0,0,0,0,0,0
 00-0031411,DeMarcus Lawrence,LB,SEA,18,0,1,0,0,0.0,1,0,0,0,0
 00-0031554,Eric Kendricks,MLB,SF,18,3,1,0,0,0.0,0,0,0,0,0
@@ -10682,7 +10683,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0033907,Dawuane Smoot,DE,JAX,18,1,4,1,0,1.0,1,0,0,0,0
 00-0033913,Chris Wormley,NT,IND,18,2,0,0,0,0.0,0,0,0,0,0
 00-0033918,Fabian Moreau,CB,MIN,18,1,0,0,0,0.0,0,0,0,0,0
-00-0033941,Rayshawn Jenkins,SAF,CLE,18,2,3,0,0,0.0,0,0,0,0,0
+00-0033941,Rayshawn Jenkins,DB,CLE,18,2,3,0,0,0.0,0,0,0,0,0
 00-0033945,Samson Ebukam,DE,IND,18,2,3,0,0,0.0,0,0,0,0,0
 00-0033952,Grover Stewart,DT,IND,18,1,1,0,0,0.0,0,0,0,0,0
 00-0034067,Scott Daly,LS,CHI,18,0,1,0,0,0.0,0,0,0,0,0
@@ -10727,7 +10728,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0034874,Roquan Smith,ILB,BAL,18,1,2,0,0,0.0,0,0,0,0,0
 00-0034941,Mitch Wishnowsky,P,BUF,18,1,0,0,0,0.0,0,0,0,0,0
 00-0034966,D'Angelo Ross,CB,CLE,18,3,3,0,0,0.0,0,0,2,0,0
-00-0034968,Darnell Savage,DB,BUF,18,0,2,0,0,0.0,0,0,1,0,0
+00-0034968,Darnell Savage,SAF,BUF,18,0,2,0,0,0.0,0,0,1,0,0
 00-0034987,E.J. Speed,LB,HOU,18,1,5,0,0,0.0,0,0,0,0,0
 00-0035000,Quinton Bell,LB,MIA,18,0,3,0,0,0.0,0,0,0,0,0
 00-0035020,Demetrius Flannigan-Fowles,LB,NYG,18,0,3,0,0,0.0,0,0,0,0,0
@@ -10791,7 +10792,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036159,Joshua Uche,LB,PHI,18,3,2,0,0,0.0,0,0,0,0,0
 00-0036176,Mason Kinsey,WR,TEN,18,2,0,0,0,0.0,0,0,0,0,0
 00-0036181,Teair Tart,DT,LAC,18,1,0,0,0,0.0,0,0,0,0,0
-00-0036192,A.J. Epenesa,DE,BUF,18,2,1,0,0,0.0,2,0,1,0,0
+00-0036192,A.J. Epenesa,LB,BUF,18,2,1,0,0,0.0,2,0,1,0,0
 00-0036193,Anfernee Jennings,LB,NE,18,3,1,2,0,0.0,2,0,0,0,0
 00-0036199,Geno Stone,SAF,CIN,18,2,1,0,0,0.0,0,0,1,0,0
 00-0036204,LaCale London,DE,ATL,18,1,3,1,0,1.0,1,0,0,0,0
@@ -10856,7 +10857,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0036672,Grant Stuard,LB,DET,18,0,1,0,0,0.0,0,0,0,0,0
 00-0036683,Devon Key,SAF,DEN,18,4,0,0,0,0.0,0,0,0,0,0
 00-0036695,Naquan Jones,DT,HOU,18,1,0,0,0,0.0,1,0,0,0,0
-00-0036711,Charles Snowden,LB,LV,18,3,0,1,0,2.0,2,0,0,0,0
+00-0036711,Charles Snowden,DE,LV,18,3,0,1,0,2.0,2,0,0,0,0
 00-0036727,Adam Prentice,FB,DEN,18,0,2,0,0,0.0,0,0,0,0,0
 00-0036788,Jack Heflin,DT,LAR,18,1,0,0,0,0.0,0,0,0,0,0
 00-0036813,Christian Elliss,LB,NE,18,3,5,0,0,0.0,0,0,0,0,0
@@ -10898,7 +10899,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037073,Jordan Davis,DT,PHI,18,0,2,0,0,0.0,0,0,0,0,0
 00-0037079,Riq Woolen,CB,SEA,18,1,1,1,0,0.0,0,0,1,0,0
 00-0037082,Dominique Robinson,DE,CHI,18,1,0,1,0,0.0,0,0,0,0,0
-00-0037091,Bo Melton,CB,GB,18,1,0,0,0,0.0,0,0,0,0,0
+00-0037091,Bo Melton,WR,GB,18,1,0,0,0,0.0,0,0,0,0,0
 00-0037094,Jonathan Ford,DT,GB,18,2,0,0,0,0.0,0,0,0,0,0
 00-0037106,Jaylon Jones,DB,CHI,18,2,1,0,0,0.0,0,0,0,0,0
 00-0037120,Tyler Goodson,RB,IND,18,1,0,0,0,0.0,0,0,0,0,0
@@ -10927,7 +10928,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037301,Theo Jackson,DB,MIN,18,3,1,1,0,1.0,1,0,0,0,0
 00-0037304,Connor Heyward,FB,PIT,18,1,1,0,0,0.0,0,0,0,0,0
 00-0037307,Ja'Sir Taylor,CB,NYJ,18,2,3,0,0,0.0,0,0,0,0,0
-00-0037310,James Houston,DE,DAL,18,1,2,0,0,0.0,5,0,0,0,0
+00-0037310,James Houston,LB,DAL,18,1,2,0,0,0.0,5,0,0,0,0
 00-0037313,Montaric Brown,CB,JAX,18,3,0,0,0,0.0,0,0,0,0,0
 00-0037315,Cameron Goode,LB,MIA,18,1,0,0,0,0.0,0,0,0,0,0
 00-0037320,Deane Leonard,CB,LAC,18,0,2,0,0,0.0,0,0,0,0,0
@@ -10950,7 +10951,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0037633,Jacob Hummel,LB,BAL,18,1,0,0,0,0.0,0,0,0,0,0
 00-0037661,Ja'Marcus Ingram,CB,HOU,18,1,1,0,0,0.0,0,0,2,0,0
 00-0037663,Jermaine Johnson II,DE,NYJ,18,1,1,0,0,0.0,0,0,0,0,0
-00-0037665,Sam Williams,DE,DAL,18,2,6,1,0,0.0,0,0,0,0,0
+00-0037665,Sam Williams,LB,DAL,18,2,6,1,0,0.0,0,0,0,0,0
 00-0037743,Daxton Hill,DB,CIN,18,4,0,0,0,0.0,0,0,0,0,0
 00-0037752,Tycen Anderson,SAF,CIN,18,1,0,0,0,0.0,0,0,1,0,0
 00-0037756,Travis Jones,DT,BAL,18,1,4,1,0,1.0,1,0,0,0,0
@@ -11022,7 +11023,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0038711,Mohamoud Diabate,LB,CLE,18,1,6,0,0,0.0,0,0,0,0,0
 00-0038715,Ronnie Hickman Jr.,SAF,CLE,18,5,3,0,0,0.0,0,0,2,0,0
 00-0038738,Hunter Luepke,RB,DAL,18,0,1,0,0,0.0,0,0,0,0,0
-00-0038742,Tyrus Wheat,DE,DET,18,1,0,0,0,0.0,0,0,0,0,0
+00-0038742,Tyrus Wheat,LB,DET,18,1,0,0,0,0.0,0,0,0,0,0
 00-0038764,Patrick O'Connell,LB,SEA,18,1,0,0,0,0.0,0,0,0,0,0
 00-0038765,Ty Okada,SAF,SEA,18,3,0,0,0,0.0,0,0,0,0,0
 00-0038778,Jalen Redmond,DL,MIN,18,1,2,0,0,0.0,0,0,0,0,0
@@ -11158,7 +11159,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040013,Smael Mondon Jr.,LB,PHI,18,0,1,0,0,0.0,0,0,0,0,0
 00-0040016,Warren Brinson,DT,GB,18,0,0,0,0,0.0,1,0,0,0,0
 00-0040020,Micah Robinson,CB,TEN,18,3,4,1,0,0.0,0,0,2,0,0
-00-0040027,Brandon Johnson,CB,PHI,18,1,1,0,0,0.0,0,0,1,0,0
+00-0040027,Brandon Johnson,DB,PHI,18,1,1,0,0,0.0,0,0,1,0,0
 00-0040033,Johnathan Baldwin,SAF,GB,18,4,3,0,0,0.0,0,0,0,0,0
 00-0040037,Jamon Johnson,LB,GB,18,3,7,0,0,0.0,0,0,1,0,0
 00-0040041,Nazir Stackhouse,DT,GB,18,0,2,0,0,0.0,0,0,0,0,0
@@ -11247,7 +11248,7 @@ player_id,player_display_name,position,team,week,def_tackles_solo,def_tackle_ass
 00-0040721,Alfred Collins,DT,SF,18,1,2,0,0,0.0,0,0,1,0,0
 00-0040722,Mike Green,LB,BAL,18,0,2,0,0,0.0,1,0,0,0,0
 00-0040724,T.J. Sanders,DT,BUF,18,1,0,1,0,1.0,1,0,0,0,0
-00-0040725,Donovan Ezeiruaku,DE,DAL,18,0,1,0,0,0.0,0,0,0,0,0
+00-0040725,Donovan Ezeiruaku,LB,DAL,18,0,1,0,0,0.0,0,0,0,0,0
 00-0040729,Jack Bech,WR,LV,18,1,0,0,0,0.0,0,0,0,0,0
 00-0040733,Nick Emmanwori,SAF,SEA,18,4,3,1,0,0.0,1,0,0,0,0
 00-0040738,Demetrius Knight Jr.,LB,CIN,18,2,1,0,0,1.0,1,0,1,0,0
