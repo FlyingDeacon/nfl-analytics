@@ -275,7 +275,18 @@
       "Bash(.venv/bin/python -c \"import pypdf; print\\(''''pypdf'''', pypdf.__version__\\)\")",
       "Bash(.venv/bin/python -c \"import fitz; print\\(''''fitz ok''''\\)\")",
       "Bash(python -m py_compile app/pages/13_Chopped_Survivor.py app/utils/survivor.py)",
-      "Bash(.venv/bin/python -m py_compile app/pages/13_Chopped_Survivor.py)"
+      "Bash(.venv/bin/python -m py_compile app/pages/13_Chopped_Survivor.py)",
+      "Bash(python -c \"import py_compile;py_compile.compile\\(''app/pages/13_Chopped_Survivor.py'',doraise=True\\);print\\(''ok''\\)\")",
+      "Bash(curl -sL --max-time 30 -w '\\\\n[HTTP %{http_code}]\\\\n' \"https://docs.google.com/spreadsheets/d/1dy9w4VW1YIp0vfsYgRhPrlN2AKCZ2-gFhWfKeUziAng/export?format=csv&gid=163634909\")",
+      "Bash(unzip -o -q chopped.xlsx -d choppedx)",
+      "Bash(tr '>' '>\\\\n')",
+      "Bash(/Users/brw8201/Coding/nfl-analytics/.venv/bin/python -c \":*)",
+      "Bash(grep -rn \"refresh\\\\|nflverse\\\\|nfl_data_py\\\\|import_schedules\" --include=*.py -l .)",
+      "WebFetch(domain:docs.google.com)",
+      "Bash(curl -sL \"https://docs.google.com/spreadsheets/d/1dy9w4VW1YIp0vfsYgRhPrlN2AKCZ2-gFhWfKeUziAng/export?format=csv&gid=163634909\" -o chopped_wk3.csv)",
+      "Bash(.venv/bin/python -c ':*)",
+      "Bash(grep -rln \"import_schedules\\\\|nfl_data_py\" --include=*.py .)",
+      "Bash(.venv/bin/python -m py_compile app/pages/13_Chopped_Survivor.py app/utils/survivor.py)"
     ]
   }
 }
