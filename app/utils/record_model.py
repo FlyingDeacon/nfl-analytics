@@ -471,14 +471,28 @@ _SCHED_TEAM_ALIAS = {"LA": "LAR", "JAC": "JAX", "STL": "LAR", "SD": "LAC", "OAK"
 
 
 def _game_probs(schedule, power):
+    cols = ["week", "home_team", "away_team", "home_score", "away_score"]
     games = schedule[(schedule["season"] == 2026) & (schedule["game_type"] == "REG")][
-        ["week", "home_team", "away_team"]].copy()
+        [c for c in cols if c in schedule.columns]].copy()
     games["home_team"] = games["home_team"].replace(_SCHED_TEAM_ALIAS)
     games["away_team"] = games["away_team"].replace(_SCHED_TEAM_ALIAS)
     pmap = power.set_index("team")["power"]
     games = games[games["home_team"].isin(pmap.index) & games["away_team"].isin(pmap.index)]
     margin = games["home_team"].map(pmap) - games["away_team"].map(pmap) + HOME_ADV
     games["p_home"] = _norm_cdf((margin / GAME_SD).to_numpy())
+
+    # Games that have already been played are locked to their actual outcome
+    # rather than simulated — the season sim should reflect what has already
+    # happened, not re-guess it from preseason ratings.
+    if "home_score" in games.columns and "away_score" in games.columns:
+        hs = pd.to_numeric(games["home_score"], errors="coerce")
+        as_ = pd.to_numeric(games["away_score"], errors="coerce")
+        played = hs.notna() & as_.notna()
+        games["played"] = played
+        actual = np.where(hs > as_, 1.0, np.where(hs < as_, 0.0, 0.5))
+        games["p_home"] = np.where(played, actual, games["p_home"])
+    else:
+        games["played"] = False
     return games.reset_index(drop=True)
 
 
