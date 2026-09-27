@@ -324,7 +324,7 @@ def _load_board(path: str, mtime: float) -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def _last_season_stats(scoring: str, mtime: float) -> pd.DataFrame:
     """Per-player 2025 production, consistency and finish ranks."""
-    wk = load_weekly(_mtime=mtime)
+    wk = load_weekly(mtime=mtime)
     if wk.empty:
         return pd.DataFrame()
     df = wk[(wk["season"] == LAST_SEASON) & (wk["season_type"] == "REG")].copy()
@@ -385,7 +385,7 @@ def _last_season_stats(scoring: str, mtime: float) -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False)
 def _team_meta(mtime: float) -> dict:
-    teams_df = load_teams(_mtime=mtime)
+    teams_df = load_teams(mtime=mtime)
     meta = {}
     for _, r in teams_df.iterrows():
         abbr = str(r["team_abbr"])
@@ -400,7 +400,7 @@ def _team_meta(mtime: float) -> dict:
 @st.cache_data(show_spinner=False)
 def _weekly_log(scoring: str, mtime: float) -> pd.DataFrame:
     """2025 week-by-week fantasy points, used for the trend chart."""
-    wk = load_weekly(_mtime=mtime)
+    wk = load_weekly(mtime=mtime)
     if wk.empty:
         return pd.DataFrame()
     df = wk[(wk["season"] == LAST_SEASON) & (wk["season_type"] == "REG")].copy()
@@ -415,7 +415,7 @@ def _weekly_log(scoring: str, mtime: float) -> pd.DataFrame:
 @st.cache_data(show_spinner=False)
 def _season_totals(scoring: str, mtime: float) -> pd.DataFrame:
     """Regular-season fantasy point totals for the last three seasons."""
-    wk = load_weekly(_mtime=mtime)
+    wk = load_weekly(mtime=mtime)
     if wk.empty:
         return pd.DataFrame()
     df = wk[
@@ -444,7 +444,7 @@ board = _load_board(str(board_path), _file_mtime(board_path))
 last = _last_season_stats(sel_scoring, _weekly_mtime)
 tmeta = _team_meta(_file_mtime(get_base_dir() / "data" / "raw" / "teams.csv"))
 _CUR_HEADSHOTS = load_headshots(
-    _mtime=_file_mtime(get_base_dir() / "data" / "raw" / "headshots.csv"))
+    mtime=_file_mtime(get_base_dir() / "data" / "raw" / "headshots.csv"))
 
 data = board.merge(
     last.drop(columns=["player", "position"], errors="ignore"), on="name_key", how="left"

@@ -25,12 +25,12 @@ if st.button("← Back to Team Ratings", key="back_to_ratings"):
 
 # ── Load data (pass mtime so cache auto-invalidates when files change) ────────
 _base = get_base_dir()
-ratings      = load_ratings(_mtime=_file_mtime(_base / "data/processed/team_ratings.csv"))
-teams_df     = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
-schedules    = load_schedules(_mtime=_file_mtime(_base / "data/raw/schedules.csv"))
-weekly       = load_weekly(_mtime=_file_mtime(_base / "data/raw/weekly.csv"))
-depth_charts = load_depth_charts(_mtime=_file_mtime(_base / "data/raw/depth_charts.csv"))
-divisions_df = load_divisions(_mtime=_file_mtime(_base / "data/raw/nfl_divisions.csv"))
+ratings      = load_ratings(mtime=_file_mtime(_base / "data/processed/team_ratings.csv"))
+teams_df     = load_teams(mtime=_file_mtime(_base / "data/raw/teams.csv"))
+schedules    = load_schedules(mtime=_file_mtime(_base / "data/raw/schedules.csv"))
+weekly       = load_weekly(mtime=_file_mtime(_base / "data/raw/weekly.csv"))
+depth_charts = load_depth_charts(mtime=_file_mtime(_base / "data/raw/depth_charts.csv"))
+divisions_df = load_divisions(mtime=_file_mtime(_base / "data/raw/nfl_divisions.csv"))
 
 # ── Season and team selection ─────────────────────────────────────────────
 abbr_col = "team_abbr" if "team_abbr" in teams_df.columns else "team"

@@ -47,8 +47,8 @@ components.html("""
 
 # ── Load data (mtime invalidates cache automatically when files update) ───────
 _base   = get_base_dir()
-ratings = load_ratings(_mtime=_file_mtime(_base / "data/processed/team_ratings.csv"))
-teams   = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
+ratings = load_ratings(mtime=_file_mtime(_base / "data/processed/team_ratings.csv"))
+teams   = load_teams(mtime=_file_mtime(_base / "data/raw/teams.csv"))
 
 # ── Sidebar filters ──────────────────────────────────────────────────────────
 if "tr_v" not in st.session_state:

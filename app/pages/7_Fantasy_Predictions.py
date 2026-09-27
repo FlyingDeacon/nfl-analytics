@@ -1526,7 +1526,7 @@ def apply_expert_adjustments(df: pd.DataFrame,
     #     Only offensive skill players are mapped — K and DEF are keyed differently.
     if team_col:
         _dc_path = RAW_DIR / "depth_charts.csv"
-        dc = load_depth_charts(_mtime=_dc_path.stat().st_mtime if _dc_path.exists() else 0.0)
+        dc = load_depth_charts(mtime=_dc_path.stat().st_mtime if _dc_path.exists() else 0.0)
         if not dc.empty and {"season", "side", "position", "player_name", "team"} <= set(dc.columns):
             dc = dc[(dc["season"] == PREDICTION_YEAR) & (dc["side"] == "offense")
                     & (dc["position"].isin(["QB", "RB", "WR", "TE"]))]

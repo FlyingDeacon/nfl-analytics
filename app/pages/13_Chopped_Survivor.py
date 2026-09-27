@@ -117,8 +117,8 @@ render_last_updated(*input_paths())
 
 _base = get_base_dir()
 _SCHED_KEY = _file_mtime(_base / "data/raw/schedules.csv")
-teams_df = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
-sched = load_schedules(_mtime=_SCHED_KEY)
+teams_df = load_teams(mtime=_file_mtime(_base / "data/raw/teams.csv"))
+sched = load_schedules(mtime=_SCHED_KEY)
 _, tw = matchup_tables()
 
 # Cache key for everything derived from the projection. It has to be a real

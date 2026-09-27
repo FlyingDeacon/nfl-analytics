@@ -288,7 +288,8 @@
       "Bash(grep -rln \"import_schedules\\\\|nfl_data_py\" --include=*.py .)",
       "Bash(.venv/bin/python -m py_compile app/pages/13_Chopped_Survivor.py app/utils/survivor.py)",
       "Bash(.venv/bin/python src/build_team_ratings.py)",
-      "mcp__scheduled-tasks__create_scheduled_task"
+      "mcp__scheduled-tasks__create_scheduled_task",
+      "Bash(.venv/bin/python -m py_compile app/utils/data_loader.py app/utils/projection.py app/pages/8_Team_Profile.py app/pages/6_Player_Search.py app/pages/13_Chopped_Survivor.py app/pages/7_Fantasy_Predictions.py app/pages/12_Weekly_Matchups.py app/pages/1_Team_Ratings.py app/pages/9_Record_Predictions.py app/pages/8_Draft_Simulator.py app/pages/11_Player_Comparison.py)"
     ]
   }
 }

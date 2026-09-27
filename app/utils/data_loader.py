@@ -20,7 +20,7 @@ from utils.nfl_data_core import (
 # ── Loaders ──────────────────────────────────────────────────────────────────
 
 @st.cache_data(show_spinner=False)
-def load_ratings(_mtime: float = 0.0) -> pd.DataFrame:
+def load_ratings(mtime: float = 0.0) -> pd.DataFrame:
     path = get_base_dir() / "data" / "processed" / "team_ratings.csv"
     if not path.exists():
         st.error(f"team_ratings.csv not found at {path}.")
@@ -32,7 +32,7 @@ def load_ratings(_mtime: float = 0.0) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_teams(_mtime: float = 0.0) -> pd.DataFrame:
+def load_teams(mtime: float = 0.0) -> pd.DataFrame:
     path = get_base_dir() / "data" / "raw" / "teams.csv"
     if not path.exists():
         st.error(f"teams.csv not found at {path}.")
@@ -50,7 +50,7 @@ def load_teams(_mtime: float = 0.0) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_schedules(_mtime: float = 0.0) -> pd.DataFrame:
+def load_schedules(mtime: float = 0.0) -> pd.DataFrame:
     path = get_base_dir() / "data" / "raw" / "schedules.csv"
     if not path.exists():
         st.error(f"schedules.csv not found at {path}.")
@@ -65,7 +65,7 @@ def load_schedules(_mtime: float = 0.0) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_weekly(_mtime: float = 0.0) -> pd.DataFrame:
+def load_weekly(mtime: float = 0.0) -> pd.DataFrame:
     path = get_base_dir() / "data" / "raw" / "weekly.csv"
     if not path.exists():
         raw_dir = path.parent
@@ -85,7 +85,7 @@ def load_weekly(_mtime: float = 0.0) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_weekly_def(_mtime: float = 0.0) -> pd.DataFrame:
+def load_weekly_def(mtime: float = 0.0) -> pd.DataFrame:
     """Load 2025 per-defender box stats used by the record model's defense side."""
     path = get_base_dir() / "data" / "raw" / "weekly_def.csv"
     if not path.exists():
@@ -118,7 +118,7 @@ def load_preseason_rankings() -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_headshots(_mtime: float = 0.0) -> dict:
+def load_headshots(mtime: float = 0.0) -> dict:
     """Map normalized player name → current-season headshot URL.
 
     weekly.csv carries a headshot per game row, but it only runs through the last
@@ -141,7 +141,7 @@ def load_headshots(_mtime: float = 0.0) -> dict:
 
 
 @st.cache_data(show_spinner=False)  # mtime arg handles invalidation
-def load_depth_charts(_mtime: float = 0.0) -> pd.DataFrame:
+def load_depth_charts(mtime: float = 0.0) -> pd.DataFrame:
     """Load depth charts from local cache or nflverse GitHub releases.
 
     Data source: https://github.com/nflverse/nflverse-data
@@ -174,7 +174,7 @@ def load_depth_charts(_mtime: float = 0.0) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def load_divisions(_mtime: float = 0.0) -> pd.DataFrame:
+def load_divisions(mtime: float = 0.0) -> pd.DataFrame:
     """Load NFL divisions and conference structure (canonical 32-team reference)."""
     path = get_base_dir() / "data" / "raw" / "nfl_divisions.csv"
     if not path.exists():

@@ -93,7 +93,7 @@ player_pos = player_row[pos_col] if pos_col else "—"
 # Current-season picture first so a player who changed teams is shown in the
 # uniform he plays in now; the weekly row is the fallback for anyone off a roster.
 player_pic = load_headshots(
-    _mtime=_file_mtime(get_base_dir() / "data" / "raw" / "headshots.csv")
+    mtime=_file_mtime(get_base_dir() / "data" / "raw" / "headshots.csv")
 ).get(_normalize_name(player_name), "")
 if not player_pic and "headshot_url" in player_row.index:
     player_pic = player_row.get("headshot_url", "")

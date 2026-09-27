@@ -38,7 +38,7 @@ st.markdown("""
 
 # ── Load data + run projection (shared cache with the matchup/survivor pages) ─
 _base = get_base_dir()
-teams_df = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
+teams_df = load_teams(mtime=_file_mtime(_base / "data/raw/teams.csv"))
 
 table, games, changes = season_projection()
 _market = table.attrs.get("market", {})

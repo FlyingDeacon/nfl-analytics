@@ -46,25 +46,25 @@ def _keys() -> tuple:
 
 
 @st.cache_data(show_spinner="Simulating the 2026 season…")
-def _simulate(_ratings_m, _depth_m, _div_m, _sched_m, _weekly_m, _def_m, _wt_m):
+def _simulate(ratings_m, depth_m, div_m, sched_m, weekly_m, def_m, wt_m):
     base = get_base_dir()
     win_totals_path = base / "data/raw/win_totals_2026.csv"
     return project_season(
-        load_ratings(_mtime=_ratings_m),
+        load_ratings(mtime=ratings_m),
         pd.read_csv(base / "data/raw/depth_charts.csv"),
-        load_divisions(_mtime=_div_m),
-        load_schedules(_mtime=_sched_m),
-        load_weekly(_mtime=_weekly_m),
-        load_weekly_def(_mtime=_def_m),
+        load_divisions(mtime=div_m),
+        load_schedules(mtime=sched_m),
+        load_weekly(mtime=weekly_m),
+        load_weekly_def(mtime=def_m),
         win_totals=pd.read_csv(win_totals_path) if win_totals_path.exists() else None,
     )
 
 
 @st.cache_data(show_spinner=False)
-def _matchups(_ratings_m, _depth_m, _div_m, _sched_m, _weekly_m, _def_m, _wt_m):
-    _, games, _ = _simulate(_ratings_m, _depth_m, _div_m, _sched_m,
-                            _weekly_m, _def_m, _wt_m)
-    blended = blend_probabilities(games, load_schedules(_mtime=_sched_m))
+def _matchups(ratings_m, depth_m, div_m, sched_m, weekly_m, def_m, wt_m):
+    _, games, _ = _simulate(ratings_m, depth_m, div_m, sched_m,
+                            weekly_m, def_m, wt_m)
+    blended = blend_probabilities(games, load_schedules(mtime=sched_m))
     return blended, team_week_table(blended)
 
 

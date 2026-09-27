@@ -87,13 +87,13 @@ def _headshots() -> dict:
     longer have a current picture, but the last one is better than a blank.
     """
     _base = get_base_dir()
-    wk = load_weekly(_mtime=_file_mtime(_base / "data" / "raw" / "weekly.csv"))
+    wk = load_weekly(mtime=_file_mtime(_base / "data" / "raw" / "weekly.csv"))
     out = {}
     if not wk.empty and "headshot_url" in wk.columns:
         wk = wk.sort_values(["season", "week"])
         out = {_normalize_name(k): v for k, v in
                wk.groupby("player_display_name")["headshot_url"].last().dropna().items()}
-    out.update(load_headshots(_mtime=_file_mtime(_base / "data" / "raw" / "headshots.csv")))
+    out.update(load_headshots(mtime=_file_mtime(_base / "data" / "raw" / "headshots.csv")))
     return out
 
 
@@ -101,7 +101,7 @@ def _headshots() -> dict:
 def _team_logos() -> dict:
     """Map team abbreviation → logo URL."""
     _base = get_base_dir()
-    teams_df = load_teams(_mtime=_file_mtime(_base / "data" / "raw" / "teams.csv"))
+    teams_df = load_teams(mtime=_file_mtime(_base / "data" / "raw" / "teams.csv"))
     abbr_col = "team_abbr" if "team_abbr" in teams_df.columns else "team"
     logos: dict = {}
     for t in teams_df[abbr_col].dropna().unique():

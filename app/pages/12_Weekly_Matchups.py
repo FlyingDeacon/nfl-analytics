@@ -72,8 +72,8 @@ st.markdown("""
 
 # ── Data ─────────────────────────────────────────────────────────────────────
 _base = get_base_dir()
-teams_df = load_teams(_mtime=_file_mtime(_base / "data/raw/teams.csv"))
-schedules = load_schedules(_mtime=_file_mtime(_base / "data/raw/schedules.csv"))
+teams_df = load_teams(mtime=_file_mtime(_base / "data/raw/teams.csv"))
+schedules = load_schedules(mtime=_file_mtime(_base / "data/raw/schedules.csv"))
 blended, _ = matchup_tables()
 
 # Kickoff day/time is not part of the projection, so pull it back off the
