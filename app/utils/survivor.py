@@ -228,23 +228,31 @@ def survival_probability(plan: pd.DataFrame, mulligan: bool = False) -> float:
 # from win probability alone, which is what lets the planner estimate a pool it
 # cannot see.
 #
-# Fitted against the two weeks of pick counts this league has published: the top
-# two teams took 74.7% of the field in Week 1 and 73.6% in Week 2, where the old
-# value of 3.0 predicted 55% and 41% — badly under-concentrated, which inflated
-# the apparent value of being contrarian. 5.0 reproduces Week 1 almost exactly
-# (74%) and matches the aggregate concentration that pick_ev's pot-share integral
-# actually consumes.
+# 5.0 is where squared error bottoms out against the three weeks of pick counts
+# this league has published. It replaced 3.0, which was badly under-concentrated
+# and so inflated the apparent value of being contrarian.
 #
-# Be clear about what this cannot do. Week 2 put 36.8% on San Francisco and 36.8%
-# on Tampa Bay — equal weight on an 84.6% favourite and a 76.0% one. A power law
-# on win probability is monotonic by construction, so no exponent reproduces that;
-# at 5.0 it says 48% / 12%. Pools also price brand names, which teams they have
-# already spent, and each other's picks, none of which is visible here. Per-team
-# squared error is in fact flattest near 4.0, so treat anything in 4-5 as inside
-# the noise of two data points rather than as a tuned constant.
+# Treat it as a rough centre of mass, not a tuned constant, because the thing
+# being fitted is not stationary. The top two teams took 74.7% of the field in
+# Week 1 and 73.6% in Week 2, then only 48.6% in Week 3. That collapse is not
+# noise: by Week 3 entries have burned different teams, so the field is forced
+# apart no matter how lopsided the slate is. A single exponent cannot be right
+# early and late, and the per-week best fits drift accordingly (6.5, 4.8, 4.4).
 #
-# The fix for that is not a better exponent, it is entering the observed shares
-# once the league publishes them — which is all this was ever a stand-in for.
+# Two further caveats worth knowing before trusting a refit:
+#
+#   - Shape, not just scale, is wrong. Week 2 put 36.8% on San Francisco and
+#     36.8% on Tampa Bay — equal weight on an 84.6% favourite and a 76.0% one.
+#     A power law on win probability is monotonic by construction, so no
+#     exponent reproduces that. Pools also price brand names and each other's
+#     picks, none of which is visible here.
+#   - The fit is retrospective and slightly circular. matchup_tables reprojects
+#     the whole season from current ratings, so the Week 1 win probabilities it
+#     reports today are not the ones the pool actually reacted to in Week 1.
+#
+# The fix for all of this is not a better exponent, it is entering the observed
+# shares once the league publishes them — which is all this was ever a stand-in
+# for. It is only load-bearing for the week whose picks are still secret.
 POPULARITY_CONCENTRATION = 5.0
 
 

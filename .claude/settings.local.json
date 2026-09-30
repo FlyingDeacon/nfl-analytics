@@ -289,7 +289,11 @@
       "Bash(.venv/bin/python -m py_compile app/pages/13_Chopped_Survivor.py app/utils/survivor.py)",
       "Bash(.venv/bin/python src/build_team_ratings.py)",
       "mcp__scheduled-tasks__create_scheduled_task",
-      "Bash(.venv/bin/python -m py_compile app/utils/data_loader.py app/utils/projection.py app/pages/8_Team_Profile.py app/pages/6_Player_Search.py app/pages/13_Chopped_Survivor.py app/pages/7_Fantasy_Predictions.py app/pages/12_Weekly_Matchups.py app/pages/1_Team_Ratings.py app/pages/9_Record_Predictions.py app/pages/8_Draft_Simulator.py app/pages/11_Player_Comparison.py)"
+      "Bash(.venv/bin/python -m py_compile app/utils/data_loader.py app/utils/projection.py app/pages/8_Team_Profile.py app/pages/6_Player_Search.py app/pages/13_Chopped_Survivor.py app/pages/7_Fantasy_Predictions.py app/pages/12_Weekly_Matchups.py app/pages/1_Team_Ratings.py app/pages/9_Record_Predictions.py app/pages/8_Draft_Simulator.py app/pages/11_Player_Comparison.py)",
+      "Bash(curl -sL \"https://docs.google.com/spreadsheets/d/1dy9w4VW1YIp0vfsYgRhPrlN2AKCZ2-gFhWfKeUziAng/export?format=csv&gid=163634909\" -o ch_status.csv)",
+      "Bash(curl -sL \"https://docs.google.com/spreadsheets/d/1dy9w4VW1YIp0vfsYgRhPrlN2AKCZ2-gFhWfKeUziAng/export?format=csv&gid=1280285444\" -o ch_picks.csv)",
+      "Bash(sed -i '' 's/^POOL = 74$/POOL = 63/; s/, 3, pool_size=POOL/, 4, pool_size=POOL/; s/tw, state\\\\[eid\\\\], 3, blocked/tw, state[eid], 4, blocked/; s/Week 3 board/Week 4 board/' /tmp/wk3check.py)",
+      "Bash(.venv/bin/python /tmp/wk3check.py)"
     ]
   }
 }
