@@ -43,6 +43,57 @@ def render_last_updated(*paths, label: str = "Data updated", at: float = None) -
     )
 
 
+_PULL_RESULT_KEY = "pull_results_message"
+
+
+def _render_pull_button() -> None:
+    """Button that fetches the weekend's final scores from nflverse.
+
+    The caption underneath reports how much of the live week is already in the
+    books, because "is there anything to pull yet" is the actual question being
+    asked on a Sunday night and the button alone cannot answer it.
+
+    Imports are deferred into the function: this module is imported by every
+    page, and the schedule loader pulls in pandas plus a megabyte of CSV that a
+    page which never touches the sidebar button should not pay for.
+    """
+    from utils.data_loader import load_schedules
+    from utils.refresh import pull_results, results_status
+    from utils.survivor import current_week
+
+    try:
+        sched = load_schedules()
+        status = results_status(sched, current_week(sched))
+    except Exception:
+        # A broken or missing schedule is the Refresh Data button's problem to
+        # surface on the page itself; the sidebar should still render.
+        status = None
+
+    if st.sidebar.button("⬇️ Pull Latest Scores", key="pull_results_btn",
+                         help="Download this week's final scores from nflverse "
+                              "and rebuild team ratings"):
+        try:
+            with st.spinner("Pulling results from nflverse…"):
+                msg = pull_results()
+            st.session_state[_PULL_RESULT_KEY] = ("success", msg)
+            st.cache_data.clear()
+        except Exception as exc:
+            st.session_state[_PULL_RESULT_KEY] = ("error", f"Pull failed: {exc}")
+        st.rerun()
+
+    # Written on the rerun that follows the pull, not before it, so the result
+    # survives the st.rerun() that refreshes the numbers on the page.
+    outcome = st.session_state.pop(_PULL_RESULT_KEY, None)
+    if outcome:
+        (st.sidebar.success if outcome[0] == "success" else st.sidebar.error)(outcome[1])
+    elif status:
+        st.sidebar.caption(
+            f"✅ Week {status['week']} is final — safe to pull."
+            if status["complete"] else
+            f"⏳ Week {status['week']}: {status['played']} of {status['total']} "
+            "games final.")
+
+
 def render_sidebar_nav(current_page: str = ""):
     """Render the branded sidebar header followed by manual page links.
 
@@ -76,10 +127,17 @@ def render_sidebar_nav(current_page: str = ""):
 
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
-    # ── Cache clear button ─────────────────────────────────────────────────────
-    if st.sidebar.button("🔄 Refresh Data", key="clear_cache_btn", help="Force reload all data from disk"):
+    # ── Data buttons ──────────────────────────────────────────────────────────
+    # Two deliberately separate actions. Refreshing rereads the files already on
+    # disk and is instant; pulling goes out to nflverse and rewrites them. Wiring
+    # the download into the cache-clear would put a multi-megabyte fetch behind
+    # every routine "did my edit land" press.
+    if st.sidebar.button("🔄 Refresh Data", key="clear_cache_btn",
+                         help="Reload the files already on disk"):
         st.cache_data.clear()
         st.rerun()
+
+    _render_pull_button()
 
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
