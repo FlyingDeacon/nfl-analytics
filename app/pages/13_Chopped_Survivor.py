@@ -10,9 +10,9 @@ from utils.data_loader import (load_teams, load_schedules, get_logo, get_base_di
                                _file_mtime)
 from utils.chopped_log import (COLUMNS, clear_pick, load_picks, picks_path,
                                record_pick, save_picks)
-from utils.survivor import (compassion_default, current_week, grade_picks,
-                            optimal_plan, survival_probability, week_deadline,
-                            week_options)
+from utils.survivor import (compassion_default, current_week,
+                            expected_season_wins, grade_picks, optimal_plan,
+                            survival_probability, week_deadline, week_options)
 from utils.projection import matchup_tables, input_paths
 from utils.nav import render_sidebar_nav, render_last_updated
 from utils.gate import require_passcode
@@ -70,30 +70,50 @@ require_passcode("CHOPPED Survivor")
 
 render_sidebar_nav(current_page="13_Chopped_Survivor")
 
-# Two entries into one pot are not two tickets unless they can fail separately,
-# so each side is given a different job rather than the same optimiser twice.
 # Edit the display names here; the ids are what the pick log is keyed on and
 # changing one would orphan that entry's history.
-ENTRIES = (
-    ("blake", "Blake", "aggressive",
-     "**Aggressive.** Same season-long plan, then the least-picked team among those "
-     "still close to it — buying separation from the field with a little survival."),
-    ("alaina", "Alaina", "safe",
-     "**Safe.** The pick that maximises survival *to Week 18*, not this Sunday — "
-     "teams are reserved for the weeks that need them."),
-)
-# Whose pick is solved first, which is not the order they are displayed in. The
-# entry playing for the best chance to survive should never be the one pushed off
-# the optimal team, so Alaina claims hers first and Blake diverges around it —
-# which is what the aggressive side wants anyway.
+ENTRIES = (("blake", "Blake"), ("alaina", "Alaina"))
+# Whose pick is solved first, which is not the order they are displayed in.
+# First claim goes to the entry with the least margin for error — the one with
+# no mulligan left — so it is never the fragile side that gets pushed off the
+# team it needed.
 PRIORITY = ("alaina", "blake")
 
-# How far the aggressive entry will stray. Capped both ways on purpose: it may
-# drop at most this much win probability below the safest team on the board, and
-# never below the floor regardless. "Slightly aggressive" has to mean "takes the
-# less popular of two close teams", not "takes an upset".
-AGGRESSION_TOLERANCE = 0.08
+# ── What the recommendation is actually maximising ───────────────────────────
+# Both entries now play for the pot rather than for survival, because in this
+# pool they are not the same objective and survival is the weaker one. Against
+# the field's real remaining teams, 8000 simulated seasons put a pure
+# survival-maximiser last among every non-greedy rule tried: it reaches Week 18
+# most often and wins least often, because it gets there in a crowd and then
+# loses the tiebreak.
+#
+# The rule is: among picks that keep at least this fraction of the best season
+# still available, take the best combination of pot EV and tiebreaker.
+#
+# The gate is season survival, not "within 8 points of this week's safest team"
+# as it used to be. A win-probability gate says nothing about what a pick costs
+# the rest of the season, which is the only currency worth rationing.
+#
+# It is a *ratio* deliberately. Survival is 15% in Week 4 and single digits by
+# Week 12, so a budget of "0.8 percentage points" silently goes from a 5% detour
+# to a 30% one as the season shortens — the same constant would mean something
+# different every week. A ratio holds its meaning.
+#
+# 0.88 is the peak of a sweep over 0.60-0.95, and it is the peak for both
+# entries, under three popularity assumptions and two random seeds. The surface
+# is rugged (one flipped week cascades through the rest of the plan), so treat
+# it as "roughly an eighth" rather than a tuned constant.
+SURVIVAL_KEEP = 0.88
 AGGRESSION_FLOOR = 0.60
+
+# Price of a projected win burnt off the tiebreaker, in units of pot EV. The
+# tiebreaker decides roughly half of the seasons where anyone survives at all
+# (the median finish has two or three entries standing), and it reduces to the
+# average final wins of the teams you never spent — so retiring a 4-win team
+# instead of an 11-win one is worth real money even when both are safe picks
+# this Sunday. Anything in 0.01-0.04 picks the same plan; 0 costs about two
+# thirds of the simulated win rate, which is the only part of this that matters.
+TIEBREAK_WEIGHT = 0.02
 
 LAST_WEEK = 18
 RESULT_ICON = {"win": "✅", "loss": "❌", "pending": "⏳"}
@@ -129,6 +149,9 @@ _, tw = matchup_tables()
 PROJ_KEY = tuple(_file_mtime(p) for p in input_paths())
 
 ALL_TEAMS = sorted(tw["team"].unique())
+# Projected final wins per team — the units the tiebreaker is settled in, and
+# so a price on every pick over and above what it does for you this Sunday.
+TEAM_WINS = expected_season_wins(tw, sched)
 
 
 def _crest(abbr: str, size: int = 26) -> str:
@@ -173,23 +196,28 @@ def _plan_around(used: frozenset, week: int, team: str, blocked: tuple, key: tup
                         blocked=_as_blocked(blocked))
 
 
-def _recommend(opts: pd.DataFrame, mode: str) -> pd.Series:
-    """The row to put on the card, given how much risk this entry is playing for.
+def _recommend(opts: pd.DataFrame) -> pd.Series:
+    """The row to put on the card: the best pick for winning the pot, not for
+    reaching Week 18.
 
-    `opts` arrives sorted by season survival, so the safe answer is simply the
-    top row. The aggressive answer is the biggest expected slice of the pot among
-    the teams that are still close to it — surviving and winning are not the same
-    thing in a pool, and a 71% team nobody else has thins the field in the weeks
-    it comes in.
+    Inside the survival budget, two things separate one safe team from another
+    and the pool pays for both. `pot_ev` is the ground gained in the weeks you
+    survive — a team nobody else has thins the field around you. `team_wins` is
+    the ground lost at the end, because the pick is also a retirement: whatever
+    you play is gone from the inventory the tiebreaker scores.
+
+    `opts` arrives sorted by season survival, so its top row is the pure
+    survival answer, which is what this falls back to when the pot has not been
+    priced or the floor rules everything out.
     """
-    safe = opts.iloc[0]
-    if mode != "aggressive" or "pot_ev" not in opts.columns:
-        return safe
-    near = opts[(opts["win_prob"] >= safe["win_prob"] - AGGRESSION_TOLERANCE)
+    if "pot_ev" not in opts.columns or "team_wins" not in opts.columns:
+        return opts.iloc[0]
+    near = opts[(opts["season_survival"]
+                 >= SURVIVAL_KEEP * opts["season_survival"].max())
                 & (opts["win_prob"] >= AGGRESSION_FLOOR)]
     if near.empty:
-        return safe
-    return near.loc[near["pot_ev"].idxmax()]
+        return opts.iloc[0]
+    return near.loc[(near["pot_ev"] - TIEBREAK_WEIGHT * near["team_wins"]).idxmax()]
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -308,11 +336,14 @@ if cur_week != LIVE_WEEK:
                "Picks can only be locked for the live week.")
 
 st.info(
-    "**The rule that decides everything:** a team can only be used once all season. "
-    "So the best pick this week is rarely the biggest favourite — it is the one that "
-    "leaves the strongest set of teams for the weeks still to come. Every option below "
-    "is priced that way: **Cost** is how much full-season survival you give up versus "
-    "the optimal choice, so a 0.00 cost is the pick that keeps the most value in reserve.",
+    "**The rule that decides everything:** a team can only be used once all season, so "
+    "every pick is really two decisions — who you play, and who you retire. **Cost** "
+    "prices the first (full-season survival given up against the best plan left, so "
+    "0.00 keeps the most in reserve) and **Burn** prices the second (the projected "
+    "wins of the team you are spending, which is what the pot's tiebreaker is settled "
+    "in). The recommendation is not the 0.00 pick: it is the best **EV** inside a "
+    f"survival budget of {SURVIVAL_KEEP:.0%}, because reaching Week 18 in a crowd is "
+    "not the same thing as winning.",
     icon="🧠",
 )
 
@@ -344,13 +375,13 @@ for eid in PRIORITY:
     if s["locked"] is not None:
         plan = _plan(frozenset(s["used"]), cur_week + 1, blk, PROJ_KEY)
     else:
-        mode = next(m for i, _n, m, _s in ENTRIES if i == eid)
         opts = _options(s["spent_elsewhere"], cur_week, pool_size, blk, PROJ_KEY)
         if opts.empty:
             board[eid] = None
             s["blueprint"] = pd.DataFrame()
             continue
-        best = _recommend(opts, mode)
+        opts = opts.assign(team_wins=opts["team"].map(TEAM_WINS))
+        best = _recommend(opts)
         plan = _plan_around(s["spent_elsewhere"], cur_week, best["team"], blk, PROJ_KEY)
         board[eid] = {"opts": opts, "best": best, "plan": plan}
 
@@ -358,11 +389,15 @@ for eid in PRIORITY:
     if diverge and not plan.empty:
         blocked_pairs.extend((int(w), t) for w, t in zip(plan["week"], plan["team"]))
 
-for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
+for col, (eid, name) in zip(st.columns(2), ENTRIES):
     s = state[eid]
     with col:
         st.markdown(f"### {name}")
-        st.caption(style)
+        st.caption(
+            f"**Playing for the pot.** Of the picks that keep "
+            f"{SURVIVAL_KEEP:.0%} of the best season still available, the one "
+            "that gains the most ground on the field — and retires the least "
+            "useful team while doing it.")
 
         # ── Out of the pool ───────────────────────────────────────────────────
         if s["out_week"] is not None and s["out_week"] < cur_week:
@@ -436,13 +471,9 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
         # line shorter than the aggressive one.
         _cost = (f'costs {best["cost_vs_best"]:.2%} of the season'
                  if best["cost_vs_best"] > 0 else "no cost to the season plan")
-        if "pot_ev" not in opts.columns:
-            _why = [_cost]
-        elif mode == "aggressive":
-            _why = [f'{best["pot_ev"]:.2f} claim on the pot',
-                    f'only {best["popularity"]:.0%} of the field is on it']
-        else:
-            _why = [f'{best["popularity"]:.0%} of the field is on it', _cost]
+        _why = ([_cost] if "pot_ev" not in opts.columns else
+                [f'{best["pot_ev"]:.2f} claim on the pot',
+                 f'{best["popularity"]:.0%} of the field is on it'])
         _toll = f'<div class="sub" style="margin-top:4px;">{" · ".join(_why)}</div>'
         st.markdown(
             f'<div class="stat-card cs-pick">'
@@ -506,7 +537,9 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
         show["Cost"] = (show["cost_vs_best"] * 100).round(2)
         show["Field %"] = (show["popularity"] * 100).round(0).astype(int)
         show["EV"] = show["pot_ev"].round(2)
-        st.dataframe(show[["Matchup", "Win %", "Cost", "Field %", "EV"]], hide_index=True,
+        show["Burn"] = show["team_wins"].round(1)
+        st.dataframe(show[["Matchup", "Win %", "Cost", "Field %", "EV", "Burn"]],
+                     hide_index=True,
                      use_container_width=True,
                      column_config={
                          "Win %": st.column_config.NumberColumn(
@@ -526,27 +559,35 @@ for col, (eid, name, mode, style) in zip(st.columns(2), ENTRIES):
                                   "winner-take-all, so this is not a share you would "
                                   "actually be paid — it is how much ground you gain "
                                   "on the field in the weeks you survive."),
+                         "Burn": st.column_config.NumberColumn(
+                             "Burn", format="%.1f",
+                             help="Projected final wins of the team you would be "
+                                  "retiring. The pot's tiebreaker is the average "
+                                  "wins of the teams you have left, so the low "
+                                  "numbers here are the cheap ones to spend."),
                      })
 
-        # Survival and pot share can disagree, and when they do it is worth
-        # saying out loud rather than burying in a column — but it is a judgement
-        # call about how much variance you want, so it is surfaced, not obeyed.
-        # Only when the edge is real: the EV leader is often ahead by less than a
-        # rounding step, and trading eight points of win probability for 0.6% of
-        # the pot is not a decision worth putting in front of anyone.
-        # Only for the safe entry: the aggressive one has already taken the EV
-        # pick, so pointing at it there would just be reading its own card back.
+        # The EV leader is not always the pick, and an unexplained gap between
+        # the top of this column and the card above it reads as a bug. Two
+        # things can push the recommendation off it: the survival budget, and
+        # the tiebreaker. Say which, but only when the gap is big enough to be
+        # a real decision rather than a rounding step.
         EV_EDGE_MIN = 0.02
         ev_best = opts.loc[opts["pot_ev"].idxmax()]
-        if (mode == "safe" and ev_best["team"] != best["team"]
+        if (ev_best["team"] != best["team"]
                 and ev_best["pot_ev"] - best["pot_ev"] >= EV_EDGE_MIN):
+            _survival_gate = SURVIVAL_KEEP * opts["season_survival"].max()
+            _reason = (f'it leaves only {ev_best["season_survival"]:.1%} of a season '
+                       f'against {best["season_survival"]:.1%}, below the '
+                       f'{SURVIVAL_KEEP:.0%} floor'
+                       if ev_best["season_survival"] < _survival_gate else
+                       f'it would retire a {ev_best["team_wins"]:.1f}-win team against '
+                       f'{best["team_wins"]:.1f}, and the tiebreaker is paid out of '
+                       f'what you have left')
             st.caption(
                 f'⚖️ Highest **EV** this week is **{ev_best["team"]}** '
-                f'({ev_best["pot_ev"]:.2f} vs {best["pot_ev"]:.2f}) — only '
-                f'{ev_best["win_prob"]:.0%} to win, but just '
-                f'{ev_best["popularity"]:.0%} of the field is on it, so it gains '
-                f'the most ground when it hits. The pick above is still the '
-                f'survival-maximising one.')
+                f'({ev_best["pot_ev"]:.2f} vs {best["pot_ev"]:.2f}) at '
+                f'{ev_best["win_prob"]:.0%} to win — passed over because {_reason}.')
 
         plan_df = solved["plan"]
         if not plan_df.empty:
@@ -709,65 +750,73 @@ _top_premium = (", ".join(f"{t} ({n})" for t, n in _premium.head(4).items())
 _top_targets = (", ".join(f"{t} ({n})" for t, n in _targets.head(4).items())
                 or "nobody, this late")
 
+st.markdown(f"""
+**Surviving is not the same as winning, and this pool pays only for winning.**
+
+Simulating the rest of the season against the field's actual remaining teams makes
+the gap embarrassing. A pure survival-maximiser reaches Week 18 *more often than any
+other rule tried* — and wins the pot least often of all of them. It gets there in a
+crowd, and then loses the tiebreak. Both entries are now solved for the pot instead,
+which is why neither card is necessarily sitting on the 0.00-cost pick any more.
+
+Three things decide it, in this order.
+""")
+
 _a, _b = st.columns(2)
 with _a:
     st.markdown(f"""
-**Blake — press the edge**
+**1 · Don't go out. Budget what that costs.**
 
-Where two teams are close, take the one the pool is not on. The card only ever
-strays inside guardrails: at most {AGGRESSION_TOLERANCE:.0%} of win probability
-below the safest team on the board, and never below {AGGRESSION_FLOOR:.0%} to win
-outright. That is deliberately narrow — this is not hunting upsets, it is refusing
-to be on the same team as everybody else when the cost of being different is a
-rounding error.
+The **Cost** column is survival given up against the best remaining season — not
+against this Sunday's biggest favourite. It already knows that using {_hoarded}
+today is what leaves you with nothing in Week {_worst_week}, which is why a team with
+a better number can sit on the board untouched and the **Season blueprint** names the
+week it is being saved for.
 
-What it buys is the weeks you both survive. Surviving alongside 80% of the pool
-moves you nowhere; surviving a week that halves the field is how a pot is actually
-won. The **EV** column is that number: 1.00 is the pool average.
+Anything that keeps {SURVIVAL_KEEP:.0%} of the best season still available — and wins
+outright at least {AGGRESSION_FLOOR:.0%} of the time — is treated as equally
+survivable, and the next two criteria pick between them. The discipline this asks for
+is refusing an 82% week when the tool says 78%: that gap is the tool charging you for
+the team you would have burned.
 
-With *Split the two entries* on, this side is also barred from every team Alaina has
-reserved **for the week she reserved it**, not just from this Sunday's pick. So the
-two blueprints are genuinely different seasons rather than the same one with a swap
-— and the same team can still appear on both, in different weeks.
+**2 · Be somewhere the field isn't.**
+
+Surviving alongside 80% of the pool moves you nowhere; surviving a week that halves
+the field is how a pot is won. The **EV** column is that number, 1.00 being the pool
+average. Inside the budget, being different is nearly free, so take it.
 """)
 with _b:
     st.markdown(f"""
-**Alaina — hold the safest road**
+**3 · Every pick is also a retirement — spend the cheap teams.**
 
-Take the 0.00-cost pick, and take it first: this side gets first claim on the board
-and Blake works around it, so you are never the one pushed off a team you needed.
+This is the part that was missing, and it is worth more than the other two combined.
+The pot is never split: when more than one of you survives, it goes to the average
+final wins of the teams you have **not** used. Everyone alive has spent the same
+number of teams and the league's 272 wins are fixed, so holding the most at the end
+is exactly burning the fewest along the way.
 
-The thing worth understanding is that 0.00 is *not* the biggest favourite. Every
-week is priced by solving all 18 weeks at once and assigning one team to each — so
-the cost column already knows that using {_hoarded} today is what leaves you with
-nothing in Week {_worst_week}. Taking the 0.00 pick every week is not eighteen
-greedy decisions; it is one plan, re-solved each week against what you have actually
-spent. That is why a team with a better number can sit on the board untouched, and
-why the **Season blueprint** above shows which week it is being saved for.
+The **Burn** column is what a pick costs you there — the projected final wins of the
+team you are retiring, so low is cheap. The ideal week is a mediocre team that
+happens to be a big favourite, which is what makes the doormats ({_top_targets}) so
+valuable: they let you cash in a 7-win team instead of an 11-win one. The premium
+teams ({_top_premium}) are the answer to the thin weeks *and* to the tiebreak, which
+is one reason to hoard them rather than two.
 
-The discipline this asks for is refusing an 82% week when the tool says 78%. That
-gap is not the tool being wrong — it is the tool charging you for the team you would
-have burned.
+**And work backwards from Week {_worst_week}.** It is the thinnest week left — the
+best team available is only {_worst_pct}. Whoever you are saving for a rainy day,
+that is the day.
+
+**Never spend the mulligan on forgetting.** It converts your first loss into a free
+week, and it is most of the gap between Blake's odds here and Alaina's. Burning it on
+an unsent email means the first genuine upset ends you.
 """)
 
-st.markdown(f"""
-**Both entries, same three habits**
-
-**1 · Spend the cheap wins, hoard the expensive ones.** Almost every good week comes
-from playing somebody against the same handful of bad teams — right now that is
-{_top_targets}. The premium teams ({_top_premium}) are a limited resource. Burning one
-for an 81% week when you could have had 78% from a team you will never want again is
-how people lose this pool.
-
-**2 · Work backwards from Week {_worst_week}.** It is the thinnest week left: the best
-team available is only {_worst_pct}. Whoever you are saving for a rainy day, that
-is the day. Do not arrive there holding only teams you were avoiding.
-
-**3 · Never spend the mulligan on forgetting.** It is worth more than any single pick:
-it converts your first loss into a free week. Burning it because an email did not get
-sent means the first genuine upset ends you, and upsets are the one thing no plan
-prevents.
-""")
+st.caption(
+    "With *Split the two entries* on, Blake is also barred from every team Alaina "
+    "has reserved **for the week she reserved it**, not just from this Sunday's "
+    "pick — so the two blueprints are different seasons rather than the same one "
+    "with a swap, and the same team can still appear on both in different weeks. "
+    "Alaina solves first because she has no mulligan left.")
 
 with st.expander("The rules, as written"):
     st.markdown(f"""
@@ -787,8 +836,11 @@ Double penalty: you are out, and on the way out you lose your answer to the thin
 
 **Winner takes all — the pot is never split.** If several of you go out in the same
 week it goes to a tiebreaker: combined wins of your **remaining** teams (a tie is half
-a point) divided by how many teams you have left. Hoarding strong teams both raises
-your late-season floor and wins that tiebreak, so it is one plan, not two.
+a point) divided by how many teams you have left. This is not a footnote — simulated
+out, it decides roughly half of the seasons in which anybody survives at all, because
+the usual finish is two or three entries standing rather than one. Since everyone
+still alive has spent the same number of teams, the divisor cancels and it reduces to
+a single instruction: **burn the fewest wins.** That is the **Burn** column.
 
 **Ties on the field count as wins** for both teams, so a pick only fails if your team
 actually loses.

@@ -439,6 +439,42 @@ def week_options(tw: pd.DataFrame, used_teams: set[str], week: int,
     return out.sort_values(["season_survival", "win_prob"], ascending=False).reset_index(drop=True)
 
 
+def expected_season_wins(tw: pd.DataFrame, schedule: pd.DataFrame,
+                         season: int = 2026) -> pd.Series:
+    """Each team's projected final win total: games already played plus win
+    probability for the ones that are not. Ties count half, as the pool does.
+
+    This is the tiebreaker's currency, and the tiebreaker is not a footnote.
+    CHOPPED never splits the pot; when more than one entry is still standing it
+    goes to the average final wins of the teams you have *not* spent. Everyone
+    still alive has spent the same number of teams, and the 32 totals sum to a
+    constant, so "hold the most wins at the end" is exactly "burn the fewest
+    along the way" — which makes the team you retire each week a decision in
+    its own right, not a by-product of the one you played.
+    """
+    reg = _regular_season(schedule, season)
+    wins = {t: 0.0 for t in tw["team"].unique()}
+    played = reg[reg["home_score"].notna() & reg["away_score"].notna()]
+    for g in played.itertuples():
+        if g.home_score > g.away_score:
+            wins[g.home_team] = wins.get(g.home_team, 0.0) + 1.0
+        elif g.away_score > g.home_score:
+            wins[g.away_team] = wins.get(g.away_team, 0.0) + 1.0
+        else:
+            wins[g.home_team] = wins.get(g.home_team, 0.0) + 0.5
+            wins[g.away_team] = wins.get(g.away_team, 0.0) + 0.5
+
+    # tw spans the whole season, including the weeks scored above, so the
+    # projected half has to be restricted to games that have not happened or
+    # every played week would be counted twice.
+    done = {(int(g.week), t) for g in played.itertuples()
+            for t in (g.home_team, g.away_team)}
+    ahead = tw[[(int(w), t) not in done for w, t in zip(tw["week"], tw["team"])]]
+    future = ahead.groupby("team")["win_prob"].sum()
+    return (pd.Series(wins).add(future, fill_value=0.0)
+            .reindex(sorted(wins)).astype(float))
+
+
 # ── Season state ─────────────────────────────────────────────────────────────
 # Everything above prices hypothetical futures. The rest of this module answers
 # "where are we actually", which is what turns the planner into something usable
