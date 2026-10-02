@@ -99,11 +99,22 @@ PRIORITY = ("alaina", "blake")
 # to a 30% one as the season shortens — the same constant would mean something
 # different every week. A ratio holds its meaning.
 #
-# 0.88 is the peak of a sweep over 0.60-0.95, and it is the peak for both
-# entries, under three popularity assumptions and two random seeds. The surface
-# is rugged (one flipped week cascades through the rest of the plan), so treat
-# it as "roughly an eighth" rather than a tuned constant.
-SURVIVAL_KEEP = 0.88
+# 0.86 is the peak of a sweep scored the way the pot is actually won: both
+# entries in the same simulated pool, Alaina solved first and Blake blocked from
+# her whole blueprint, counting a win when *either* of them takes it. That
+# matters, because an earlier sweep scored each entry alone against 62 others
+# and picked 0.88 — which the joint sweep ranks fourth (6.5% vs 9.2% for the
+# household over five seeds). Two entries are not one entry twice: what Alaina
+# takes is unavailable to Blake, so the right gate is looser than scoring them
+# separately suggests.
+#
+# The surface is rugged — one flipped week cascades through the rest of the plan,
+# and 0.84 and 0.88 both score worse than 0.86 and 0.80. Treat this as "roughly
+# a seventh, and don't tighten past 0.88", not as a precision constant. Anything
+# at 0.90 or above collapses to about a third of the win rate: that is the
+# region where the gate is tight enough to force both entries onto the same
+# chalk, which is exactly the correlation the split exists to avoid.
+SURVIVAL_KEEP = 0.86
 AGGRESSION_FLOOR = 0.60
 
 # Price of a projected win burnt off the tiebreaker, in units of pot EV. The
@@ -242,10 +253,10 @@ pool_size = int(st.sidebar.number_input(
          "win, not the entries that bought in — after Week 3 that is 63 of the "
          "original 87, the other 24 having been chopped."))
 diverge = st.sidebar.toggle(
-    "Split the two entries", value=True, key="cs_diverge",
-    help="Both entries solve the same schedule, so on a lopsided week they can land "
-         "on the same team — and get knocked out by the same upset. This keeps Blake "
-         "off whatever Alaina is using.")
+    "Split the two entries", value=False, key="cs_diverge",
+    help="Keeps Blake off every team in Alaina's blueprint. Off by default: the "
+         "hedge reads well but simulates badly, because it buys decorrelation by "
+         "handicapping one entry all season.")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SEASON STATE
@@ -356,12 +367,23 @@ recs = {}
 # not the same: a locked pick claims its team first (it is a fact, not a
 # suggestion), then Alaina, then Blake around whatever is left.
 #
-# Divergence is applied to the whole remaining season, not just to this week.
-# Both entries solve the same schedule, so left alone their blueprints are
-# near-identical — the same premium team earmarked for the same thin week — and
-# a split that only covers Week N quietly collides again in Week N+1. Blocking
-# each entry from the other's entire blueprint is what makes the second entry a
-# genuinely different season rather than the first one with a swap.
+# Divergence is now OFF by default, and the two entries are allowed to play the
+# same team when that is simply the best pick.
+#
+# The hedging argument is intuitive and wrong here. Blocking Blake from Alaina's
+# blueprint does decorrelate them, but the pot is winner-take-all, so what it
+# really does is hand one entry the optimal season and the other a handicapped
+# one — for the whole year, not just the week of the collision. Simulated as the
+# pot is actually won (both entries in the same pool, a win counted when either
+# of them takes it), splitting loses at every gate tried: at the shipped 0.86 it
+# is 3.4% against 8.9%, and it never once came out ahead.
+#
+# Two good entries beat one good entry and one compromised entry, because the
+# tiebreaker pays for holding strong teams and the split spends exactly those.
+# The toggle stays so the behaviour can be inspected, but it is no longer the
+# recommendation. When divergence IS on it still covers the whole remaining
+# season rather than one week, since a split that only covers Week N quietly
+# collides again in Week N+1.
 board = {}          # eid -> {"opts", "best", "plan"} or None
 blocked_pairs = [(cur_week, s["locked"]["team"])
                  for s in state.values() if s["locked"] is not None]
@@ -613,10 +635,13 @@ for col, (eid, name) in zip(st.columns(2), ENTRIES):
                        if diverge else ""))
 
 if len(recs) == 2 and len(set(recs.values())) == 1:
-    st.warning(
-        f"Both entries are on **{list(recs.values())[0]}**. Only one of you can win the pot, "
-        "so playing the same team means one upset eliminates you both. Turn on "
-        "*Split the two entries* in the sidebar to separate them."
+    st.info(
+        f"Both entries are on **{list(recs.values())[0]}** — deliberately. One upset "
+        "does take you both out, but simulating the pool both ways says that is the "
+        "cheaper risk: forcing the second entry off the best team handicaps it for "
+        "the rest of the season, and the tiebreaker is settled in exactly the teams "
+        "a split makes you spend. Use *Split the two entries* in the sidebar if you "
+        "would rather hedge."
     )
 
 st.markdown("---")
@@ -812,11 +837,15 @@ an unsent email means the first genuine upset ends you.
 """)
 
 st.caption(
-    "With *Split the two entries* on, Blake is also barred from every team Alaina "
-    "has reserved **for the week she reserved it**, not just from this Sunday's "
-    "pick — so the two blueprints are different seasons rather than the same one "
-    "with a swap, and the same team can still appear on both in different weeks. "
-    "Alaina solves first because she has no mulligan left.")
+    "*Split the two entries* is **off** by default, so both entries can land on the "
+    "same team when that is genuinely the best pick. It looks like a free hedge and "
+    "is not: the pot is winner-take-all, so blocking the second entry does not buy "
+    "two chances, it buys one good season and one handicapped one. Simulated as the "
+    "pot is actually won, splitting lost at every setting tried. Switch it on and "
+    "Blake is barred from every team Alaina has reserved **for the week she reserved "
+    "it** — different seasons, not the same one with a swap, so a team can still "
+    "appear on both in different weeks. Alaina solves first either way, because she "
+    "has no mulligan left.")
 
 with st.expander("The rules, as written"):
     st.markdown(f"""
