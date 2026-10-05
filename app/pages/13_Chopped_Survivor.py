@@ -671,8 +671,9 @@ else:
                .rename(columns={"week": "Wk"}))
     st.dataframe(grid, hide_index=True, use_container_width=True)
     st.caption("Results are read off the schedule, not typed in — a tie counts as a win, "
-               "per the league rule. Run `scripts/update_2026_data.py` to pull the "
-               "weekend's scores, then hit Refresh Data in the sidebar.")
+               "per the league rule. Hit **Get This Week's Scores** in the sidebar once "
+               "the games are over; it downloads the results and rebuilds the ratings. "
+               "(*Reload From Disk* does not download anything.)")
 
 with st.expander("💾 Backup, restore and hand-editing"):
     st.markdown(

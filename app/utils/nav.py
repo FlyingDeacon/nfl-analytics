@@ -65,13 +65,14 @@ def _render_pull_button() -> None:
         sched = load_schedules()
         status = results_status(sched, current_week(sched))
     except Exception:
-        # A broken or missing schedule is the Refresh Data button's problem to
-        # surface on the page itself; the sidebar should still render.
+        # A broken or missing schedule is the page's problem to surface where it
+        # is actually used; the sidebar should still render.
         status = None
 
-    if st.sidebar.button("⬇️ Pull Latest Scores", key="pull_results_btn",
-                         help="Download this week's final scores from nflverse "
-                              "and rebuild team ratings"):
+    if st.sidebar.button("⬇️ Get This Week's Scores", key="pull_results_btn",
+                         type="primary", use_container_width=True,
+                         help="Downloads final scores from nflverse and rebuilds "
+                              "team ratings. Takes about half a minute."):
         try:
             with st.spinner("Pulling results from nflverse…"):
                 msg = pull_results()
@@ -128,16 +129,22 @@ def render_sidebar_nav(current_page: str = ""):
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
     # ── Data buttons ──────────────────────────────────────────────────────────
-    # Two deliberately separate actions. Refreshing rereads the files already on
-    # disk and is instant; pulling goes out to nflverse and rewrites them. Wiring
-    # the download into the cache-clear would put a multi-megabyte fetch behind
-    # every routine "did my edit land" press.
-    if st.sidebar.button("🔄 Refresh Data", key="clear_cache_btn",
-                         help="Reload the files already on disk"):
+    # Two deliberately separate actions. Pulling goes out to nflverse and rewrites
+    # the files; reloading only rereads what is already on disk. Wiring the
+    # download into the cache-clear would put a multi-megabyte fetch behind every
+    # routine "did my edit land" press.
+    #
+    # The pull comes first and is the primary button because it is the one that
+    # answers "get this week's scores". The other used to be called "Refresh
+    # Data", which read like the downloader and was pressed in its place.
+    _render_pull_button()
+
+    if st.sidebar.button("🔄 Reload From Disk", key="clear_cache_btn",
+                         help="Clears the cache and rereads the local files. Does "
+                              "not download anything — use Get This Week's Scores "
+                              "for that."):
         st.cache_data.clear()
         st.rerun()
-
-    _render_pull_button()
 
     st.sidebar.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
 
