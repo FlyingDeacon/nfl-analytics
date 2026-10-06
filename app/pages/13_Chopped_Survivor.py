@@ -100,22 +100,21 @@ PRIORITY = ("alaina", "blake")
 # to a 30% one as the season shortens — the same constant would mean something
 # different every week. A ratio holds its meaning.
 #
-# 0.86 is the peak of a sweep scored the way the pot is actually won: both
-# entries in the same simulated pool, Alaina solved first and Blake blocked from
-# her whole blueprint, counting a win when *either* of them takes it. That
-# matters, because an earlier sweep scored each entry alone against 62 others
-# and picked 0.88 — which the joint sweep ranks fourth (6.5% vs 9.2% for the
-# household over five seeds). Two entries are not one entry twice: what Alaina
-# takes is unavailable to Blake, so the right gate is looser than scoring them
-# separately suggests.
+# 0.82 is the peak of a sweep scored the way the pot is actually won: both
+# entries in the same simulated pool against the league's real surviving field
+# read off the sheet, counting a win when *either* of them takes it. Re-swept at
+# Week 5 over 15,000 seasons x 7 seeds, it returns 10.5% against 6.0% for the
+# 0.86 it replaces, and its worst seed (10.1%) still beats every other setting's
+# best. Earlier sweeps scored each entry alone against the whole field and
+# picked 0.88; that framing is wrong, because the household does not care which
+# of the two wins.
 #
 # The surface is rugged — one flipped week cascades through the rest of the plan,
-# and 0.84 and 0.88 both score worse than 0.86 and 0.80. Treat this as "roughly
-# a seventh, and don't tighten past 0.88", not as a precision constant. Anything
-# at 0.90 or above collapses to about a third of the win rate: that is the
-# region where the gate is tight enough to force both entries onto the same
-# chalk, which is exactly the correlation the split exists to avoid.
-SURVIVAL_KEEP = 0.86
+# so 0.80 and 0.84 both score around 7% while 0.82 spikes. Re-sweep rather than
+# interpolate. What is stable across every sweep so far is the direction: gates
+# at 0.90 and above collapse, because they force both entries onto whichever
+# team the whole pool is already on.
+SURVIVAL_KEEP = 0.82
 AGGRESSION_FLOOR = 0.60
 
 # Price of a projected win burnt off the tiebreaker, in units of pot EV. The
