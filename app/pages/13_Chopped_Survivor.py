@@ -245,13 +245,13 @@ cur_week = st.sidebar.number_input(
          f"look ahead — nothing you do here writes a pick.")
 cur_week = int(cur_week)
 pool_size = int(st.sidebar.number_input(
-    "Entries still alive", min_value=2, max_value=1000, value=63, step=1,
+    "Entries still alive", min_value=2, max_value=1000, value=60, step=1,
     key="cs_pool",
     help="Drives the EV column. Pot share is what you are actually playing for, "
          "and how much being different is worth depends entirely on how many "
          "people you would be splitting with. Count the entries that can still "
-         "win, not the entries that bought in — after Week 3 that is 63 of the "
-         "original 87, the other 24 having been chopped."))
+         "win, not the entries that bought in — after Week 4 that is 60 of the "
+         "original 87, the other 27 having been chopped."))
 diverge = st.sidebar.toggle(
     "Split the two entries", value=False, key="cs_diverge",
     help="Keeps Blake off every team in Alaina's blueprint. Off by default: the "
