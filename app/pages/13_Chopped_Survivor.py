@@ -10,6 +10,7 @@ from utils.data_loader import (load_teams, load_schedules, get_logo, get_base_di
                                _file_mtime)
 from utils.chopped_log import (COLUMNS, clear_pick, load_picks, picks_path,
                                record_pick, save_picks)
+from utils.chopped_field import leaderboard, load_field
 from utils.survivor import (compassion_default, current_week,
                             expected_season_wins, grade_picks, optimal_plan,
                             survival_probability, week_deadline, week_options)
@@ -181,6 +182,25 @@ def _as_blocked(pairs: tuple) -> dict:
     for week, team in pairs:
         out.setdefault(week, set()).add(team)
     return out
+
+
+# The sheet is the league's own record and changes only when someone picks, so
+# a long TTL is plenty. The key is bumped by the hour rather than being left to
+# the TTL alone so that Reload From Disk does not silently serve a stale board.
+_SHEET_TTL_KEY = pd.Timestamp.now(tz="US/Eastern").floor("h")
+
+
+@st.cache_data(show_spinner="Reading the league sheet…", ttl=3600)
+def _load_leaderboard(key):
+    """The field's standings, or None if the sheet cannot be reached.
+
+    Returning None rather than raising keeps a network blip from taking down a
+    page whose real work — the recommendation — needs no network at all.
+    """
+    try:
+        return leaderboard(load_field(), TEAM_WINS)
+    except Exception:
+        return None
 
 
 @st.cache_data(show_spinner="Pricing every legal pick…")
@@ -703,6 +723,58 @@ with st.expander("💾 Backup, restore and hand-editing"):
                 if st.button("Replace the log with this file", key="cs_restore"):
                     save_picks(incoming)
                     st.rerun()
+
+st.markdown("---")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LEAGUE LEADERBOARD
+# ══════════════════════════════════════════════════════════════════════════════
+st.markdown("### 🏅 League leaderboard")
+
+_board = _load_leaderboard(_SHEET_TTL_KEY)
+if _board is None:
+    st.caption("Could not reach the league sheet, so the standings are hidden "
+               "rather than shown stale. Everything above is computed locally "
+               "and is unaffected.")
+else:
+    _alive = _board[_board["alive"]]
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Still alive", f"{len(_alive)} of {len(_board)}")
+    c2.metric("Mulligan intact", int(_alive["mulligan"].sum()))
+    c3.metric("Chopped", len(_board) - len(_alive))
+
+    st.caption(
+        "Ranked the way the pot is settled: still alive first, then mulligan "
+        "intact, then **reserve** — the average projected final wins of the "
+        "teams you have *not* spent, which is the league's literal tiebreaker. "
+        "Reserve reads backwards from instinct. Everyone alive has spent the "
+        "same number of teams and the 32 win totals add to a fixed 272, so a "
+        "high reserve means you have been winning with cheap teams. The entries "
+        "that have already taken a loss mostly score better on it, because the "
+        "spotless ones got spotless by spending the best teams on the board.")
+
+    _show = _board.copy()
+    _show.insert(0, "#", range(1, len(_show) + 1))
+    _show["mulligan"] = _show["mulligan"].map({True: "🛟", False: "⚠️"})
+    _show["reserve"] = _show["reserve"].round(2)
+    _hide_out = st.checkbox("Hide chopped entries", value=True, key="cs_lb_alive")
+    if _hide_out:
+        _show = _show[_show["alive"]]
+    st.dataframe(
+        _show[["#", "player", "entry", "status", "mulligan", "used",
+               "reserve", "burned"]],
+        hide_index=True, use_container_width=True,
+        column_config={
+            "player": "Player", "entry": "Entry", "status": "Status",
+            "mulligan": st.column_config.TextColumn(
+                "Mull", help="🛟 intact · ⚠️ spent — the next loss ends it"),
+            "used": st.column_config.NumberColumn("Used", help="Teams spent"),
+            "reserve": st.column_config.NumberColumn(
+                "Reserve", format="%.2f",
+                help="Average projected final wins of the teams still unspent. "
+                     "This is the tiebreaker the pot is decided on."),
+            "burned": st.column_config.TextColumn("Teams spent"),
+        })
 
 st.markdown("---")
 
