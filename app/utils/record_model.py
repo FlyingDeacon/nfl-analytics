@@ -496,6 +496,80 @@ def _game_probs(schedule, power):
     return games.reset_index(drop=True)
 
 
+PRIOR_SD = 4.5   # points of margin: how far a preseason power rating typically misses
+
+
+def _inseason_power(schedule, power, season=2026):
+    """Fold the games already played into the power rating.
+
+    `_game_probs` locks completed games to their real outcome, so results
+    already count toward the win total. But that only banks the wins — without
+    this, a team's *remaining* games are still priced off a preseason rating,
+    and a 4-0 team is projected the rest of the way as though September never
+    happened.
+
+    The in-season estimate is opponent-adjusted rather than raw net points: a
+    team's strength is its average margin, plus the average strength of whoever
+    it played, net of home field. Raw net PPG would simply hand the best rating
+    to the easiest schedule, which in a 4-game sample is most of the signal.
+
+    Prior and observation are combined by precision, so the weight on the season
+    falls out of the model instead of being picked: one game's margin has
+    variance GAME_SD**2 and the preseason rating has variance PRIOR_SD**2, so
+    after n games the season carries n / (n + GAME_SD**2 / PRIOR_SD**2). That
+    denominator is about 8.6 games — a third of the way by Week 4, half by
+    Week 9 — which is roughly where published power ratings sit too.
+    """
+    cols = {"season", "game_type", "home_team", "away_team",
+            "home_score", "away_score"}
+    if not cols.issubset(schedule.columns):
+        return power
+
+    reg = schedule[(schedule["season"] == season)
+                   & (schedule["game_type"] == "REG")].copy()
+    reg["home_team"] = reg["home_team"].replace(_SCHED_TEAM_ALIAS)
+    reg["away_team"] = reg["away_team"].replace(_SCHED_TEAM_ALIAS)
+    reg["hs"] = pd.to_numeric(reg["home_score"], errors="coerce")
+    reg["as"] = pd.to_numeric(reg["away_score"], errors="coerce")
+    reg = reg[reg["hs"].notna() & reg["as"].notna()]
+    if reg.empty:
+        return power
+
+    prior = power.set_index("team")["power"]
+    # One row per team-game, from that team's point of view, with home field
+    # stripped out so a team is not rewarded for where its games fell.
+    rows = pd.concat([
+        pd.DataFrame({"team": reg["home_team"], "opp": reg["away_team"],
+                      "margin": reg["hs"] - reg["as"], "hfa": HOME_ADV}),
+        pd.DataFrame({"team": reg["away_team"], "opp": reg["home_team"],
+                      "margin": reg["as"] - reg["hs"], "hfa": -HOME_ADV}),
+    ], ignore_index=True)
+    rows = rows[rows["team"].isin(prior.index) & rows["opp"].isin(prior.index)]
+    if rows.empty:
+        return power
+    rows["obs"] = rows["margin"] - rows["hfa"] + rows["opp"].map(prior)
+
+    grp = rows.groupby("team")["obs"]
+    n = grp.count().reindex(power["team"]).fillna(0.0).to_numpy()
+    obs = grp.mean().reindex(power["team"]).fillna(0.0).to_numpy()
+
+    k = GAME_SD ** 2 / PRIOR_SD ** 2
+    w = n / (n + k)
+    pre = power["power"].to_numpy(dtype=float)
+    blended = (1.0 - w) * pre + w * obs
+
+    out = power.copy()
+    out["preseason_power"] = pre
+    out["inseason_power"] = obs
+    out["inseason_weight"] = w
+    out["games_played"] = n
+    out["power"] = blended - blended.mean()
+    out.attrs = dict(power.attrs)
+    out.attrs["inseason"] = {"games": float(n.max()), "weight": float(w.max()),
+                             "k": k}
+    return out
+
+
 def project_season(ratings, depth, divisions, schedule, weekly, weekly_def=None,
                    win_totals=None, n_sims=N_SIMS, seed=7):
     """Full projection.
@@ -507,6 +581,7 @@ def project_season(ratings, depth, divisions, schedule, weekly, weekly_def=None,
     """
     power = build_team_projections(ratings, depth, divisions, weekly, weekly_def,
                                    win_totals=win_totals)
+    power = _inseason_power(schedule, power)
     cal = power.attrs.get("calibration", {})
     def_cal = power.attrs.get("def_calibration", {})
     market = power.attrs.get("market", {})
@@ -584,9 +659,14 @@ def project_season(ratings, depth, divisions, schedule, weekly, weekly_def=None,
                             minlength=GAMES + 1) / n_sims
                 for i in range(n_teams)]
 
-    table = power[["team", "division", "conference", "power", "roster_index",
-                   "proj_off_ppg", "proj_def_ppg", "off_ppg_2025", "off_change",
-                   "def_ppg_2025", "def_change"]].copy()
+    keep = ["team", "division", "conference", "power", "roster_index",
+            "proj_off_ppg", "proj_def_ppg", "off_ppg_2025", "off_change",
+            "def_ppg_2025", "def_change"]
+    # Only present once the season is under way, and the page wants to show how
+    # far results have already moved each team off its preseason number.
+    keep += [c for c in ("preseason_power", "inseason_power",
+                         "inseason_weight", "games_played") if c in power.columns]
+    table = power[keep].copy()
     table["proj_wins"] = exp_wins.round(1)
     table["proj_losses"] = (GAMES - exp_wins).round(1)
     table["playoff_pct"] = playoff * 100
@@ -597,6 +677,7 @@ def project_season(ratings, depth, divisions, schedule, weekly, weekly_def=None,
     table.attrs["calibration"] = cal
     table.attrs["def_calibration"] = def_cal
     table.attrs["market"] = market
+    table.attrs["inseason"] = power.attrs.get("inseason", {})
     return table, games, changes
 
 

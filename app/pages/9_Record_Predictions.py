@@ -30,7 +30,7 @@ st.markdown("""
     <div class="icon">🔮</div>
     <div>
         <div class="title">2026 Season Projections</div>
-        <div class="subtitle">Projected record & expected finish · powered by 2025 results + updated rosters</div>
+        <div class="subtitle">Projected record & expected finish · 2026 results, market win totals and roster changes</div>
     </div>
 </div>
 <div class="gold-rule"></div>
@@ -80,6 +80,8 @@ disp = pd.DataFrame({
     "Proj Def PPG": league["proj_def_ppg"].round(1),
     "Def Δ vs '25": league["def_change"].round(1),
     "Power": league["power"].round(1),
+    **({"Δ Power": (league["power"] - league["preseason_power"]).round(1)}
+       if "preseason_power" in league.columns else {}),
     "Make Playoffs": league["playoff_pct"].round(0),
     "Win Division": league["div_title_pct"].round(0),
     "Proj Finish": league["exp_finish"].round(2),
@@ -101,6 +103,9 @@ st.dataframe(
                     help="Points-allowed shift from defensive roster changes (negative = improved defense)"),
         "Power": st.column_config.NumberColumn("Power", format="%+.1f",
                     help="Projected point margin vs a league-average team"),
+        "Δ Power": st.column_config.NumberColumn("Δ Power", format="%+.1f",
+                    help="How far 2026 results have moved this team off its "
+                         "preseason rating, opponent-adjusted"),
         "Make Playoffs": st.column_config.NumberColumn("Playoffs %", format="%d%%"),
         "Win Division": st.column_config.NumberColumn("Div Title %", format="%d%%"),
         "Proj Finish": st.column_config.NumberColumn("Avg Div Finish", format="%.2f",
@@ -109,8 +114,14 @@ st.dataframe(
 )
 _anchor = (f"power blended {int(_market.get('weight', 0)*100)}% to market win totals · "
            if _market.get("used") else "")
+_inseason = table.attrs.get("inseason", {})
+_season_note = (
+    f"{int(_inseason['games'])} games played carry "
+    f"{_inseason['weight']:.0%} of the rating · "
+    if _inseason.get("games") else "")
 st.caption(
     f"Sorted by projected wins · 20,000 simulated seasons · {_anchor}"
+    f"{_season_note}"
     f"model rating = 2025 points scored & allowed, regressed toward the mean and "
     f"adjusted for offseason roster turnover"
 )
@@ -303,6 +314,21 @@ with st.expander("ℹ️ How these projections are built"):
         )
     else:
         _power_para = "A team's **power rating** is its predicted net PPG centered on the league."
+    if _inseason.get("games"):
+        _power_para += (
+            f"\n\nOnce the season starts that preseason number stops being the "
+            f"whole story. Through **{int(_inseason['games'])} games** the rating "
+            f"is **{_inseason['weight']:.0%} what has actually happened in 2026** "
+            f"and {1 - _inseason['weight']:.0%} preseason. The in-season half is "
+            f"opponent-adjusted — a team's average point margin plus the average "
+            f"rating of who it played, with home field removed — because over a "
+            f"handful of games raw point differential mostly measures schedule. "
+            f"The weight is not a dial: a single game's margin and the preseason "
+            f"rating each have a known error, so combining them by precision puts "
+            f"the season at *n / (n + {_inseason['k']:.1f})*, reaching half around "
+            f"Week 9. **Δ Power** in the table is how far results have moved each "
+            f"team."
+        )
     st.markdown(f"""
 **Team quality is anchored on what actually happened, not on fantasy points.**
 A walk-forward backtest (2016-2025) showed that a team's prior-season point
