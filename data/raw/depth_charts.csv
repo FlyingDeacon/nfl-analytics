@@ -16,11 +16,11 @@ ARI,2026,DL,1,Josh Sweat,00-0034381,0,defense,0,0.0
 ARI,2026,DL,2,Roy Lopez,00-0036568,0,defense,0,0.0
 ARI,2026,DL,3,Walter Nolen III,00-0040706,0,defense,0,0.0
 ARI,2026,DL,4,Dante Stills,00-0038623,0,defense,0,0.0
-ARI,2026,DL,5,Jordan Burch,00-0040137,0,defense,0,0.0
+ARI,2026,DL,5,Eku Leota,00-0038782,0,defense,0,0.0
 ARI,2026,DL,6,Andrew Billings,00-0033066,0,defense,0,0.0
 ARI,2026,DL,7,L.J. Collier,00-0035636,0,defense,0,0.0
 ARI,2026,DL,8,Darius Robinson,00-0039854,0,defense,0,0.0
-ARI,2026,DL,9,Eku Leota,00-0038782,0,defense,0,0.0
+ARI,2026,DL,9,Jordan Burch,00-0040137,0,defense,0,0.0
 ARI,2026,DL,10,Zachary Carter,00-0037804,0,defense,0,0.0
 ARI,2026,DL,11,Kaleb Proctor,00-0041555,0,defense,0,0.0
 ARI,2026,LB,1,Jack Gibbens,00-0037596,0,defense,0,0.0
@@ -59,9 +59,10 @@ ATL,2026,DB,7,DeMarcco Hellams,00-0038628,0,defense,0,0.0
 ATL,2026,DB,8,Sydney Brown,00-0039002,0,defense,0,0.0
 ATL,2026,DB,9,Mike Ford Jr.,00-0034639,0,defense,0,0.0
 ATL,2026,DB,10,Sydney Brown,00-0039002,0,defense,0,0.0
-ATL,2026,DB,11,A.J. Terrell Jr.,00-0036285,0,defense,0,0.0
+ATL,2026,DB,11,Jammie Robinson,00-0038587,0,defense,0,0.0
 ATL,2026,DB,12,Robert Longerbeam,00-0040077,0,defense,0,0.0
 ATL,2026,DB,13,Avieon Terrell,00-0041469,0,defense,0,0.0
+ATL,2026,DB,14,A.J. Terrell Jr.,00-0036285,0,defense,0,0.0
 ATL,2026,DL,1,LaCale London,00-0036204,0,defense,0,0.0
 ATL,2026,DL,2,Gervon Dexter Sr.,00-0039070,0,defense,0,0.0
 ATL,2026,DL,3,Brandon Dorlus,00-0039859,0,defense,0,0.0
@@ -107,11 +108,12 @@ BAL,2026,DB,4,Marlon Humphrey,00-0033281,0,defense,0,0.0
 BAL,2026,DB,5,Kyle Hamilton,00-0038038,0,defense,0,0.0
 BAL,2026,DB,6,Chidobe Awuzie,00-0033548,0,defense,0,0.0
 BAL,2026,DB,7,Keondre Jackson,00-0040104,0,defense,0,0.0
-BAL,2026,DB,8,T.J. Tampa,00-0039234,0,defense,0,0.0
-BAL,2026,DB,9,Keyon Martin,00-0040636,0,defense,0,0.0
-BAL,2026,DB,10,Bilhal Kone,00-0040073,0,defense,0,0.0
-BAL,2026,DB,11,Jahquez Robinson,00-0040988,0,defense,0,0.0
-BAL,2026,DB,12,Chandler Rivers,00-0040885,0,defense,0,0.0
+BAL,2026,DB,8,K'Von Wallace,00-0036395,0,defense,0,0.0
+BAL,2026,DB,9,T.J. Tampa,00-0039234,0,defense,0,0.0
+BAL,2026,DB,10,Keyon Martin,00-0040636,0,defense,0,0.0
+BAL,2026,DB,11,Bilhal Kone,00-0040073,0,defense,0,0.0
+BAL,2026,DB,12,Jahquez Robinson,00-0040988,0,defense,0,0.0
+BAL,2026,DB,13,Chandler Rivers,00-0040885,0,defense,0,0.0
 BAL,2026,DL,1,Nnamdi Madubuike,00-0036130,0,defense,0,0.0
 BAL,2026,DL,2,Travis Jones,00-0037756,0,defense,0,0.0
 BAL,2026,DL,3,Calais Campbell,00-0026190,0,defense,0,0.0
@@ -120,11 +122,11 @@ BAL,2026,DL,5,John Jenkins,00-0030070,0,defense,0,0.0
 BAL,2026,DL,6,Broderick Washington Jr.,00-0036081,0,defense,0,0.0
 BAL,2026,LB,1,Tavius Robinson,00-0038505,0,defense,0,0.0
 BAL,2026,LB,2,Roquan Smith,00-0034874,0,defense,0,0.0
-BAL,2026,LB,3,Teddye Buchanan,00-0040069,0,defense,0,0.0
+BAL,2026,LB,3,Trenton Simpson,00-0038504,0,defense,0,0.0
 BAL,2026,LB,4,Trey Hendrickson,00-0033935,0,defense,0,0.0
 BAL,2026,LB,5,Zion Young,00-0041494,0,defense,0,0.0
 BAL,2026,LB,6,Jay Higgins IV,00-0040100,0,defense,0,0.0
-BAL,2026,LB,7,Trenton Simpson,00-0038504,0,defense,0,0.0
+BAL,2026,LB,7,Teddye Buchanan,00-0040069,0,defense,0,0.0
 BAL,2026,LB,8,Mike Green,00-0040722,0,defense,0,0.0
 BAL,2026,LB,9,Ethan Burke,00-0040978,0,defense,0,0.0
 BAL,2026,QB,1,Lamar Jackson,00-0034796,0,offense,13,218.9
@@ -190,12 +192,12 @@ BUF,2026,WR,4,Joshua Palmer,00-0036988,0,offense,12,52.3
 BUF,2026,WR,5,Greg Dortch,00-0035500,0,offense,11,74.3
 BUF,2026,WR,6,Skyler Bell,00-0041443,0,offense,0,0.0
 BUF,2026,WR,7,Tyrell Shavers,00-0038679,0,offense,8,45.5
-CAR,2026,DB,1,Mike Jackson,00-0035277,0,defense,0,0.0
+CAR,2026,DB,1,Akayleb Evans,00-0038101,0,defense,0,0.0
 CAR,2026,DB,2,Tre'von Moehrig,00-0036962,0,defense,0,0.0
 CAR,2026,DB,3,Nick Scott,00-0035669,0,defense,0,0.0
 CAR,2026,DB,4,Will Lee III,00-0041063,0,defense,0,0.0
 CAR,2026,DB,5,Chau Smith-Wade,00-0039380,0,defense,0,0.0
-CAR,2026,DB,6,Akayleb Evans,00-0038101,0,defense,0,0.0
+CAR,2026,DB,6,Mike Jackson,00-0035277,0,defense,0,0.0
 CAR,2026,DB,7,Zakee Wheatley,00-0041076,0,defense,0,0.0
 CAR,2026,DB,8,Lathan Ransom,00-0040159,0,defense,0,0.0
 CAR,2026,DB,9,Jaycee Horn,00-0036944,0,defense,0,0.0
@@ -217,15 +219,15 @@ CAR,2026,LB,7,Jackson Kuwatch,00-0041119,0,defense,0,0.0
 CAR,2026,LB,8,Princely Umanmielen,00-0040136,0,defense,0,0.0
 CAR,2026,LB,9,Thomas Incoom,00-0038791,0,defense,0,0.0
 CAR,2026,LB,10,Bam Martin-Scott,00-0040289,0,defense,0,0.0
-CAR,2026,LB,11,Claudin Cherelus,00-0038493,0,defense,0,0.0
-CAR,2026,LB,12,Nic Scourton,00-0040746,0,defense,0,0.0
+CAR,2026,LB,11,Nic Scourton,00-0040746,0,defense,0,0.0
 CAR,2026,QB,1,Bryce Young,00-0039150,0,offense,16,220.0
 CAR,2026,QB,2,Kenny Pickett,00-0038102,0,offense,5,7.7
 CAR,2026,QB,3,Haynes King,00-0041149,0,offense,0,0.0
 CAR,2026,RB,1,Chuba Hubbard,00-0036555,0,offense,15,125.4
 CAR,2026,RB,2,AJ Dillon,00-0036265,0,offense,6,9.1
-CAR,2026,RB,3,Trevor Etienne,00-0040644,0,offense,8,13.7
-CAR,2026,RB,4,Jonathon Brooks,00-0039344,0,offense,0,0.0
+CAR,2026,RB,3,Anthony Tyus III,00-0040394,0,offense,0,0.0
+CAR,2026,RB,4,Trevor Etienne,00-0040644,0,offense,8,13.7
+CAR,2026,RB,5,Jonathon Brooks,00-0039344,0,offense,0,0.0
 CAR,2026,TE,1,Tommy Tremble,00-0037005,0,offense,13,62.9
 CAR,2026,TE,2,Darren Waller,00-0031610,0,offense,7,87.7
 CAR,2026,TE,3,Mitchell Evans,00-0040187,0,offense,11,48.2
@@ -233,10 +235,11 @@ CAR,2026,TE,4,Feleipe Franks,00-0036825,0,offense,2,0.4
 CAR,2026,TE,5,Ja'Tavion Sanders,00-0039356,0,offense,10,54.0
 CAR,2026,WR,1,Tetairoa McMillan,00-0040124,0,offense,17,213.3
 CAR,2026,WR,2,Jalen Coker,00-0039491,0,offense,10,86.4
-CAR,2026,WR,3,Xavier Legette,00-0039342,0,offense,13,88.5
-CAR,2026,WR,4,Brycen Tremayne,00-0038840,0,offense,7,30.0
-CAR,2026,WR,5,John Metchie III,00-0037614,0,offense,10,70.3
-CAR,2026,WR,6,Chris Brazzell II,00-0041047,0,offense,0,0.0
+CAR,2026,WR,3,Brycen Tremayne,00-0038840,0,offense,7,30.0
+CAR,2026,WR,4,John Metchie III,00-0037614,0,offense,10,70.3
+CAR,2026,WR,5,David Moore,00-0033589,0,offense,2,2.7
+CAR,2026,WR,6,Xavier Legette,00-0039342,0,offense,13,88.5
+CAR,2026,WR,7,Chris Brazzell II,00-0041047,0,offense,0,0.0
 CHI,2026,DB,1,Jaylon Johnson,00-0036292,0,defense,0,0.0
 CHI,2026,DB,2,Dillon Thieneman,00-0041538,0,defense,0,0.0
 CHI,2026,DB,3,Xavier Woods,00-0033579,0,defense,0,0.0
@@ -273,8 +276,8 @@ CHI,2026,LB,7,Nephi Sewell,00-0037544,0,defense,0,0.0
 CHI,2026,LB,8,Noah Sewell,00-0038390,0,defense,0,0.0
 CHI,2026,LB,9,Ruben Hyppolite II,00-0040167,0,defense,0,0.0
 CHI,2026,QB,1,Caleb Williams,00-0039918,0,offense,17,318.2
-CHI,2026,QB,2,Case Keenum,00-0028986,0,offense,0,0.0
-CHI,2026,QB,3,Tyson Bagent,00-0038416,0,offense,2,2.6
+CHI,2026,QB,2,Tyson Bagent,00-0038416,0,offense,2,2.6
+CHI,2026,QB,3,Case Keenum,00-0028986,0,offense,0,0.0
 CHI,2026,RB,1,D'Andre Swift,00-0036275,0,offense,16,227.7
 CHI,2026,RB,2,Kyle Monangai,00-0040236,0,offense,17,142.7
 CHI,2026,RB,3,Roschon Johnson,00-0039021,0,offense,2,1.7
@@ -380,24 +383,27 @@ CLE,2026,WR,3,Jerry Jeudy,00-0036407,0,offense,16,120.7
 CLE,2026,WR,4,Isaiah Bond,00-0040782,0,offense,12,52.7
 CLE,2026,WR,5,Tylan Wallace,00-0036630,0,offense,3,14.5
 CLE,2026,WR,6,Malachi Corley,00-0039920,0,offense,12,31.6
-DAL,2026,DB,1,Cobie Durant,00-0037839,0,defense,0,0.0
-DAL,2026,DB,2,Markquese Bell,00-0037561,0,defense,0,0.0
+DAL,2026,DB,1,Joey Porter Jr.,00-0039167,0,defense,0,0.0
+DAL,2026,DB,2,Caleb Downs,00-0040865,0,defense,0,0.0
 DAL,2026,DB,3,Malik Hooker,00-0033877,0,defense,0,0.0
 DAL,2026,DB,4,DaRon Bland,00-0037275,0,defense,0,0.0
 DAL,2026,DB,5,Caleb Downs,00-0040865,0,defense,0,0.0
-DAL,2026,DB,6,Shavon Revel Jr.,00-0040008,0,defense,0,0.0
-DAL,2026,DB,7,Alijah Clark,00-0040045,0,defense,0,0.0
+DAL,2026,DB,6,Cobie Durant,00-0037839,0,defense,0,0.0
+DAL,2026,DB,7,Markquese Bell,00-0037561,0,defense,0,0.0
 DAL,2026,DB,8,P.J. Locke,00-0035227,0,defense,0,0.0
 DAL,2026,DB,9,Ameer Speed,00-0038624,0,defense,0,0.0
-DAL,2026,DB,10,Devin Moore,00-0040875,0,defense,0,0.0
-DAL,2026,DB,11,Jalen Thompson,00-0035705,0,defense,0,0.0
-DAL,2026,DB,12,Caelen Carson,00-0039387,0,defense,0,0.0
+DAL,2026,DB,10,Caelen Carson,00-0039387,0,defense,0,0.0
+DAL,2026,DB,11,Alijah Clark,00-0040045,0,defense,0,0.0
+DAL,2026,DB,12,Shavon Revel Jr.,00-0040008,0,defense,0,0.0
+DAL,2026,DB,13,Devin Moore,00-0040875,0,defense,0,0.0
+DAL,2026,DB,14,Jalen Thompson,00-0035705,0,defense,0,0.0
 DAL,2026,DL,1,Quinnen Williams,00-0035718,0,defense,0,0.0
 DAL,2026,DL,2,Otito Ogbonnia,00-0037270,0,defense,0,0.0
 DAL,2026,DL,3,Kenny Clark,00-0033120,0,defense,0,0.0
 DAL,2026,DL,4,LT Overton,00-0040880,0,defense,0,0.0
 DAL,2026,DL,5,Jonathan Bullard,00-0033093,0,defense,0,0.0
-DAL,2026,DL,6,Kelvin Gilliam Jr.,00-0040933,0,defense,0,0.0
+DAL,2026,DL,6,Elijah Garcia,00-0037051,0,defense,0,0.0
+DAL,2026,DL,7,Kelvin Gilliam Jr.,00-0040933,0,defense,0,0.0
 DAL,2026,LB,1,Rashan Gary,00-0034967,0,defense,0,0.0
 DAL,2026,LB,2,DeMarvion Overshown,00-0038556,0,defense,0,0.0
 DAL,2026,LB,3,Dee Winters,00-0038625,0,defense,0,0.0
@@ -473,7 +479,6 @@ DEN,2026,WR,2,Courtland Sutton,00-0034348,0,offense,17,217.7
 DEN,2026,WR,3,Pat Bryant,00-0040134,0,offense,11,74.8
 DEN,2026,WR,4,Marvin Mims Jr.,00-0038976,0,offense,15,89.0
 DEN,2026,WR,5,Troy Franklin,00-0039868,0,offense,16,171.1
-DEN,2026,WR,6,Lil'Jordan Humphrey,00-0035406,0,offense,5,34.6
 DET,2026,DB,1,D.J. Reed,00-0034384,0,defense,0,0.0
 DET,2026,DB,2,Christian Izien,00-0038820,0,defense,0,0.0
 DET,2026,DB,3,Chuck Clark,00-0033294,0,defense,0,0.0
@@ -504,8 +509,9 @@ DET,2026,LB,1,Derrick Barnes,00-0036964,0,defense,0,0.0
 DET,2026,LB,2,Jack Campbell,00-0039018,0,defense,0,0.0
 DET,2026,LB,3,Devin White,00-0035707,0,defense,0,0.0
 DET,2026,LB,4,Jimmy Rolder,00-0041442,0,defense,0,0.0
-DET,2026,LB,5,Malcolm Rodriguez,00-0037289,0,defense,0,0.0
-DET,2026,LB,6,Damone Clark,00-0037281,0,defense,0,0.0
+DET,2026,LB,5,Amen Ogbongbemiga,00-0036716,0,defense,0,0.0
+DET,2026,LB,6,Malcolm Rodriguez,00-0037289,0,defense,0,0.0
+DET,2026,LB,7,Damone Clark,00-0037281,0,defense,0,0.0
 DET,2026,QB,1,Jared Goff,00-0033106,0,offense,17,303.1
 DET,2026,QB,2,Joshua Dobbs,00-0033949,0,offense,3,2.3
 DET,2026,RB,1,Jahmyr Gibbs,00-0039139,0,offense,17,366.6
@@ -532,7 +538,6 @@ GB,2026,DB,7,Johnathan Baldwin II,00-0040033,0,defense,0,0.0
 GB,2026,DB,8,Kitan Oladapo,00-0039818,0,defense,0,0.0
 GB,2026,DB,9,Carrington Valentine,00-0038408,0,defense,0,0.0
 GB,2026,DB,10,Kamal Hadden,00-0039831,0,defense,0,0.0
-GB,2026,DB,11,Marlon Jones,00-0008818,0,defense,0,0.0
 GB,2026,DL,1,Karl Brooks,00-0038398,0,defense,0,0.0
 GB,2026,DL,2,Javon Hargrave,00-0033109,0,defense,0,0.0
 GB,2026,DL,3,Devonte Wyatt,00-0037075,0,defense,0,0.0
@@ -542,20 +547,20 @@ GB,2026,DL,6,Warren Brinson,00-0040016,0,defense,0,0.0
 GB,2026,DL,7,Anthony Campbell,00-0040689,0,defense,0,0.0
 GB,2026,DL,8,Jordon Riley,00-0038506,0,defense,0,0.0
 GB,2026,LB,1,Lukas Van Ness,00-0039112,0,defense,0,0.0
-GB,2026,LB,2,Edgerrin Cooper,00-0039850,0,defense,0,0.0
+GB,2026,LB,2,Isaiah McDuffie,00-0036658,0,defense,0,0.0
 GB,2026,LB,3,Zaire Franklin,00-0034431,0,defense,0,0.0
 GB,2026,LB,4,Barryn Sorrell,00-0040010,0,defense,0,0.0
 GB,2026,LB,5,Brenton Cox Jr.,00-0038463,0,defense,0,0.0
-GB,2026,LB,6,Isaiah McDuffie,00-0036658,0,defense,0,0.0
+GB,2026,LB,6,Nick Niemann,00-0036648,0,defense,0,0.0
 GB,2026,LB,7,Ty'Ron Hopper,00-0039812,0,defense,0,0.0
 GB,2026,LB,8,Dani Dennis-Sutton,00-0040877,0,defense,0,0.0
 GB,2026,LB,9,Collin Oliver,00-0040012,0,defense,0,0.0
-GB,2026,LB,10,Nick Niemann,00-0036648,0,defense,0,0.0
+GB,2026,LB,10,Edgerrin Cooper,00-0039850,0,defense,0,0.0
 GB,2026,LB,11,Micah Parsons,00-0036932,0,defense,0,0.0
 GB,2026,QB,1,Jordan Love,00-0036264,0,offense,15,235.1
 GB,2026,QB,2,Tyrod Taylor,00-0028118,0,offense,6,61.5
-GB,2026,RB,1,Kaleb Johnson,00-0040142,0,offense,9,9.0
-GB,2026,RB,2,MarShawn Lloyd,00-0039811,0,offense,0,0.0
+GB,2026,RB,1,MarShawn Lloyd,00-0039811,0,offense,0,0.0
+GB,2026,RB,2,Kaleb Johnson,00-0040142,0,offense,9,9.0
 GB,2026,RB,3,Chris Brooks,00-0038685,0,offense,13,32.7
 GB,2026,RB,4,Josh Jacobs,00-0035700,0,offense,15,237.1
 GB,2026,TE,1,Tucker Kraft,00-0038996,0,offense,8,117.2
@@ -566,11 +571,11 @@ GB,2026,TE,5,Luke Musgrave,00-0039144,0,offense,12,48.3
 GB,2026,TE,6,Thomas Yassmin,00-0039936,0,offense,0,0.0
 GB,2026,WR,1,Christian Watson,00-0038124,0,offense,10,132.4
 GB,2026,WR,2,Matthew Golden,00-0040667,0,offense,13,70.0
-GB,2026,WR,3,Jayden Reed,00-0039146,0,offense,5,48.5
-GB,2026,WR,4,Skyy Moore,00-0038090,0,offense,7,14.8
-GB,2026,WR,5,Bo Melton,00-0037091,0,offense,6,24.2
-GB,2026,WR,6,J. Michael Sturdivant,00-0040948,0,offense,0,0.0
-GB,2026,WR,7,Savion Williams,00-0040009,0,offense,9,25.6
+GB,2026,WR,3,Skyy Moore,00-0038090,0,offense,7,14.8
+GB,2026,WR,4,Bo Melton,00-0037091,0,offense,6,24.2
+GB,2026,WR,5,J. Michael Sturdivant,00-0040948,0,offense,0,0.0
+GB,2026,WR,6,Savion Williams,00-0040009,0,offense,9,25.6
+GB,2026,WR,7,Jayden Reed,00-0039146,0,offense,5,48.5
 HOU,2026,DB,1,Derek Stingley Jr.,00-0037237,0,defense,0,0.0
 HOU,2026,DB,2,Reed Blankenship,00-0037130,0,defense,0,0.0
 HOU,2026,DB,3,Calen Bullock,00-0039838,0,defense,0,0.0
@@ -588,14 +593,15 @@ HOU,2026,DL,3,Sheldon Rankins,00-0032759,0,defense,0,0.0
 HOU,2026,DL,4,Danielle Hunter,00-0031565,0,defense,0,0.0
 HOU,2026,DL,5,Dominique Robinson,00-0037082,0,defense,0,0.0
 HOU,2026,DL,6,Logan Hall,00-0038127,0,defense,0,0.0
-HOU,2026,DL,7,Mario Edwards Jr.,00-0032265,0,defense,0,0.0
+HOU,2026,DL,7,Jaden Crumedy,00-0039402,0,defense,0,0.0
 HOU,2026,DL,8,Jadeveon Clowney,00-0031364,0,defense,0,0.0
-HOU,2026,DL,9,Sabastian Harsh,00-0041305,0,defense,0,0.0
+HOU,2026,DL,9,Chris Braswell,00-0039902,0,defense,0,0.0
 HOU,2026,DL,10,Kayden McDonald,00-0041440,0,defense,0,0.0
-HOU,2026,DL,11,Jaden Crumedy,00-0039402,0,defense,0,0.0
+HOU,2026,DL,11,Mario Edwards Jr.,00-0032265,0,defense,0,0.0
 HOU,2026,DL,12,Ali Gaye,00-0038724,0,defense,0,0.0
-HOU,2026,DL,13,Dylan Horton,00-0039009,0,defense,0,0.0
+HOU,2026,DL,13,Sabastian Harsh,00-0041305,0,defense,0,0.0
 HOU,2026,DL,14,Solomon Byrd,00-0039427,0,defense,0,0.0
+HOU,2026,DL,15,Dylan Horton,00-0039009,0,defense,0,0.0
 HOU,2026,LB,1,Aiden Fisher,00-0041449,0,defense,0,0.0
 HOU,2026,LB,2,Azeez Al-Shaair,00-0035166,0,defense,0,0.0
 HOU,2026,LB,3,Jake Hansen,00-0037457,0,defense,0,0.0
@@ -610,13 +616,13 @@ HOU,2026,QB,2,Davis Mills,00-0036898,0,offense,6,66.6
 HOU,2026,QB,3,Graham Mertz,00-0040211,0,offense,0,0.0
 HOU,2026,RB,1,David Montgomery,00-0035685,0,offense,17,164.9
 HOU,2026,RB,2,Woody Marks,00-0040583,0,offense,16,145.1
-HOU,2026,RB,3,British Brooks,00-0039603,0,offense,2,7.8
-HOU,2026,RB,4,Dare Ogunbowale,00-0033854,0,offense,7,23.2
+HOU,2026,RB,3,Dare Ogunbowale,00-0033854,0,offense,7,23.2
+HOU,2026,RB,4,British Brooks,00-0039603,0,offense,2,7.8
 HOU,2026,TE,1,Dalton Schultz,00-0034383,0,offense,17,177.7
 HOU,2026,TE,2,Foster Moreau,00-0034981,0,offense,5,12.9
-HOU,2026,TE,3,Marlin Klein,00-0041472,0,offense,0,0.0
-HOU,2026,TE,4,Cade Stover,00-0039359,0,offense,5,19.9
-HOU,2026,TE,5,Brevin Jordan,00-0036556,0,offense,0,0.0
+HOU,2026,TE,3,Cade Stover,00-0039359,0,offense,5,19.9
+HOU,2026,TE,4,Brevin Jordan,00-0036556,0,offense,0,0.0
+HOU,2026,TE,5,Marlin Klein,00-0041472,0,offense,0,0.0
 HOU,2026,WR,1,Nico Collins,00-0036554,0,offense,15,224.2
 HOU,2026,WR,2,Xavier Hutchinson,00-0038618,0,offense,15,98.0
 HOU,2026,WR,3,Kayshon Boutte,00-0038608,0,offense,13,124.1
@@ -664,10 +670,10 @@ IND,2026,TE,4,Will Mallory,00-0038394,0,offense,1,2.6
 IND,2026,TE,5,Carson Towt,00-0040853,0,offense,0,0.0
 IND,2026,WR,1,Josh Downs,00-0038997,0,offense,16,135.7
 IND,2026,WR,2,Keenan Allen,00-0030279,0,offense,17,182.7
-IND,2026,WR,3,Darius Slayton,00-0035535,0,offense,13,94.8
-IND,2026,WR,4,Laquon Treadwell,00-0032951,0,offense,0,0.0
-IND,2026,WR,5,Ashton Dulin,00-0035021,0,offense,5,19.8
-IND,2026,WR,6,Deion Burks,00-0041132,0,offense,0,0.0
+IND,2026,WR,3,Laquon Treadwell,00-0032951,0,offense,0,0.0
+IND,2026,WR,4,Ashton Dulin,00-0035021,0,offense,5,19.8
+IND,2026,WR,5,Deion Burks,00-0041132,0,offense,0,0.0
+IND,2026,WR,6,Darius Slayton,00-0035535,0,offense,13,94.8
 IND,2026,WR,7,Anthony Gould,00-0039816,0,offense,2,2.6
 IND,2026,WR,8,Alec Pierce,00-0037664,0,offense,14,183.3
 IND,2026,WR,9,D.J. Montgomery,00-0035045,0,offense,0,0.0
@@ -680,7 +686,9 @@ JAX,2026,DB,6,Christian Braswell,00-0038616,0,defense,0,0.0
 JAX,2026,DB,7,Rayuan Lane III,00-0040213,0,defense,0,0.0
 JAX,2026,DB,8,Caleb Ransaw,00-0040145,0,defense,0,0.0
 JAX,2026,DB,9,Jarrian Jones,00-0039353,0,defense,0,0.0
-JAX,2026,DB,10,Jalen Huskey,00-0041055,0,defense,0,0.0
+JAX,2026,DB,10,Jarrian Jones,00-0039353,0,defense,0,0.0
+JAX,2026,DB,11,Jalen Huskey,00-0041055,0,defense,0,0.0
+JAX,2026,DB,12,Alijah Huzzie,00-0040411,0,defense,0,0.0
 JAX,2026,DL,1,Travon Walker,00-0037235,0,defense,0,0.0
 JAX,2026,DL,2,Arik Armstead,00-0032164,0,defense,0,0.0
 JAX,2026,DL,3,DaVon Hamilton,00-0036262,0,defense,0,0.0
@@ -756,10 +764,10 @@ KC,2026,TE,4,Jared Wiley,00-0039824,0,offense,1,1.4
 KC,2026,TE,5,John Michael Gyllenborg,00-0040955,0,offense,0,0.0
 KC,2026,WR,1,Rashee Rice,00-0039067,0,offense,8,148.1
 KC,2026,WR,2,Xavier Worthy,00-0039894,0,offense,13,109.9
-KC,2026,WR,3,Tyquan Thornton,00-0038104,0,offense,9,80.8
-KC,2026,WR,4,Jalen Royals,00-0040646,0,offense,1,2.4
-KC,2026,WR,5,Cyrus Allen,00-0040890,0,offense,0,0.0
-KC,2026,WR,6,Nikko Remigio,00-0038519,0,offense,2,4.2
+KC,2026,WR,3,Jalen Royals,00-0040646,0,offense,1,2.4
+KC,2026,WR,4,Cyrus Allen,00-0040890,0,offense,0,0.0
+KC,2026,WR,5,Nikko Remigio,00-0038519,0,offense,2,4.2
+KC,2026,WR,6,Tyquan Thornton,00-0038104,0,offense,9,80.8
 KC,2026,WR,7,Jeff Caldwell,00-0040953,0,offense,0,0.0
 KC,2026,WR,8,Jimmy Holiday,00-0040120,0,offense,0,0.0
 LAC,2026,DB,1,Cam Hart,00-0039369,0,defense,0,0.0
@@ -809,16 +817,17 @@ LAR,2026,DB,2,Kam Curl,00-0036349,0,defense,0,0.0
 LAR,2026,DB,3,Kamren Kinchens,00-0039834,0,defense,0,0.0
 LAR,2026,DB,4,Trent McDuffie,00-0037191,0,defense,0,0.0
 LAR,2026,DB,5,Quentin Lake,00-0037841,0,defense,0,0.0
-LAR,2026,DB,6,Jaylen McCollough,00-0039776,0,defense,0,0.0
-LAR,2026,DB,7,Maximus Pulley,00-0040923,0,defense,0,0.0
-LAR,2026,DB,8,Emmanuel Forbes Jr.,00-0039151,0,defense,0,0.0
-LAR,2026,DB,9,Josh Wallace,00-0039772,0,defense,0,0.0
+LAR,2026,DB,6,Josh Wallace,00-0039772,0,defense,0,0.0
+LAR,2026,DB,7,Jaylen McCollough,00-0039776,0,defense,0,0.0
+LAR,2026,DB,8,Maximus Pulley,00-0040923,0,defense,0,0.0
+LAR,2026,DB,9,Emmanuel Forbes Jr.,00-0039151,0,defense,0,0.0
 LAR,2026,DL,1,Kobie Turner,00-0039138,0,defense,0,0.0
 LAR,2026,DL,2,Poona Ford,00-0034234,0,defense,0,0.0
 LAR,2026,DL,3,Aaron Donald,00-0031388,0,defense,0,0.0
 LAR,2026,DL,4,Tyler Davis,00-0039749,0,defense,0,0.0
 LAR,2026,DL,5,Ty Hamilton,00-0040585,0,defense,0,0.0
 LAR,2026,DL,6,Braden Fiske,00-0039734,0,defense,0,0.0
+LAR,2026,DL,7,Larrell Murchison,00-0036237,0,defense,0,0.0
 LAR,2026,LB,1,Byron Young,00-0039137,0,defense,0,0.0
 LAR,2026,LB,2,Nate Landman,00-0037587,0,defense,0,0.0
 LAR,2026,LB,3,Omar Speights,00-0039774,0,defense,0,0.0
@@ -839,17 +848,17 @@ LAR,2026,RB,2,Blake Corum,00-0039738,0,offense,17,122.2
 LAR,2026,RB,3,Dean Connors,00-0041415,0,offense,0,0.0
 LAR,2026,RB,4,Ronnie Rivers,00-0037557,0,offense,2,4.6
 LAR,2026,TE,1,Colby Parkinson,00-0036244,0,offense,12,130.4
-LAR,2026,TE,2,Terrance Ferguson,00-0040737,0,offense,7,52.1
+LAR,2026,TE,2,Tyler Higbee,00-0033110,0,offense,8,71.1
 LAR,2026,TE,3,Davis Allen,00-0039074,0,offense,13,61.8
-LAR,2026,TE,4,Tyler Higbee,00-0033110,0,offense,8,71.1
-LAR,2026,TE,5,Max Klare,00-0041510,0,offense,0,0.0
+LAR,2026,TE,4,Max Klare,00-0041510,0,offense,0,0.0
+LAR,2026,TE,5,Terrance Ferguson,00-0040737,0,offense,7,52.1
 LAR,2026,WR,1,Puka Nacua,00-0039075,0,offense,16,375.0
 LAR,2026,WR,2,Davante Adams,00-0031381,0,offense,14,222.9
 LAR,2026,WR,3,Jordan Whittington,00-0039751,0,offense,11,36.3
 LAR,2026,WR,4,Konata Mumpfield,00-0040590,0,offense,6,25.2
-LAR,2026,WR,5,Xavier Smith,00-0038359,0,offense,10,48.3
-LAR,2026,WR,6,Tutu Atwell,00-0036849,0,offense,5,31.2
-LAR,2026,WR,7,CJ Daniels,00-0041399,0,offense,0,0.0
+LAR,2026,WR,5,Tutu Atwell,00-0036849,0,offense,5,31.2
+LAR,2026,WR,6,CJ Daniels,00-0041399,0,offense,0,0.0
+LAR,2026,WR,7,Alex Bachman,00-0035602,0,offense,2,3.2
 LV,2026,DB,1,Eric Stokes,00-0036901,0,defense,0,0.0
 LV,2026,DB,2,Jeremy Chinn,00-0036293,0,defense,0,0.0
 LV,2026,DB,3,Treydan Stukes,00-0040868,0,defense,0,0.0
@@ -932,8 +941,8 @@ MIA,2026,LB,7,Ronnie Harrison Jr.,00-0034779,0,defense,0,0.0
 MIA,2026,QB,1,Malik Willis,00-0038128,0,offense,4,51.2
 MIA,2026,QB,2,Kyle McCord,00-0040014,0,offense,0,0.0
 MIA,2026,QB,3,Brady Cook,00-0040398,0,offense,5,28.5
-MIA,2026,RB,1,Jaylen Wright,00-0039874,0,offense,9,48.2
-MIA,2026,RB,2,Ollie Gordon II,00-0040198,0,offense,12,54.7
+MIA,2026,RB,1,Ollie Gordon II,00-0040198,0,offense,12,54.7
+MIA,2026,RB,2,Jaylen Wright,00-0039874,0,offense,9,48.2
 MIA,2026,RB,3,De'Von Achane,00-0039040,0,offense,16,322.1
 MIA,2026,TE,1,Greg Dulcich,00-0037252,0,offense,9,62.8
 MIA,2026,TE,2,Will Kacmarek,00-0041524,0,offense,0,0.0
@@ -991,24 +1000,23 @@ MIN,2026,WR,2,Jordan Addison,00-0038994,0,offense,13,133.1
 MIN,2026,WR,3,Jauan Jennings,00-0036259,0,offense,15,171.3
 MIN,2026,WR,4,Tai Felton,00-0040154,0,offense,3,5.5
 MIN,2026,WR,5,Myles Price,00-0040506,0,offense,0,0.0
-MIN,2026,WR,6,Jeshaun Jones,00-0039710,0,offense,0,0.0
 NE,2026,DB,1,Carlton Davis III,00-0034778,0,defense,0,0.0
 NE,2026,DB,2,Craig Woodson,00-0040716,0,defense,0,0.0
 NE,2026,DB,3,Kevin Byard,00-0033132,0,defense,0,0.0
 NE,2026,DB,4,Christian Gonzalez,00-0039147,0,defense,0,0.0
 NE,2026,DB,5,Marcus Jones,00-0037253,0,defense,0,0.0
-NE,2026,DB,6,Charles Woods,00-0039770,0,defense,0,0.0
+NE,2026,DB,6,Channing Canada,00-0041316,0,defense,0,0.0
 NE,2026,DB,7,Jaylen Reed,00-0040204,0,defense,0,0.0
 NE,2026,DB,8,Brenden Schooler,00-0037205,0,defense,0,0.0
-NE,2026,DB,9,Karon Prunty,00-0041088,0,defense,0,0.0
-NE,2026,DB,10,Channing Canada,00-0041316,0,defense,0,0.0
-NE,2026,DB,11,Dell Pettus,00-0039692,0,defense,0,0.0
+NE,2026,DB,9,Charles Woods,00-0039770,0,defense,0,0.0
+NE,2026,DB,10,Dell Pettus,00-0039692,0,defense,0,0.0
+NE,2026,DB,11,Karon Prunty,00-0041088,0,defense,0,0.0
 NE,2026,DL,1,Christian Barmore,00-0036981,0,defense,0,0.0
 NE,2026,DL,2,Cory Durden,00-0038653,0,defense,0,0.0
 NE,2026,DL,3,Milton Williams,00-0036916,0,defense,0,0.0
-NE,2026,DL,4,Leonard Taylor III,00-0039289,0,defense,0,0.0
+NE,2026,DL,4,Joshua Farmer,00-0040171,0,defense,0,0.0
 NE,2026,DL,5,DaQuan Jones,00-0031054,0,defense,0,0.0
-NE,2026,DL,6,Joshua Farmer,00-0040171,0,defense,0,0.0
+NE,2026,DL,6,Leonard Taylor III,00-0039289,0,defense,0,0.0
 NE,2026,LB,1,Elijah Ponder,00-0040574,0,defense,0,0.0
 NE,2026,LB,2,Christian Elliss,00-0036813,0,defense,0,0.0
 NE,2026,LB,3,Robert Spillane,00-0034720,0,defense,0,0.0
@@ -1036,8 +1044,8 @@ NE,2026,TE,5,Julian Hill,00-0038720,0,offense,9,29.0
 NE,2026,WR,1,Romeo Doubs,00-0037816,0,offense,15,163.4
 NE,2026,WR,2,DeMario Douglas,00-0038621,0,offense,16,95.8
 NE,2026,WR,3,Mack Hollins,00-0033555,0,offense,14,113.4
-NE,2026,WR,4,Kyle Williams,00-0040131,0,offense,8,49.4
-NE,2026,WR,5,Efton Chism III,00-0040563,0,offense,2,16.5
+NE,2026,WR,4,Efton Chism III,00-0040563,0,offense,2,16.5
+NE,2026,WR,5,Kyle Williams,00-0040131,0,offense,8,49.4
 NE,2026,WR,6,A.J. Brown,00-0035676,0,offense,15,218.3
 NE,2026,WR,7,Jeremiah Webb,00-0040570,0,offense,0,0.0
 NO,2026,DB,1,Kool-Aid McKinstry,00-0039860,0,defense,0,0.0
@@ -1073,14 +1081,16 @@ NO,2026,LB,6,Isaiah Stalbird,00-0039622,0,defense,0,0.0
 NO,2026,LB,7,Danny Stutsman,00-0040155,0,defense,0,0.0
 NO,2026,LB,8,Myles Cole,00-0039425,0,defense,0,0.0
 NO,2026,LB,9,Chris Rumph II,00-0036867,0,defense,0,0.0
-NO,2026,LB,10,Jaylan Ford,00-0039388,0,defense,0,0.0
+NO,2026,LB,10,Jackson Sirmon,00-0039288,0,defense,0,0.0
+NO,2026,LB,11,Jaylan Ford,00-0039388,0,defense,0,0.0
+NO,2026,LB,12,Fadil Diggs,00-0040249,0,defense,0,0.0
 NO,2026,QB,1,Tyler Shough,00-0040743,0,offense,10,158.0
 NO,2026,QB,2,Spencer Rattler,00-0039376,0,offense,8,101.1
 NO,2026,QB,3,Zach Wilson,00-0037013,0,offense,1,1.6
-NO,2026,RB,1,Travis Etienne Jr.,00-0036973,0,offense,17,253.9
-NO,2026,RB,2,Alvin Kamara,00-0033906,0,offense,11,100.7
-NO,2026,RB,3,Kendre Miller,00-0038551,0,offense,7,33.3
-NO,2026,RB,4,CJ Donaldson,00-0041326,0,offense,0,0.0
+NO,2026,RB,1,Alvin Kamara,00-0033906,0,offense,11,100.7
+NO,2026,RB,2,Kendre Miller,00-0038551,0,offense,7,33.3
+NO,2026,RB,3,CJ Donaldson,00-0041326,0,offense,0,0.0
+NO,2026,RB,4,Travis Etienne Jr.,00-0036973,0,offense,17,253.9
 NO,2026,RB,5,Ty Chandler,00-0037276,0,offense,2,8.8
 NO,2026,TE,1,Juwan Johnson,00-0036040,0,offense,17,179.9
 NO,2026,TE,2,Noah Fant,00-0035644,0,offense,12,74.8
@@ -1090,9 +1100,10 @@ NO,2026,TE,5,Moliki Matavao,00-0040244,0,offense,1,3.0
 NO,2026,WR,1,Chris Olave,00-0037239,0,offense,16,268.0
 NO,2026,WR,2,Devaughn Vele,00-0039424,0,offense,9,66.3
 NO,2026,WR,3,Bryce Lance,00-0041067,0,offense,0,0.0
-NO,2026,WR,4,Barion Brown,00-0041099,0,offense,0,0.0
-NO,2026,WR,5,Jordyn Tyson,00-0041029,0,offense,0,0.0
-NO,2026,WR,6,Mason Tipton,00-0039623,0,offense,4,20.4
+NO,2026,WR,4,Kevin Austin Jr.,00-0037231,0,offense,4,33.0
+NO,2026,WR,5,Barion Brown,00-0041099,0,offense,0,0.0
+NO,2026,WR,6,Jordyn Tyson,00-0041029,0,offense,0,0.0
+NO,2026,WR,7,Mason Tipton,00-0039623,0,offense,4,20.4
 NYG,2026,DB,1,Deonte Banks,00-0039000,0,defense,0,0.0
 NYG,2026,DB,2,Tyler Nubin,00-0039861,0,defense,0,0.0
 NYG,2026,DB,3,Jevon Holland,00-0036998,0,defense,0,0.0
@@ -1116,15 +1127,15 @@ NYG,2026,DL,4,Bobby Jamison-Travis,00-0041095,0,defense,0,0.0
 NYG,2026,DL,5,CJ Okoye,00-0039176,0,defense,0,0.0
 NYG,2026,DL,6,Darius Alexander,00-0040694,0,defense,0,0.0
 NYG,2026,DL,7,Roy Robertson-Harris,00-0032667,0,defense,0,0.0
-NYG,2026,DL,8,Josh Tupou,00-0033347,0,defense,0,0.0
 NYG,2026,LB,1,Kayvon Thibodeaux,00-0037611,0,defense,0,0.0
 NYG,2026,LB,2,Arvell Reese,00-0041509,0,defense,0,0.0
 NYG,2026,LB,3,Tremaine Edmunds,00-0034673,0,defense,0,0.0
 NYG,2026,LB,4,Abdul Carter,00-0040677,0,defense,0,0.0
-NYG,2026,LB,5,Brian Burns,00-0035713,0,defense,0,0.0
+NYG,2026,LB,5,Jihad Ward,00-0033046,0,defense,0,0.0
 NYG,2026,LB,6,Jack Kelly,00-0041102,0,defense,0,0.0
 NYG,2026,LB,7,Micah McFadden,00-0037259,0,defense,0,0.0
-NYG,2026,LB,8,Zaire Barnes,00-0038399,0,defense,0,0.0
+NYG,2026,LB,8,Brian Burns,00-0035713,0,defense,0,0.0
+NYG,2026,LB,9,Zaire Barnes,00-0038399,0,defense,0,0.0
 NYG,2026,QB,1,Jameis Winston,00-0031503,0,offense,2,45.3
 NYG,2026,QB,2,J.J. McCarthy,00-0039923,0,offense,10,127.4
 NYG,2026,QB,3,Jaxson Dart,00-0040691,0,offense,13,241.9
@@ -1148,25 +1159,26 @@ NYJ,2026,DB,3,Minkah Fitzpatrick,00-0034789,0,defense,0,0.0
 NYJ,2026,DB,4,Brandon Stephens,00-0036987,0,defense,0,0.0
 NYJ,2026,DB,5,Jarvis Brownlee Jr.,00-0039372,0,defense,0,0.0
 NYJ,2026,DB,6,Nahshon Wright,00-0036986,0,defense,0,0.0
-NYJ,2026,DB,7,Andre Cisco,00-0036941,0,defense,0,0.0
-NYJ,2026,DB,8,Malachi Moore,00-0040165,0,defense,1,1.3
+NYJ,2026,DB,7,Malachi Moore,00-0040165,0,defense,1,1.3
+NYJ,2026,DB,8,Andre Cisco,00-0036941,0,defense,0,0.0
 NYJ,2026,DB,9,Qwan'tez Stiggers,00-0039789,0,defense,0,0.0
 NYJ,2026,DB,10,D'Angelo Ponds,00-0041038,0,defense,0,0.0
-NYJ,2026,DB,11,VJ Payne,00-0041120,0,defense,0,0.0
-NYJ,2026,DB,12,Tre Brown,00-0036885,0,defense,0,0.0
-NYJ,2026,DL,1,Kingsley Enagbare,00-0037083,0,defense,0,0.0
+NYJ,2026,DB,11,Andre Cisco,00-0036941,0,defense,0,0.0
+NYJ,2026,DB,12,VJ Payne,00-0041120,0,defense,0,0.0
+NYJ,2026,DB,13,Tre Brown,00-0036885,0,defense,0,0.0
+NYJ,2026,DL,1,David Bailey,00-0041026,0,defense,0,0.0
 NYJ,2026,DL,2,T'Vondre Sweat,00-0039886,0,defense,0,0.0
 NYJ,2026,DL,3,Harrison Phillips,00-0034782,0,defense,0,0.0
-NYJ,2026,DL,4,Will McDonald IV,00-0039142,0,defense,0,0.0
-NYJ,2026,DL,5,David Bailey,00-0041026,0,defense,0,0.0
+NYJ,2026,DL,4,Kingsley Enagbare,00-0037083,0,defense,0,0.0
+NYJ,2026,DL,5,Joseph Ossai,00-0036902,0,defense,0,0.0
 NYJ,2026,DL,6,Darrell Jackson Jr.,00-0041549,0,defense,0,0.0
 NYJ,2026,DL,7,Jowon Briggs,00-0039431,0,defense,0,0.0
-NYJ,2026,DL,8,Braiden McGregor,00-0039284,0,defense,0,0.0
-NYJ,2026,DL,9,Kingsley Jonathan,00-0037431,0,defense,0,0.0
+NYJ,2026,DL,8,Will McDonald IV,00-0039142,0,defense,0,0.0
+NYJ,2026,DL,9,Tyler Baron,00-0040196,0,defense,0,0.0
 NYJ,2026,DL,10,Jack Heflin,00-0036788,0,defense,0,0.0
-NYJ,2026,DL,11,Joseph Ossai,00-0036902,0,defense,0,0.0
-NYJ,2026,DL,12,David Onyemata,00-0033051,0,defense,0,0.0
-NYJ,2026,DL,13,Tyler Baron,00-0040196,0,defense,0,0.0
+NYJ,2026,DL,11,Braiden McGregor,00-0039284,0,defense,0,0.0
+NYJ,2026,DL,12,Kingsley Jonathan,00-0037431,0,defense,0,0.0
+NYJ,2026,DL,13,David Onyemata,00-0033051,0,defense,0,0.0
 NYJ,2026,LB,1,Demario Davis,00-0029607,0,defense,0,0.0
 NYJ,2026,LB,2,Jamien Sherwood,00-0036500,0,defense,0,0.0
 NYJ,2026,LB,3,Kiko Mauigoa,00-0040186,0,defense,0,0.0
@@ -1216,21 +1228,21 @@ PHI,2026,LB,1,Nolan Smith Jr.,00-0039013,0,defense,0,0.0
 PHI,2026,LB,2,Zack Baun,00-0036418,0,defense,0,0.0
 PHI,2026,LB,3,Jihaad Campbell,00-0040708,0,defense,0,0.0
 PHI,2026,LB,4,Jonathan Greenard,00-0036224,0,defense,0,0.0
-PHI,2026,LB,5,AJ Epenesa,00-0036192,0,defense,0,0.0
+PHI,2026,LB,5,Arnold Ebiketie,00-0038116,0,defense,0,0.0
 PHI,2026,LB,6,Smael Mondon Jr.,00-0040013,0,defense,0,0.0
 PHI,2026,LB,7,Jeremiah Trotter Jr.,00-0039826,0,defense,0,0.0
 PHI,2026,LB,8,Jalyx Hunt,00-0039740,0,defense,0,0.0
-PHI,2026,LB,9,Arnold Ebiketie,00-0038116,0,defense,0,0.0
+PHI,2026,LB,9,AJ Epenesa,00-0036192,0,defense,0,0.0
 PHI,2026,QB,1,Jalen Hurts,00-0036389,0,offense,16,303.1
-PHI,2026,QB,2,Andy Dalton,00-0027973,0,offense,3,11.6
-PHI,2026,QB,3,Tanner McKee,00-0038400,0,offense,2,14.2
+PHI,2026,QB,2,Tanner McKee,00-0038400,0,offense,2,14.2
+PHI,2026,QB,3,Andy Dalton,00-0027973,0,offense,3,11.6
 PHI,2026,QB,4,Cole Payton,00-0040891,0,offense,0,0.0
 PHI,2026,RB,1,Saquon Barkley,00-0034844,0,offense,16,230.3
-PHI,2026,RB,2,Tank Bigsby,00-0038555,0,offense,11,53.8
-PHI,2026,RB,3,Will Shipley,00-0039746,0,offense,10,19.5
+PHI,2026,RB,2,Will Shipley,00-0039746,0,offense,10,19.5
+PHI,2026,RB,3,Tank Bigsby,00-0038555,0,offense,11,53.8
 PHI,2026,TE,1,Dallas Goedert,00-0034351,0,offense,15,185.1
-PHI,2026,TE,2,Zach Ertz,00-0030061,0,offense,12,124.4
-PHI,2026,TE,3,Johnny Mundt,00-0033246,0,offense,8,20.1
+PHI,2026,TE,2,Johnny Mundt,00-0033246,0,offense,8,20.1
+PHI,2026,TE,3,Zach Ertz,00-0030061,0,offense,12,124.4
 PHI,2026,TE,4,E.J. Jenkins,00-0038498,0,offense,0,0.0
 PHI,2026,TE,5,Grant Calcaterra,00-0037086,0,offense,7,22.6
 PHI,2026,TE,6,Eli Stowers,00-0041483,0,offense,0,0.0
@@ -1242,25 +1254,25 @@ PHI,2026,WR,5,Darius Cooper,00-0040024,0,offense,5,18.2
 PHI,2026,WR,6,Elijah Moore,00-0036980,0,offense,6,27.9
 PHI,2026,WR,7,Britain Covey,00-0037132,0,offense,1,4.0
 PHI,2026,WR,8,Johnny Wilson,00-0039236,0,offense,0,0.0
-PIT,2026,DB,1,Joey Porter Jr.,00-0039167,0,defense,0,0.0
-PIT,2026,DB,2,Rayshawn Jenkins,00-0033941,0,defense,0,0.0
+PIT,2026,DB,1,Asante Samuel Jr.,00-0036617,0,defense,0,0.0
+PIT,2026,DB,2,Robert Spears-Jennings,00-0041401,0,defense,0,0.0
 PIT,2026,DB,3,Jaquan Brisker,00-0038135,0,defense,0,0.0
 PIT,2026,DB,4,Jamel Dean,00-0035699,0,defense,0,0.0
 PIT,2026,DB,5,Jalen Ramsey,00-0033055,0,defense,0,0.0
-PIT,2026,DB,6,Asante Samuel Jr.,00-0036617,0,defense,0,0.0
+PIT,2026,DB,6,Sean Murphy-Bunting,00-0035239,0,defense,0,0.0
 PIT,2026,DB,7,DeShon Elliott,00-0034277,0,defense,0,0.0
-PIT,2026,DB,8,Robert Spears-Jennings,00-0041401,0,defense,0,0.0
+PIT,2026,DB,8,Rayshawn Jenkins,00-0033941,0,defense,0,0.0
 PIT,2026,DB,9,Daylen Everette,00-0041393,0,defense,0,0.0
 PIT,2026,DB,10,Brandin Echols,00-0036504,0,defense,0,0.0
 PIT,2026,DB,11,Daequan Hardy,00-0039883,0,defense,0,0.0
 PIT,2026,DB,12,Donte Kent,00-0040232,0,defense,0,0.0
-PIT,2026,DL,1,Derrick Harmon,00-0040678,0,defense,0,0.0
+PIT,2026,DL,1,Yahya Black,00-0040188,0,defense,0,0.0
 PIT,2026,DL,2,Keeanu Benton,00-0039110,0,defense,0,0.0
 PIT,2026,DL,3,Cameron Heyward,00-0027969,0,defense,0,0.0
 PIT,2026,DL,4,Gabriel Rubio,,0,defense,0,0.0
 PIT,2026,DL,5,Sebastian Joseph-Day,00-0034810,0,defense,0,0.0
-PIT,2026,DL,6,Yahya Black,00-0040188,0,defense,0,0.0
-PIT,2026,DL,7,Kevin Jobity Jr.,00-0041261,0,defense,0,0.0
+PIT,2026,DL,6,Kevin Jobity Jr.,00-0041261,0,defense,0,0.0
+PIT,2026,DL,7,Derrick Harmon,00-0040678,0,defense,0,0.0
 PIT,2026,DL,8,Logan Lee,00-0039389,0,defense,0,0.0
 PIT,2026,LB,1,T.J. Watt,00-0033886,0,defense,0,0.0
 PIT,2026,LB,2,Payton Wilson,00-0039741,0,defense,0,0.0
@@ -1319,10 +1331,12 @@ SEA,2026,LB,10,Connor O'Toole,00-0040061,0,defense,0,0.0
 SEA,2026,QB,1,Sam Darnold,00-0034869,0,offense,17,241.4
 SEA,2026,QB,2,Drew Lock,00-0035704,0,offense,1,0.5
 SEA,2026,QB,3,Jalen Milroe,00-0040673,0,offense,2,0.4
-SEA,2026,RB,1,Jadarian Price,00-0041512,0,offense,0,0.0
-SEA,2026,RB,2,Emanuel Wilson,00-0038797,0,offense,16,92.5
-SEA,2026,RB,3,George Holani,00-0039299,0,offense,4,14.8
-SEA,2026,RB,4,Zach Charbonnet,00-0039165,0,offense,16,179.4
+SEA,2026,RB,1,Emanuel Wilson,00-0038797,0,offense,16,92.5
+SEA,2026,RB,2,George Holani,00-0039299,0,offense,4,14.8
+SEA,2026,RB,3,Velus Jones Jr.,00-0037745,0,offense,1,3.2
+SEA,2026,RB,4,Robert Henry Jr.,00-0041178,0,offense,0,0.0
+SEA,2026,RB,5,Zach Charbonnet,00-0039165,0,offense,16,179.4
+SEA,2026,RB,6,Jadarian Price,00-0041512,0,offense,0,0.0
 SEA,2026,TE,1,AJ Barner,00-0039793,0,offense,17,147.3
 SEA,2026,TE,2,Eric Saubert,00-0033576,0,offense,3,7.1
 SEA,2026,TE,3,Elijah Arroyo,00-0040739,0,offense,9,36.9
@@ -1355,13 +1369,13 @@ SF,2026,DL,6,Naquan Jones,00-0036695,0,defense,0,0.0
 SF,2026,DL,7,James Thompson Jr.,THO581952,0,defense,0,0.0
 SF,2026,DL,8,Ogbo Okoronkwo,00-0034807,0,defense,0,0.0
 SF,2026,DL,9,Khalid Kareem,00-0036341,0,defense,0,0.0
-SF,2026,DL,10,C.J. West,00-0040711,0,defense,0,0.0
+SF,2026,DL,10,Sebastian Valdez,00-0040560,0,defense,0,0.0
 SF,2026,DL,11,Alfred Collins,00-0040721,0,defense,0,0.0
-SF,2026,DL,12,Viliami Fehoko Jr.,00-0038575,0,defense,0,0.0
+SF,2026,DL,12,Mykel Williams,00-0040660,0,defense,0,0.0
 SF,2026,DL,13,Sam Okuayinonu,00-0037602,0,defense,0,0.0
-SF,2026,DL,14,Mykel Williams,00-0040660,0,defense,0,0.0
-SF,2026,DL,15,Mikail Kamara,00-0041360,0,defense,0,0.0
-SF,2026,DL,16,Andrew Farmer II,00-0038865,0,defense,0,0.0
+SF,2026,DL,14,C.J. West,00-0040711,0,defense,0,0.0
+SF,2026,DL,15,Andrew Farmer II,00-0038865,0,defense,0,0.0
+SF,2026,DL,16,Mikail Kamara,00-0041360,0,defense,0,0.0
 SF,2026,LB,1,Dre Greenlaw,00-0034982,0,defense,0,0.0
 SF,2026,LB,2,Fred Warner,00-0034815,0,defense,0,0.0
 SF,2026,LB,3,Jaden Dugger,00-0041078,0,defense,0,0.0
@@ -1382,7 +1396,7 @@ SF,2026,TE,3,Brayden Willis,00-0038643,0,offense,0,0.0
 SF,2026,TE,4,Jake Tonges,00-0037112,0,offense,9,93.3
 SF,2026,WR,1,Mike Evans,00-0031408,0,offense,7,84.8
 SF,2026,WR,2,Deebo Samuel,00-0035719,0,offense,16,188.2
-SF,2026,WR,3,KhaDarel Hodge,00-0034854,0,offense,1,6.1
+SF,2026,WR,3,Brandin Cooks,00-0031236,0,offense,11,51.9
 SF,2026,WR,4,Jacob Cowing,00-0039365,0,offense,0,0.0
 SF,2026,WR,5,Jordan Watkins,00-0040172,0,offense,2,4.6
 SF,2026,WR,6,Christian Kirk,00-0034775,0,offense,10,57.2
@@ -1487,12 +1501,12 @@ WAS,2026,DB,2,Nick Cross,00-0037616,0,defense,0,0.0
 WAS,2026,DB,3,Jeremy Reaves,00-0034465,0,defense,0,0.0
 WAS,2026,DB,4,Fabian Moreau,00-0033918,0,defense,0,0.0
 WAS,2026,DB,5,Amik Robertson,00-0036375,0,defense,0,0.0
-WAS,2026,DB,6,Isaac Yiadom,00-0034780,0,defense,0,0.0
+WAS,2026,DB,6,Trey Amos,00-0040731,0,defense,0,0.0
 WAS,2026,DB,7,Tyler Owens,00-0039681,0,defense,0,0.0
 WAS,2026,DB,8,Percy Butler,00-0038100,0,defense,0,0.0
 WAS,2026,DB,9,Mike Sainristil,00-0039898,0,defense,0,0.0
-WAS,2026,DB,10,Quan Martin,00-0039149,0,defense,0,0.0
-WAS,2026,DB,11,Trey Amos,00-0040731,0,defense,0,0.0
+WAS,2026,DB,10,Mike Sainristil,00-0039898,0,defense,0,0.0
+WAS,2026,DB,11,Quan Martin,00-0039149,0,defense,0,0.0
 WAS,2026,DL,1,Tim Settle,00-0034397,0,defense,0,0.0
 WAS,2026,DL,2,Daron Payne,00-0034333,0,defense,0,0.0
 WAS,2026,DL,3,Javon Kinlaw,00-0036260,0,defense,0,0.0
@@ -1525,7 +1539,7 @@ WAS,2026,TE,4,Colson Yankoff,00-0039686,0,offense,2,3.8
 WAS,2026,WR,1,Terry McLaurin,00-0035659,0,offense,10,114.2
 WAS,2026,WR,2,Stefon Diggs,00-0031588,0,offense,17,210.3
 WAS,2026,WR,3,Antonio Williams,00-0041040,0,offense,0,0.0
-WAS,2026,WR,4,Dyami Brown,00-0036626,0,offense,9,49.7
-WAS,2026,WR,5,Treylon Burks,00-0037742,0,offense,6,29.0
-WAS,2026,WR,6,Jaylin Lane,00-0040164,0,offense,9,37.4
-WAS,2026,WR,7,Luke McCaffrey,00-0039355,0,offense,6,49.3
+WAS,2026,WR,4,Treylon Burks,00-0037742,0,offense,6,29.0
+WAS,2026,WR,5,Dyami Brown,00-0036626,0,offense,9,49.7
+WAS,2026,WR,6,Luke McCaffrey,00-0039355,0,offense,6,49.3
+WAS,2026,WR,7,Jaylin Lane,00-0040164,0,offense,9,37.4

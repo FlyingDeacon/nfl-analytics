@@ -187,7 +187,12 @@ def _as_blocked(pairs: tuple) -> dict:
 # The sheet is the league's own record and changes only when someone picks, so
 # a long TTL is plenty. The key is bumped by the hour rather than being left to
 # the TTL alone so that Reload From Disk does not silently serve a stale board.
-_SHEET_TTL_KEY = pd.Timestamp.now(tz="US/Eastern").floor("h")
+#
+# "America/New_York", not "US/Eastern": the two name the same zone, but the
+# latter is a backward-compatibility alias that the slim tzdata on Streamlit
+# Cloud's Python 3.14 image does not ship, and looking it up there takes the
+# whole page down. The rest of the app already uses the canonical name.
+_SHEET_TTL_KEY = pd.Timestamp.now(tz="America/New_York").floor("h")
 
 
 @st.cache_data(show_spinner="Reading the league sheet…", ttl=3600)
