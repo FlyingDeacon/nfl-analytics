@@ -293,7 +293,23 @@
       "Bash(curl -sL \"https://docs.google.com/spreadsheets/d/1dy9w4VW1YIp0vfsYgRhPrlN2AKCZ2-gFhWfKeUziAng/export?format=csv&gid=163634909\" -o ch_status.csv)",
       "Bash(curl -sL \"https://docs.google.com/spreadsheets/d/1dy9w4VW1YIp0vfsYgRhPrlN2AKCZ2-gFhWfKeUziAng/export?format=csv&gid=1280285444\" -o ch_picks.csv)",
       "Bash(sed -i '' 's/^POOL = 74$/POOL = 63/; s/, 3, pool_size=POOL/, 4, pool_size=POOL/; s/tw, state\\\\[eid\\\\], 3, blocked/tw, state[eid], 4, blocked/; s/Week 3 board/Week 4 board/' /tmp/wk3check.py)",
-      "Bash(.venv/bin/python /tmp/wk3check.py)"
+      "Bash(.venv/bin/python /tmp/wk3check.py)",
+      "Bash(curl -sL \"https://docs.google.com/spreadsheets/d/1dy9w4VW1YIp0vfsYgRhPrlN2AKCZ2-gFhWfKeUziAng/export?format=csv&gid=961423589\" -o ch_mobile.csv)",
+      "Bash(.venv/bin/python /tmp/field.py)",
+      "Bash(timeout 1800 .venv/bin/python /tmp/sim2.py)",
+      "Bash(.venv/bin/python /tmp/sim2.py)",
+      "Bash(.venv/bin/python /tmp/check2.py)",
+      "Bash(grep -rn \"def project_season\" -A 30 src/ app/ --include=*.py)",
+      "Bash(../.venv/bin/python -c \":*)",
+      "Bash(.venv/bin/python /tmp/joint2.py)",
+      "Bash(.venv/bin/python /tmp/joint3.py)",
+      "Bash(timeout 870 .venv/bin/python /tmp/j4.py)",
+      "Bash(grep -rn \"Refresh Data\" app/ --include=*.py)",
+      "Bash(grep -v \"WARNING\\\\|Warning:\\\\|streamlit run\\\\|^$\\\\|view a Streamlit\")",
+      "Bash(grep -v \"WARNING\\\\|Warning:\\\\|streamlit run\\\\|run it with\\\\|^$\\\\|view a Streamlit\")",
+      "Bash(grep -rin \"streamlit.app\\\\|share.streamlit\\\\|herokuapp\\\\|render.com\\\\|fly.dev\" README.md *.md .streamlit/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8601/Record_Predictions)",
+      "Bash(.venv/bin/python -c \"import json;json.load\\(open\\(''.claude/settings.local.json''\\)\\);print\\(''valid JSON''\\)\")"
     ]
   }
 }
