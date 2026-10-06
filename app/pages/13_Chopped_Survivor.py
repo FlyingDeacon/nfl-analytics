@@ -100,21 +100,30 @@ PRIORITY = ("alaina", "blake")
 # to a 30% one as the season shortens — the same constant would mean something
 # different every week. A ratio holds its meaning.
 #
-# 0.82 is the peak of a sweep scored the way the pot is actually won: both
-# entries in the same simulated pool against the league's real surviving field
-# read off the sheet, counting a win when *either* of them takes it. Re-swept at
-# Week 5 over 15,000 seasons x 7 seeds, it returns 10.5% against 6.0% for the
-# 0.86 it replaces, and its worst seed (10.1%) still beats every other setting's
-# best. Earlier sweeps scored each entry alone against the whole field and
-# picked 0.88; that framing is wrong, because the household does not care which
-# of the two wins.
+# One gate per entry, because the two are not in the same race. Blake has his
+# mulligan and reaches Week 18 about one season in nine; Alaina spent hers in
+# Week 1, so her next loss ends it and she gets there about one in fifty. Asking
+# a single constant to serve both costs real money: swept together they peak at
+# 10.5%, swept apart at 12.2%.
 #
-# The surface is rugged — one flipped week cascades through the rest of the plan,
-# so 0.80 and 0.84 both score around 7% while 0.82 spikes. Re-sweep rather than
-# interpolate. What is stable across every sweep so far is the direction: gates
-# at 0.90 and above collapse, because they force both entries onto whichever
-# team the whole pool is already on.
-SURVIVAL_KEEP = 0.82
+# The direction is the opposite of the intuition. The entry with no safety net
+# is *not* the one to gamble with — Alaina tightens to 0.94, because her only
+# realistic path to the pot is surviving into the tiebreak room, and a lottery
+# ticket that is already losing does not improve by buying worse odds. Blake,
+# who can absorb one loss, is the one who can afford to chase ground.
+#
+# Both numbers are peaks of a sweep scored the way the pot is actually won: both
+# entries in the same simulated pool against the league's real surviving field
+# read off the sheet, counting a win when *either* of them takes it. Week 5,
+# 12,000 seasons x 6 seeds; the winning pair's worst seed (11.95%) beats every
+# other pair's best.
+#
+# Treat these as re-swept weekly, not as constants. The surface is rugged, and
+# Blake's in particular is a knife-edge — 0.80 scores 8.8% and 0.84 scores 6.5%
+# against 12.2% at 0.82. Alaina's is flatter (0.88-1.00 all land between 10.7%
+# and 12.2%). What has been stable across every sweep is only the shape: gate
+# hard enough to stay in the room, then win the room on the tiebreaker.
+SURVIVAL_KEEP = {"blake": 0.82, "alaina": 0.94}
 AGGRESSION_FLOOR = 0.60
 
 # Price of a projected win burnt off the tiebreaker, in units of pot EV. The
@@ -231,7 +240,7 @@ def _plan_around(used: frozenset, week: int, team: str, blocked: tuple, key: tup
                         blocked=_as_blocked(blocked))
 
 
-def _recommend(opts: pd.DataFrame) -> pd.Series:
+def _recommend(opts: pd.DataFrame, eid: str) -> pd.Series:
     """The row to put on the card: the best pick for winning the pot, not for
     reaching Week 18.
 
@@ -241,6 +250,9 @@ def _recommend(opts: pd.DataFrame) -> pd.Series:
     the ground lost at the end, because the pick is also a retirement: whatever
     you play is gone from the inventory the tiebreaker scores.
 
+    The budget is `eid`'s own, not a house setting: a mulligan in hand buys the
+    room to chase ground that an entry on its last life does not have.
+
     `opts` arrives sorted by season survival, so its top row is the pure
     survival answer, which is what this falls back to when the pot has not been
     priced or the floor rules everything out.
@@ -248,7 +260,7 @@ def _recommend(opts: pd.DataFrame) -> pd.Series:
     if "pot_ev" not in opts.columns or "team_wins" not in opts.columns:
         return opts.iloc[0]
     near = opts[(opts["season_survival"]
-                 >= SURVIVAL_KEEP * opts["season_survival"].max())
+                 >= SURVIVAL_KEEP[eid] * opts["season_survival"].max())
                 & (opts["win_prob"] >= AGGRESSION_FLOOR)]
     if near.empty:
         return opts.iloc[0]
@@ -377,7 +389,9 @@ st.info(
     "0.00 keeps the most in reserve) and **Burn** prices the second (the projected "
     "wins of the team you are spending, which is what the pot's tiebreaker is settled "
     "in). The recommendation is not the 0.00 pick: it is the best **EV** inside a "
-    f"survival budget of {SURVIVAL_KEEP:.0%}, because reaching Week 18 in a crowd is "
+    "survival budget — "
+    + " and ".join(f"{SURVIVAL_KEEP[e]:.0%} for {n}" for e, n in ENTRIES)
+    + ", set by who still has a mulligan — because reaching Week 18 in a crowd is "
     "not the same thing as winning.",
     icon="🧠",
 )
@@ -427,7 +441,7 @@ for eid in PRIORITY:
             s["blueprint"] = pd.DataFrame()
             continue
         opts = opts.assign(team_wins=opts["team"].map(TEAM_WINS))
-        best = _recommend(opts)
+        best = _recommend(opts, eid)
         plan = _plan_around(s["spent_elsewhere"], cur_week, best["team"], blk, PROJ_KEY)
         board[eid] = {"opts": opts, "best": best, "plan": plan}
 
@@ -441,7 +455,7 @@ for col, (eid, name) in zip(st.columns(2), ENTRIES):
         st.markdown(f"### {name}")
         st.caption(
             f"**Playing for the pot.** Of the picks that keep "
-            f"{SURVIVAL_KEEP:.0%} of the best season still available, the one "
+            f"{SURVIVAL_KEEP[eid]:.0%} of the best season still available, the one "
             "that gains the most ground on the field — and retires the least "
             "useful team while doing it.")
 
@@ -622,10 +636,10 @@ for col, (eid, name) in zip(st.columns(2), ENTRIES):
         ev_best = opts.loc[opts["pot_ev"].idxmax()]
         if (ev_best["team"] != best["team"]
                 and ev_best["pot_ev"] - best["pot_ev"] >= EV_EDGE_MIN):
-            _survival_gate = SURVIVAL_KEEP * opts["season_survival"].max()
+            _survival_gate = SURVIVAL_KEEP[eid] * opts["season_survival"].max()
             _reason = (f'it leaves only {ev_best["season_survival"]:.1%} of a season '
                        f'against {best["season_survival"]:.1%}, below the '
-                       f'{SURVIVAL_KEEP:.0%} floor'
+                       f'{SURVIVAL_KEEP[eid]:.0%} floor'
                        if ev_best["season_survival"] < _survival_gate else
                        f'it would retire a {ev_best["team_wins"]:.1f}-win team against '
                        f'{best["team_wins"]:.1f}, and the tiebreaker is paid out of '
@@ -875,8 +889,9 @@ today is what leaves you with nothing in Week {_worst_week}, which is why a team
 a better number can sit on the board untouched and the **Season blueprint** names the
 week it is being saved for.
 
-Anything that keeps {SURVIVAL_KEEP:.0%} of the best season still available — and wins
-outright at least {AGGRESSION_FLOOR:.0%} of the time — is treated as equally
+Anything that keeps enough of the best season still available — {SURVIVAL_KEEP["blake"]:.0%}
+for Blake, {SURVIVAL_KEEP["alaina"]:.0%} for Alaina, who has no mulligan left to spend —
+and wins outright at least {AGGRESSION_FLOOR:.0%} of the time — is treated as equally
 survivable, and the next two criteria pick between them. The discipline this asks for
 is refusing an 82% week when the tool says 78%: that gap is the tool charging you for
 the team you would have burned.
