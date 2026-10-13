@@ -280,14 +280,19 @@ cur_week = st.sidebar.number_input(
     help=f"Defaults to the live week ({LIVE_WEEK}) off the schedule. Change it to "
          f"look ahead — nothing you do here writes a pick.")
 cur_week = int(cur_week)
+# Counted off the league sheet rather than typed in. The field halves over the
+# first month, and a pool size left at last month's number quietly misprices
+# every EV on the page — being contrarian is worth far more against 43 entries
+# than against 87. Falls back to a hand-set number only if the sheet is down.
+_live_board = _load_leaderboard(_SHEET_TTL_KEY)
+_alive_now = int(_live_board["alive"].sum()) if _live_board is not None else 60
 pool_size = int(st.sidebar.number_input(
-    "Entries still alive", min_value=2, max_value=1000, value=60, step=1,
+    "Entries still alive", min_value=2, max_value=1000, value=_alive_now, step=1,
     key="cs_pool",
     help="Drives the EV column. Pot share is what you are actually playing for, "
          "and how much being different is worth depends entirely on how many "
-         "people you would be splitting with. Count the entries that can still "
-         "win, not the entries that bought in — after Week 4 that is 60 of the "
-         "original 87, the other 27 having been chopped."))
+         "people you would be splitting with. Counted off the league sheet: "
+         f"{_alive_now} of the original 87 can still win."))
 diverge = st.sidebar.toggle(
     "Split the two entries", value=False, key="cs_diverge",
     help="Keeps Blake off every team in Alaina's blueprint. Off by default: the "
