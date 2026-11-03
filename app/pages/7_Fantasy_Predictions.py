@@ -1160,6 +1160,17 @@ def _rookie_scoring_scalar(pos: str, scoring: str) -> float:
 weekly = load_weekly()
 teams  = load_teams()
 
+# This page projects PREDICTION_YEAR, so it may only ever see seasons before it.
+# weekly.csv now carries in-progress PREDICTION_YEAR games (ingested for next
+# year's retrain), and without this cutoff they would silently retarget the
+# board: build_predictions_core's as_of_season=None means "latest season in the
+# frame", so a partial 2026 would make this a 2027 board off 8 games of
+# features. Cutting here rather than only passing as_of_season covers the second
+# consumer too — _force_include_proj_games() derives its qualifying cohort from
+# max(season) in this same frame (see its `latest`), so a partial season would
+# move proj_games for the force-included starters as well.
+weekly = weekly[weekly["season"] < PREDICTION_YEAR].copy()
+
 if weekly.empty:
     st.warning("No weekly player data found. Run load_nfl_data.py first.")
     st.stop()
@@ -1233,14 +1244,19 @@ def build_predictions(weekly_df: pd.DataFrame, target_col: str = "fantasy_points
     TARGET_COL = target_col
 
     # Pure ridge/PPG-blend engine now lives in model/projection.py — no globals,
-    # explicit signature, reused as-is by scripts/backtest_model.py. This call
-    # (as_of_season=None) trains on every season pair in weekly_df, same as the
-    # original inline implementation.
+    # explicit signature, reused as-is by scripts/backtest_model.py.
+    #
+    # as_of_season is stated rather than left at None so the target season is a
+    # declared fact instead of a side effect of how far weekly.csv happens to
+    # run. It is redundant with the cutoff applied at load today, deliberately:
+    # this is the engine's own contract for "project season S off S-1", and it
+    # is what keeps the board pinned if that cutoff is ever moved or relaxed.
     config = ProjectionConfig(
         target_col=TARGET_COL, name_col=name_col, pos_col=pos_col,
         team_col=team_col, track_col=track_col,
     )
-    all_preds, hist = build_predictions_core(weekly_df, config)
+    all_preds, hist = build_predictions_core(weekly_df, config,
+                                             as_of_season=PREDICTION_YEAR)
     if all_preds.empty:
         return all_preds, hist
 

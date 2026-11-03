@@ -7,10 +7,13 @@ Streamlit pages already consume:
   2. depth_charts.csv — rebuild the custom offense/defense depth chart from the
      latest 2026 nflverse snapshot (reflects offseason moves), with 2025
      regular-season GP + PPR points merged in (Team Profile page).
+  3. weekly.csv — append the in-progress 2026 player game logs, which is what
+     next year's retrain and the big-board grading will be measured against.
 
 Sources (nflverse-data / nfldata):
   - https://github.com/nflverse/nfldata/raw/master/data/games.csv
   - https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.csv
+  - https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2026.csv
 
 Run:  .venv/bin/python scripts/update_2026_data.py
 """
@@ -213,8 +216,77 @@ def update_headshots() -> None:
     print(f"headshots.csv: {len(out)} players for {SEASON}")
 
 
+# ── 5. Weekly player logs ────────────────────────────────────────────────────
+WEEKLY_URL = (
+    "https://github.com/nflverse/nflverse-data/releases/download/"
+    f"stats_player/stats_player_week_{SEASON}.csv"
+)
+
+# The release renamed four columns that weekly.csv still carries under their old
+# names. `passing_interceptions` matters most: as `interceptions` it is a live QB
+# model feature (model.projection.POSITION_FEATURES), so dropping the rename
+# would feed the 2027 retrain a column of zeros for QB picks.
+WEEKLY_RENAMES = {
+    "team": "recent_team",
+    "passing_interceptions": "interceptions",
+    "sacks_suffered": "sacks",
+    "sack_yards_lost": "sack_yards",
+}
+
+
+def update_weekly() -> None:
+    """Append the in-progress SEASON player game logs to weekly.csv.
+
+    This is the raw material for next year's retrain and for grading the frozen
+    big board in data/snapshots/, neither of which can be reconstructed later —
+    the nflverse release is a live file, so the only record of what a season
+    looked like is the copy taken from it.
+
+    Safe to run mid-season and repeatedly: SEASON's rows are dropped and
+    replaced wholesale, so a re-run after Week 9 corrects Week 8's stat
+    revisions rather than double-counting them.
+
+    Note this moves numbers on every page that reads weekly.csv. The Fantasy
+    Predictions board is deliberately insulated — it cuts to seasons before
+    PREDICTION_YEAR — but player and team pages will start showing SEASON.
+    """
+    path = RAW / "weekly.csv"
+    existing = pd.read_csv(path, low_memory=False)
+    existing.columns = [c.lower().strip() for c in existing.columns]
+
+    src = pd.read_csv(WEEKLY_URL, low_memory=False)
+    src.columns = [c.lower().strip() for c in src.columns]
+    src = src.rename(columns=WEEKLY_RENAMES)
+    src = src[src["season"] == SEASON].copy()
+    if src.empty:
+        print(f"weekly.csv: no {SEASON} rows upstream yet, left unchanged")
+        return
+
+    for c in ("recent_team", "opponent_team"):
+        if c in src.columns:
+            src[c] = _norm_abbr(src[c])
+
+    # Match weekly.csv's schema exactly, in order. Anything the release no
+    # longer publishes is written empty rather than omitted, so the column
+    # layout stays stable for every existing reader.
+    missing = [c for c in existing.columns if c not in src.columns]
+    for c in missing:
+        src[c] = pd.NA
+    new = src[list(existing.columns)]
+
+    kept = existing[existing["season"] != SEASON]
+    out = pd.concat([kept, new], ignore_index=True)
+    out.to_csv(path, index=False)
+
+    weeks = sorted(new["week"].dropna().unique().astype(int))
+    print(f"weekly.csv: +{len(new)} player-weeks for {SEASON} "
+          f"(weeks {weeks[0]}–{weeks[-1]}, total {len(out)} rows)"
+          + (f"; empty columns: {', '.join(missing)}" if missing else ""))
+
+
 if __name__ == "__main__":
     update_schedule()
     update_def_stats()
     update_depth_chart()
     update_headshots()
+    update_weekly()
