@@ -457,15 +457,14 @@ for eid in PRIORITY:
 for col, (eid, name) in zip(st.columns(2), ENTRIES):
     s = state[eid]
     with col:
-        st.markdown(f"### {name}")
-        st.caption(
-            f"**Playing for the pot.** Of the picks that keep "
-            f"{SURVIVAL_KEEP[eid]:.0%} of the best season still available, the one "
-            "that gains the most ground on the field — and retires the least "
-            "useful team while doing it.")
-
         # ── Out of the pool ───────────────────────────────────────────────────
+        # Checked before anything is drawn. The header carries the verdict and
+        # the strategy note is skipped entirely: a chopped entry has nothing
+        # left to solve — the loop above does not even price one — so quoting it
+        # a survival gate and a "playing for the pot" framing reads as a live
+        # recommendation that just failed to render.
         if s["out_week"] is not None and s["out_week"] < cur_week:
+            st.markdown(f"### {name} · Chopped")
             gone = s["history"][s["history"]["week"] == s["out_week"]].iloc[0]
             st.error(f"Chopped in Week {s['out_week']} — **{gone['team']}** lost to "
                      f"{gone['opponent']}, and the mulligan was already gone "
@@ -473,6 +472,13 @@ for col, (eid, name) in zip(st.columns(2), ENTRIES):
             st.caption(f"{len(s['used'])} teams spent. Nothing left to decide, but the "
                        "log below still shows how the run went.")
             continue
+
+        st.markdown(f"### {name}")
+        st.caption(
+            f"**Playing for the pot.** Of the picks that keep "
+            f"{SURVIVAL_KEEP[eid]:.0%} of the best season still available, the one "
+            "that gains the most ground on the field — and retires the least "
+            "useful team while doing it.")
 
         _mull_note = ("🛟 mulligan intact" if s["mulligan"] else
                       f"⚠️ mulligan spent in Week {s['mulligan_week']} — the next loss ends it")

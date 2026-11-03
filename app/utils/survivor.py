@@ -31,8 +31,6 @@ optimum in milliseconds, so the plan can be recomputed on every interaction.
 """
 from __future__ import annotations
 
-from zoneinfo import ZoneInfo
-
 import numpy as np
 import pandas as pd
 from scipy.optimize import linear_sum_assignment
@@ -93,17 +91,31 @@ def blend_probabilities(games: pd.DataFrame, schedule: pd.DataFrame,
 
     Adds p_home_mkt (NaN when unpriced), p_home_blend, and has_market so callers
     can show which games are anchored to a real line.
+
+    A game that has already been played is left alone. _game_probs locks those to
+    their real outcome (p_home of exactly 1 or 0), and blending a result against
+    the line it opened at turns a fact back into a guess — at MARKET_WEIGHT 0.70
+    it put Dallas at 51.9% in a Week 8 game they had already lost 30-33. Nor is
+    the blend clamped on a played game: P_CEIL exists so the model never claims
+    more certainty than a football game supports, which is not a statement about
+    games that are over.
     """
     out = games.copy()
     mkt = market_probabilities(schedule, season)
     out = out.merge(mkt, on=["week", "home_team", "away_team"], how="left")
+    played = out["played"] if "played" in out.columns else pd.Series(False, index=out.index)
+    played = played.fillna(False).astype(bool)
+    # has_market stays a fact about the fixture rather than about the blend: a
+    # finished game really did have a line, and the matchup board footnotes it
+    # as "Vegas 62%", which is still true after the whistle.
     out["has_market"] = out["p_home_mkt"].notna()
-    out["p_home_blend"] = np.where(
+    blend = np.where(
         out["has_market"],
         MARKET_WEIGHT * out["p_home_mkt"].fillna(0.0)
         + (1.0 - MARKET_WEIGHT) * out["p_home"],
         out["p_home"],
     ).clip(P_FLOOR, P_CEIL)
+    out["p_home_blend"] = np.where(played, out["p_home"], blend)
     return out
 
 
@@ -114,15 +126,32 @@ def team_week_table(games: pd.DataFrame, prob_col: str = "p_home_blend") -> pd.D
     game-level table cannot answer without knowing which side they are on.
     """
     p = games[prob_col].clip(P_FLOOR, P_CEIL)
+    played = (games["played"].fillna(False).astype(bool) if "played" in games.columns
+              else pd.Series(False, index=games.index))
     home = pd.DataFrame({
         "week": games["week"], "team": games["home_team"],
         "opponent": games["away_team"], "is_home": True, "win_prob": p,
+        "played": played,
     })
     away = pd.DataFrame({
         "week": games["week"], "team": games["away_team"],
         "opponent": games["home_team"], "is_home": False, "win_prob": 1.0 - p,
+        "played": played,
     })
     return pd.concat([home, away], ignore_index=True).sort_values(["week", "team"])
+
+
+def _playable(tw: pd.DataFrame) -> pd.DataFrame:
+    """Drop games that are already over.
+
+    A finished game is locked to its real result, which makes the team that won
+    look like a free 100% to the planner and the team that lost look impossible.
+    Both are nonsense as *picks* — the deadline is kickoff, so neither can be
+    chosen any more — and on a Monday the live week is mostly made of them.
+    """
+    if "played" not in tw.columns:
+        return tw
+    return tw[~tw["played"].fillna(False).astype(bool)]
 
 
 def _cost_matrix(tw: pd.DataFrame, teams: list[str], weeks: list[int]) -> np.ndarray:
@@ -162,6 +191,7 @@ def optimal_plan(tw: pd.DataFrame, used_teams: set[str], start_week: int,
     Returns week / team / opponent / is_home / win_prob, or an empty frame if
     no complete assignment exists.
     """
+    tw = _playable(tw)
     weeks = [w for w in sorted(tw["week"].unique()) if start_week <= w <= end_week]
     teams = sorted(set(tw["team"].unique()) - set(used_teams))
     if not weeks or len(teams) < len(weeks):
@@ -405,7 +435,8 @@ def week_options(tw: pd.DataFrame, used_teams: set[str], week: int,
     best = optimal_plan(tw, used_teams, week, end_week, blocked=blocked)
     best_surv = survival_probability(best)
 
-    avail = tw[(tw["week"] == week) & (~tw["team"].isin(used_teams))]
+    avail = _playable(tw)
+    avail = avail[(avail["week"] == week) & (~avail["team"].isin(used_teams))]
     if blocked:
         avail = avail[~avail["team"].isin(blocked.get(week, ()))]
     rows = []
@@ -430,7 +461,8 @@ def week_options(tw: pd.DataFrame, used_teams: set[str], week: int,
         # (It does assume the field has no used-team constraint of its own, which
         # is why popularity is worth overriding with real grid numbers when you
         # can read them.)
-        slate = tw[tw["week"] == week].drop_duplicates("team").set_index("team")
+        slate = (_playable(tw)[lambda d: d["week"] == week]
+                 .drop_duplicates("team").set_index("team"))
         pop = popularity_estimate(slate["win_prob"])
         ev = pick_ev(slate["win_prob"], pop, slate["opponent"], pool_size)
         out["popularity"] = out["team"].map(pop)
@@ -481,8 +513,6 @@ def expected_season_wins(tw: pd.DataFrame, schedule: pd.DataFrame,
 # in Week 9 rather than only on draft night: which week is live, when the pick is
 # due, and whether the picks already made won or lost.
 
-_LEAGUE_TZ = ZoneInfo("America/New_York")
-
 
 def _regular_season(schedule: pd.DataFrame, season: int = 2026) -> pd.DataFrame:
     return schedule[(schedule["season"] == season)
@@ -498,24 +528,34 @@ def _kickoffs(games: pd.DataFrame) -> pd.Series:
     return day + clock.fillna(pd.Timedelta(0))
 
 
-def current_week(schedule: pd.DataFrame, today=None, season: int = 2026) -> int:
-    """The week the pool is picking right now.
+def current_week(schedule: pd.DataFrame, season: int = 2026) -> int:
+    """The week the pool is picking right now: the earliest with a game still to play.
 
     A week stays current until its last game has been played, not until its
     first: on a Sunday you are still in the week whose Thursday game is already
-    over. Past the end of the schedule it pins to 18 rather than running off.
+    over. Past the end of the schedule it pins to the last week rather than
+    running off.
+
+    "Still to play" is read off the scores, not off the calendar. Going by date
+    kept a week live for the whole of its final day — on the Monday after Week 8
+    the page still opened on Week 8 and offered a board of thirteen settled
+    games, Arizona among them at 100% in a game they had already won. Results
+    are also the thing that actually ends a week: a postponement moves the game
+    but not the date already written in the file.
     """
     games = _regular_season(schedule, season)
     if games.empty:
         return 1
-    # Eastern, not the server's clock: Streamlit Cloud runs in UTC, where a
-    # Monday night game is already Tuesday and the week would tick over while
-    # the last game of it is still being played.
-    today = (pd.Timestamp(today) if today is not None
-             else pd.Timestamp.now(tz=_LEAGUE_TZ).normalize().tz_localize(None))
-    last = pd.to_datetime(games["gameday"], errors="coerce").groupby(games["week"]).max()
-    live = last[last >= today]
-    return int(live.index.min()) if not live.empty else int(last.index.max())
+
+    if {"home_score", "away_score"} <= set(games.columns):
+        scored = (pd.to_numeric(games["home_score"], errors="coerce").notna()
+                  & pd.to_numeric(games["away_score"], errors="coerce").notna())
+    else:
+        scored = pd.Series(False, index=games.index)
+
+    pending = games.loc[~scored, "week"]
+    # Nothing pending means the season is over.
+    return int(pending.min()) if not pending.empty else int(games["week"].max())
 
 
 def week_deadline(schedule: pd.DataFrame, week: int, season: int = 2026,
