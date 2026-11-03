@@ -1,0 +1,434 @@
+player,pos,team,predicted_pts,pred_ppg,proj_games,vor,round_grade,injury_risk,is_rookie,espn_overall
+Jahmyr Gibbs,RB,DET,334.8,22.47,14.9,195.9,Rd 1,,False,1.0
+Bijan Robinson,RB,ATL,305.1,20.34,15.0,166.2,Rd 1,,False,4.0
+Puka Nacua,WR,LAR,303.2,20.21,15.0,159.2,Rd 1,      Yes      ,False,3.0
+Jaxon Smith-Njigba,WR,SEA,280.1,18.55,15.1,136.1,Rd 1,,False,5.0
+Jonathan Taylor,RB,IND,273.2,19.24,14.2,134.3,Rd 1,      Yes      ,False,8.0
+Amon-Ra St. Brown,WR,DET,255.2,17.13,14.9,111.2,Rd 1,,False,7.0
+James Cook,RB,BUF,247.6,16.62,14.9,108.7,Rd 1,,False,12.0
+Ja'Marr Chase,WR,CIN,251.4,16.87,14.9,107.4,Rd 1,,False,2.0
+De'Von Achane,RB,MIA,246.0,17.08,14.4,107.1,Rd 1,      Yes      ,False,10.0
+Trey McBride,TE,ARI,210.3,13.06,16.1,86.8,Rd 1,,False,14.0
+Omarion Hampton,RB,LAC,218.7,13.67,16.0,79.8,Rd 1,,False,32.0
+George Pickens,WR,DAL,219.6,14.84,14.8,75.6,Rd 2,,False,29.0
+Brock Bowers,TE,LV,195.0,12.19,16.0,71.5,Rd 2,,False,19.0
+Kyren Williams,RB,LAR,208.5,14.28,14.6,69.6,Rd 2,      Yes      ,False,49.0
+CeeDee Lamb,WR,DAL,212.0,14.93,14.2,68.0,Rd 2,      Yes      ,False,9.0
+Derrick Henry,RB,BAL,206.1,13.74,15.0,67.2,Rd 2,,False,23.0
+Kenneth Walker III,RB,KC,204.5,14.3,14.3,65.6,Rd 2,      Yes      ,False,28.0
+Christian McCaffrey,RB,SF,204.1,15.01,13.6,65.2,Rd 2,      Yes      ,False,6.0
+Travis Etienne,RB,NO,202.3,13.67,14.8,63.4,Rd 2,      Yes      ,False,46.0
+Jeremiyah Love,RB,ARI,199.8,14.27,14.0,60.9,Rd 2,,True,17.0
+Ashton Jeanty,RB,LV,198.2,13.21,15.0,59.3,Rd 2,      Yes      ,False,15.0
+Rashee Rice,WR,KC,200.0,13.33,15.0,56.0,Rd 2,      Yes      ,False,16.0
+Cam Skattebo,RB,NYG,191.5,11.97,16.0,52.6,Rd 3,,False,56.0
+Breece Hall,RB,NYJ,191.4,13.02,14.7,52.5,Rd 3,      Yes      ,False,35.0
+Malik Nabers,WR,NYG,194.6,12.97,15.0,50.6,Rd 3,      Yes      ,False,27.0
+Chase Brown,RB,CIN,189.1,13.13,14.4,50.2,Rd 3,,False,26.0
+Drake London,WR,ATL,192.6,13.56,14.2,48.6,Rd 3,,False,13.0
+D'Andre Swift,RB,CHI,180.9,12.22,14.8,42.0,Rd 3,      Yes      ,False,66.0
+Chris Olave,WR,NO,183.6,13.21,13.9,39.6,Rd 3,      Yes      ,False,20.0
+Josh Allen,QB,BUF,288.1,21.34,13.5,39.0,Rd 3,,False,31.0
+Quinshon Judkins,RB,CLE,175.4,11.69,15.0,36.5,Rd 3,,False,53.0
+Saquon Barkley,RB,PHI,175.0,12.07,14.5,36.1,Rd 3,,False,21.0
+Tyler Warren,TE,IND,159.2,9.83,16.2,35.7,Rd 3,,False,30.0
+Nico Collins,WR,HOU,177.9,12.62,14.1,33.9,Rd 4,      Yes      ,False,18.0
+Justin Jefferson,WR,MIN,177.2,12.14,14.6,33.2,Rd 4,      Yes      ,False,11.0
+Jaylen Warren,RB,PIT,171.8,11.77,14.6,32.9,Rd 4,      Yes      ,False,84.0
+Javonte Williams,RB,DAL,171.5,11.59,14.8,32.6,Rd 4,      Yes      ,False,41.0
+Colston Loveland,TE,CHI,155.2,10.01,15.5,31.7,Rd 4,,False,24.0
+Joe Burrow,QB,CIN,278.7,18.58,15.0,29.6,Rd 4,      Yes      ,False,52.0
+Bucky Irving,RB,TB,166.3,12.32,13.5,27.4,Rd 4,,False,59.0
+Lamar Jackson,QB,BAL,276.0,21.23,13.0,26.9,Rd 4,,False,39.0
+Jaylen Waddle,WR,DEN,170.8,11.78,14.5,26.8,Rd 4,      Yes      ,False,58.0
+Tucker Kraft,TE,GB,150.2,10.73,14.0,26.7,Rd 4,      Yes      ,False,57.0
+Jadarian Price,RB,SEA,165.6,10.35,16.0,26.7,Rd 4,,True,74.0
+Tetairoa McMillan,WR,CAR,170.0,11.26,15.1,26.0,Rd 5,,False,33.0
+A.J. Brown,WR,NE,169.3,11.76,14.4,25.3,Rd 5,      Yes      ,False,25.0
+Sam LaPorta,TE,DET,148.2,10.08,14.7,24.7,Rd 5,      Yes      ,False,50.0
+DeVonta Smith,WR,PHI,168.5,11.54,14.6,24.5,Rd 5,,False,40.0
+Alec Pierce,WR,IND,168.2,11.21,15.0,24.2,Rd 5,,False,92.0
+David Montgomery,RB,HOU,163.0,11.24,14.5,24.1,Rd 5,,False,69.0
+Tee Higgins,WR,CIN,166.8,12.0,13.9,22.8,Rd 5,      Yes      ,False,54.0
+TreVeyon Henderson,RB,NE,161.6,11.54,14.0,22.7,Rd 5,,False,76.0
+Kyle Pitts,TE,ATL,144.5,8.92,16.2,21.0,Rd 5,      Yes      ,False,37.0
+George Kittle,TE,SF,143.3,11.02,13.0,19.8,Rd 5,      Yes      ,False,63.0
+Harold Fannin Jr.,TE,CLE,141.2,8.88,15.9,17.7,Rd 5,,False,44.0
+Emeka Egbuka,WR,TB,161.1,10.67,15.1,17.1,Rd 6,      Yes      ,False,42.0
+Rome Odunze,WR,CHI,160.9,11.66,13.8,16.9,Rd 6,,False,61.0
+Jacory Croskey-Merritt,RB,WAS,153.8,10.25,15.0,14.9,Rd 6,,False,112.0
+Jaxson Dart,QB,NYG,264.0,18.86,14.0,14.9,Rd 6,      Yes      ,False,55.0
+Dallas Goedert,TE,PHI,138.3,9.28,14.9,14.8,Rd 6,      Yes      ,False,71.0
+Jalen Hurts,QB,PHI,263.4,19.66,13.4,14.3,Rd 6,      Yes      ,False,47.0
+Garrett Wilson,WR,NYJ,157.3,11.92,13.2,13.3,Rd 6,,False,22.0
+Jayden Daniels,QB,WAS,261.2,18.66,14.0,12.1,Rd 6,      Yes      ,False,34.0
+Rico Dowdle,RB,PIT,150.8,10.12,14.9,11.9,Rd 6,,False,87.0
+Zay Flowers,WR,BAL,155.5,10.3,15.1,11.5,Rd 6,,False,36.0
+Trevor Lawrence,QB,JAX,256.5,19.73,13.0,7.4,Rd 6,,False,60.0
+Jameson Williams,WR,DET,151.4,10.66,14.2,7.4,Rd 7,      Yes      ,False,64.0
+Bhayshul Tuten,RB,JAX,146.0,10.21,14.3,7.1,Rd 7,,False,62.0
+Jake Ferguson,TE,DAL,130.2,8.29,15.7,6.7,Rd 7,,False,83.0
+RJ Harvey,RB,DEN,145.6,9.71,15.0,6.7,Rd 7,,False,129.0
+Drake Maye,QB,NE,253.2,19.18,13.2,4.1,Rd 7,,False,43.0
+Carnell Tate,WR,TEN,147.4,9.21,16.0,3.4,Rd 7,,True,73.0
+Dak Prescott,QB,DAL,252.4,19.72,12.8,3.3,Rd 7,      Yes      ,False,65.0
+DJ Moore,WR,BUF,147.0,9.93,14.8,3.0,Rd 7,,False,67.0
+Brock Purdy,QB,SF,252.0,18.0,14.0,2.9,Rd 7,      Yes      ,False,72.0
+Hunter Henry,TE,NE,126.1,7.93,15.9,2.6,Rd 7,,False,123.0
+Rhamondre Stevenson,RB,NE,141.4,10.17,13.9,2.5,Rd 7,      Yes      ,False,80.0
+Davante Adams,WR,LAR,146.3,10.23,14.3,2.3,Rd 8,,False,45.0
+Kyler Murray,QB,MIN,250.7,17.91,14.0,1.6,Rd 8,      Yes      ,False,94.0
+Terry McLaurin,WR,WAS,144.4,10.39,13.9,0.4,Rd 8,,False,51.0
+Jared Goff,QB,DET,249.1,18.05,13.8,0.0,Rd 8,,False,102.0
+Oronde Gadsden II,TE,LAC,123.5,7.97,15.5,0.0,Rd 8,,False,
+Bo Nix,QB,DEN,249.1,18.05,13.8,0.0,Rd 8,,False,68.0
+J.K. Dobbins,RB,DEN,138.9,11.29,12.3,0.0,Rd 8,,False,105.0
+Brian Thomas Jr.,WR,JAX,144.0,9.93,14.5,0.0,Rd 8,,False,106.0
+Marvin Harrison Jr.,WR,HOU,142.7,10.34,13.8,-1.3,Rd 8,,False,82.0
+Parker Washington,WR,JAX,142.6,10.64,13.4,-1.4,Rd 8,,False,88.0
+Patrick Mahomes,QB,KC,247.5,17.68,14.0,-1.6,Rd 8,      Yes      ,False,89.0
+AJ Barner,TE,SEA,121.3,7.68,15.8,-2.2,Rd 9,,False,169.0
+Dalton Schultz,TE,HOU,121.2,7.53,16.1,-2.3,Rd 9,,False,157.0
+Quentin Johnston,WR,LAC,141.5,10.11,14.0,-2.5,Rd 9,,False,127.0
+Juwan Johnson,TE,NO,120.4,7.67,15.7,-3.1,Rd 9,,False,136.0
+Caleb Williams,QB,CHI,245.8,17.81,13.8,-3.3,Rd 9,,False,81.0
+Ladd McConkey,WR,LAC,140.0,9.46,14.8,-4.0,Rd 9,,False,48.0
+Dalton Kincaid,TE,BUF,119.2,8.11,14.7,-4.3,Rd 9,      Yes      ,False,110.0
+Luther Burden III,WR,CHI,137.8,10.28,13.4,-6.2,Rd 9,,False,70.0
+Courtland Sutton,WR,DEN,136.3,9.15,14.9,-7.7,Rd 9,      Yes      ,False,75.0
+Travis Kelce,TE,KC,115.4,7.21,16.0,-8.1,Rd 9,,False,77.0
+Brenton Strange,TE,JAX,115.4,8.13,14.2,-8.1,Rd 9,,False,144.0
+Baker Mayfield,QB,TB,240.9,17.46,13.8,-8.2,Rd 10,,False,111.0
+Woody Marks,RB,HOU,129.7,8.82,14.7,-9.2,Rd 10,,False,132.0
+Kenyon Sadiq,TE,NYJ,114.2,7.14,16.0,-9.3,Rd 10,,True,117.0
+Tony Pollard,RB,TEN,129.0,8.66,14.9,-9.9,Rd 10,      Yes      ,False,91.0
+Chuba Hubbard,RB,CAR,128.9,8.89,14.5,-10.0,Rd 10,,False,101.0
+Jakobi Meyers,WR,JAX,133.8,9.1,14.7,-10.2,Rd 10,,False,109.0
+Christian Watson,WR,GB,133.0,10.23,13.0,-11.0,Rd 10,      Yes      ,False,97.0
+Matthew Stafford,QB,LAR,238.0,17.63,13.5,-11.1,Rd 10,,False,78.0
+Michael Wilson,WR,ARI,132.0,8.98,14.7,-12.0,Rd 10,,False,104.0
+DK Metcalf,WR,PIT,131.4,9.06,14.5,-12.6,Rd 10,,False,85.0
+Kimani Vidal,RB,LAC,125.8,9.75,12.9,-13.1,Rd 10,,False,
+Jordan Addison,WR,MIN,130.6,9.33,14.0,-13.4,Rd 11,,False,116.0
+Romeo Doubs,WR,NE,130.5,9.06,14.4,-13.5,Rd 11,,False,148.0
+Deebo Samuel Sr.,WR,SF,129.9,8.96,14.5,-14.1,Rd 11,      Yes      ,False,134.0
+Justin Herbert,QB,LAC,234.7,17.65,13.3,-14.4,Rd 11,,False,86.0
+Jauan Jennings,WR,MIN,129.4,9.11,14.2,-14.6,Rd 11,,False,
+Kenneth Gainwell,RB,TB,124.0,8.32,14.9,-14.9,Rd 11,,False,93.0
+Gunnar Helm,TE,TEN,108.6,6.83,15.9,-14.9,Rd 11,,False,163.0
+Khalil Shakir,WR,BUF,129.0,8.9,14.5,-15.0,Rd 11,,False,119.0
+Cade Otton,TE,TB,108.2,7.07,15.3,-15.3,Rd 11,,False,179.0
+Dylan Sampson,RB,CLE,123.2,9.06,13.6,-15.7,Rd 11,,False,
+Josh Jacobs,RB,GB,122.3,12.23,10.0,-16.6,Rd 11,      Yes      ,False,38.0
+Kyle Monangai,RB,CHI,121.9,10.16,12.0,-17.0,Rd 12,      Yes      ,False,108.0
+Chris Rodriguez Jr.,RB,JAX,120.9,9.75,12.4,-18.0,Rd 12,,False,146.0
+Isaiah Likely,TE,NYG,105.1,7.15,14.7,-18.4,Rd 12,,False,103.0
+Rachaad White,RB,WAS,120.5,8.14,14.8,-18.4,Rd 12,,False,114.0
+Daniel Jones,QB,IND,230.1,17.7,13.0,-19.0,Rd 12,      Yes      ,False,107.0
+Darnell Washington,TE,PIT,103.5,7.24,14.3,-20.0,Rd 12,,False,
+Chig Okonkwo,TE,WAS,103.5,6.47,16.0,-20.0,Rd 12,,False,166.0
+Terrance Ferguson,TE,LAR,102.5,8.07,12.7,-21.0,Rd 12,,False,130.0
+Josh Downs,WR,IND,122.9,8.42,14.6,-21.1,Rd 12,,False,131.0
+T.J. Hockenson,TE,MIN,102.0,6.8,15.0,-21.5,Rd 12,      Yes      ,False,96.0
+Jonathon Brooks,RB,CAR,116.5,8.63,13.5,-22.4,Rd 12,,False,98.0
+Michael Pittman,WR,PIT,121.3,8.14,14.9,-22.7,Rd 13,      Yes      ,False,79.0
+Mark Andrews,TE,BAL,100.5,6.4,15.7,-23.0,Rd 13,      Yes      ,False,90.0
+Ryan Flournoy,WR,DAL,120.0,9.45,12.7,-24.0,Rd 13,,False,
+Tez Johnson,WR,TB,120.0,9.23,13.0,-24.0,Rd 13,,False,
+Mike Evans,WR,SF,119.9,9.15,13.1,-24.1,Rd 13,,False,95.0
+Jalen McMillan,WR,TB,119.7,10.14,11.8,-24.3,Rd 13,,False,167.0
+MarShawn Lloyd,RB,GB,114.2,8.16,14.0,-24.7,Rd 13,,False,
+Mason Taylor,TE,NYJ,98.3,6.64,14.8,-25.2,Rd 13,,False,
+Chris Godwin Jr.,WR,TB,118.8,9.14,13.0,-25.2,Rd 13,      Yes      ,False,147.0
+Elijah Arroyo,TE,SEA,97.4,7.27,13.4,-26.1,Rd 13,,False,
+Ollie Gordon II,RB,MIA,111.6,8.39,13.3,-27.3,Rd 13,,False,
+Mitchell Evans,TE,CAR,95.9,6.8,14.1,-27.6,Rd 14,,False,
+Xavier Worthy,WR,KC,116.3,8.25,14.1,-27.7,Rd 14,,False,125.0
+Isaac TeSlaa,WR,DET,116.2,9.45,12.3,-27.8,Rd 14,,False,
+Jackson Hawes,TE,BUF,95.6,6.59,14.5,-27.9,Rd 14,,False,
+Darren Waller,TE,CAR,95.2,7.16,13.3,-28.3,Rd 14,      Yes      ,False,176.0
+Makai Lemon,WR,PHI,115.5,7.7,15.0,-28.5,Rd 14,,True,140.0
+Colby Parkinson,TE,LAR,94.2,6.32,14.9,-29.3,Rd 14,,False,
+Jayden Reed,WR,GB,113.8,8.75,13.0,-30.2,Rd 14,,False,122.0
+Jake Tonges,TE,SF,93.2,7.52,12.4,-30.3,Rd 14,,False,
+Matthew Golden,WR,GB,113.2,8.26,13.7,-30.8,Rd 14,,False,100.0
+Keenan Allen,WR,IND,112.9,7.73,14.6,-31.1,Rd 14,      Yes      ,False,178.0
+Tyrone Tracy Jr.,RB,NYG,107.5,7.36,14.6,-31.4,Rd 15,,False,
+Brashard Smith,RB,KC,107.2,7.5,14.3,-31.7,Rd 15,,False,
+Devin Neal,RB,NO,106.6,8.74,12.2,-32.3,Rd 15,,False,
+Blake Corum,RB,LAR,106.6,7.3,14.6,-32.3,Rd 15,,False,126.0
+Pat Bryant,WR,DEN,111.4,8.57,13.0,-32.6,Rd 15,,False,
+Jordyn Tyson,WR,NO,111.3,11.13,10.0,-32.7,Rd 15,,True,174.0
+Wan'Dale Robinson,WR,TEN,111.1,7.51,14.8,-32.9,Rd 15,      Yes      ,False,113.0
+Jordan Mason,RB,MIN,105.2,7.62,13.8,-33.7,Rd 15,,False,121.0
+Travis Hunter,WR,JAX,109.0,9.4,11.6,-35.0,Rd 15,,False,172.0
+Jalen Coker,WR,CAR,108.9,8.51,12.8,-35.1,Rd 15,,False,159.0
+Jaylin Noel,WR,HOU,108.8,8.37,13.0,-35.2,Rd 15,,False,
+Troy Franklin,WR,DEN,108.3,7.32,14.8,-35.7,Rd 16,,False,
+Tre Tucker,WR,LV,108.2,7.36,14.7,-35.8,Rd 16,,False,175.0
+Rashid Shaheed,WR,SEA,108.2,7.73,14.0,-35.8,Rd 16,,False,161.0
+Kayshon Boutte,WR,HOU,107.6,8.15,13.2,-36.4,Rd 16,,False,
+Devaughn Vele,WR,NO,106.8,8.34,12.8,-37.2,Rd 16,,False,
+Stefon Diggs,WR,WAS,106.6,7.11,15.0,-37.4,Rd 16,      Yes      ,False,138.0
+Jordan Love,QB,GB,210.7,15.96,13.2,-38.4,Rd 16,      Yes      ,False,120.0
+Jaylen Wright,RB,MIA,100.5,7.85,12.8,-38.4,Rd 16,,False,
+Elic Ayomanor,WR,TEN,105.1,7.1,14.8,-38.9,Rd 16,,False,
+DeMario Douglas,WR,NE,105.1,7.2,14.6,-38.9,Rd 16,,False,
+Chimere Dike,WR,TEN,105.1,7.1,14.8,-38.9,Rd 16,,False,
+Najee Harris,RB,NYG,99.9,7.4,13.5,-39.0,Rd 17,,False,
+Pat Freiermuth,TE,PIT,84.2,5.43,15.5,-39.3,Rd 17,,False,151.0
+Malik Davis,RB,DAL,99.1,8.4,11.8,-39.8,Rd 17,,False,
+Isaiah Davis,RB,NYJ,98.8,7.43,13.3,-40.1,Rd 17,,False,
+Tahj Brooks,RB,CIN,98.1,8.76,11.2,-40.8,Rd 17,,False,
+Tre Harris,WR,LAC,102.8,7.29,14.1,-41.2,Rd 17,,False,
+Mike Gesicki,TE,CIN,82.1,5.44,15.1,-41.4,Rd 17,,False,
+Davis Allen,TE,LAR,82.1,6.08,13.5,-41.4,Rd 17,,False,
+Tyler Shough,QB,NO,207.5,15.96,13.0,-41.6,Rd 17,      Yes      ,False,99.0
+Trevor Etienne,RB,CAR,97.1,8.16,11.9,-41.8,Rd 17,,False,
+Mitchell Tinsley,WR,CIN,101.6,8.99,11.3,-42.4,Rd 17,,False,
+Tanner Conner,TE,MIA,80.6,6.5,12.4,-42.9,Rd 18,,False,
+Aaron Jones,RB,MIN,96.0,7.01,13.7,-42.9,Rd 18,      Yes      ,False,118.0
+Isiah Pacheco,RB,DET,96.0,7.33,13.1,-42.9,Rd 18,      Yes      ,False,160.0
+Tyjae Spears,RB,TEN,95.1,6.89,13.8,-43.8,Rd 18,,False,142.0
+Isaiah Bond,WR,CLE,99.7,7.44,13.4,-44.3,Rd 18,,False,
+Keaton Mitchell,RB,LAC,94.5,7.94,11.9,-44.4,Rd 18,,False,156.0
+Ben Sinnott,TE,WAS,79.1,6.28,12.6,-44.4,Rd 18,,False,
+KC Concepcion,WR,CLE,99.4,6.21,16.0,-44.6,Rd 18,,True,143.0
+Roman Wilson,WR,PIT,99.3,8.56,11.6,-44.7,Rd 18,,False,
+Kyle Williams,WR,NE,98.4,8.2,12.0,-45.6,Rd 18,,False,
+Sam Darnold,QB,SEA,203.4,15.29,13.3,-45.7,Rd 18,,False,128.0
+Mack Hollins,WR,NE,98.0,7.05,13.9,-46.0,Rd 19,,False,
+Jack Bech,WR,LV,97.9,7.96,12.3,-46.1,Rd 19,,False,
+Konata Mumpfield,WR,LAR,97.7,8.65,11.3,-46.3,Rd 19,,False,
+Cole Kmet,TE,CHI,77.0,5.0,15.4,-46.5,Rd 19,,False,
+Marquise Brown,WR,KC,97.1,7.53,12.9,-46.9,Rd 19,,False,
+Jaylin Lane,WR,WAS,96.9,7.88,12.3,-47.1,Rd 19,,False,
+Brevyn Spann-Ford,TE,DAL,76.2,5.95,12.8,-47.3,Rd 19,,False,
+Luke McCaffrey,WR,WAS,96.4,7.97,12.1,-47.6,Rd 19,,False,
+Cam Ward,QB,TEN,201.1,14.57,13.8,-48.0,Rd 19,,False,137.0
+John FitzPatrick,TE,GB,75.2,6.32,11.9,-48.3,Rd 19,,False,
+LeQuint Allen Jr.,RB,JAX,90.3,6.45,14.0,-48.6,Rd 19,,False,
+Sean Tucker,RB,TB,89.8,7.24,12.4,-49.1,Rd 20,,False,
+Tank Dell,WR,HOU,94.8,6.97,13.6,-49.2,Rd 20,      Yes      ,False,155.0
+Evan Engram,TE,DEN,74.2,4.95,15.0,-49.3,Rd 20,      Yes      ,False,182.0
+Darius Slayton,WR,NYG,94.7,6.62,14.3,-49.3,Rd 20,,False,
+Hunter Long,TE,ARI,74.2,5.94,12.5,-49.3,Rd 20,,False,
+Bam Knight,RB,ARI,89.3,7.83,11.4,-49.6,Rd 20,,False,
+Isaiah Williams,WR,NYJ,93.5,8.42,11.1,-50.5,Rd 20,,False,
+Dont'e Thornton Jr.,WR,LV,93.0,8.02,11.6,-51.0,Rd 20,,False,
+Tyquan Thornton,WR,KC,92.6,7.85,11.8,-51.4,Rd 20,,False,
+Dawson Knox,TE,BUF,71.9,4.76,15.1,-51.6,Rd 20,,False,
+Evan Hull,RB,ARI,87.0,8.29,10.5,-51.9,Rd 20,,False,
+Rasheen Ali,RB,BAL,86.7,7.81,11.1,-52.2,Rd 21,,False,
+Tyrell Shavers,WR,BUF,91.7,8.26,11.1,-52.3,Rd 21,,False,
+Devin Singletary,RB,NYG,86.1,5.9,14.6,-52.8,Rd 21,,False,
+Kendrick Bourne,WR,ARI,91.0,6.95,13.1,-53.0,Rd 21,,False,
+Michael Carter,RB,TEN,85.6,6.74,12.7,-53.3,Rd 21,,False,
+Jimmy Horn Jr.,WR,CAR,90.3,7.11,12.7,-53.7,Rd 21,,False,
+Savion Williams,WR,GB,90.3,7.34,12.3,-53.7,Rd 21,,False,
+C.J. Stroud,QB,HOU,195.2,14.9,13.1,-53.9,Rd 21,      Yes      ,False,124.0
+Kendre Miller,RB,NO,84.9,7.45,11.4,-54.0,Rd 21,,False,
+Michael Mayer,TE,LV,68.9,4.85,14.2,-54.6,Rd 21,,False,
+Xavier Smith,WR,LAR,88.0,7.46,11.8,-56.0,Rd 21,,False,
+Cooper Kupp,WR,SEA,87.7,6.22,14.1,-56.3,Rd 22,      Yes      ,False,
+Kaleb Johnson,RB,GB,82.6,7.51,11.0,-56.3,Rd 22,,False,
+Adonai Mitchell,WR,NYJ,87.5,6.25,14.0,-56.5,Rd 22,,False,171.0
+Andrei Iosivas,WR,CIN,87.4,6.29,13.9,-56.6,Rd 22,,False,
+Brycen Tremayne,WR,CAR,87.3,8.08,10.8,-56.7,Rd 22,,False,
+Arian Smith,WR,NYJ,87.0,7.5,11.6,-57.0,Rd 22,,False,
+Jerry Jeudy,WR,CLE,86.3,5.79,14.9,-57.7,Rd 22,,False,165.0
+Kareem Hunt,RB,KC,81.1,5.59,14.5,-57.8,Rd 22,,False,
+Seahawks D/ST,DEF,SEA,142.0,8.88,16.0,-58.0,Rd 22,,False,
+Tyler Higbee,TE,LAR,65.4,4.99,13.1,-58.1,Rd 22,,False,
+Charlie Kolar,TE,LAC,64.5,5.04,12.8,-59.0,Rd 22,,False,
+Keon Coleman,WR,BUF,84.9,6.29,13.5,-59.1,Rd 23,,False,
+Greg Dulcich,TE,MIA,64.3,5.23,12.3,-59.2,Rd 23,,False,173.0
+Calvin Austin III,WR,NYG,84.7,6.05,14.0,-59.3,Rd 23,,False,
+Malik Willis,QB,MIA,189.3,14.56,13.0,-59.8,Rd 23,      Yes      ,False,115.0
+David Sills,WR,TB,84.1,7.25,11.6,-59.9,Rd 23,,False,
+Broncos D/ST,DEF,DEN,140.0,8.75,16.0,-60.0,Rd 23,,False,
+Jaret Patterson,RB,LAC,78.7,7.03,11.2,-60.2,Rd 23,,False,
+Justice Hill,RB,BAL,78.4,5.94,13.2,-60.5,Rd 23,,False,
+Emanuel Wilson,RB,SEA,78.3,5.59,14.0,-60.6,Rd 23,,False,
+Omar Cooper Jr.,WR,NYJ,83.2,5.55,15.0,-60.8,Rd 23,,True,
+Ray Davis,RB,BUF,77.8,5.72,13.6,-61.1,Rd 23,,False,
+Daniel Bellinger,TE,TEN,61.9,4.52,13.7,-61.6,Rd 24,,False,
+Dontayvion Wicks,WR,PHI,82.4,5.76,14.3,-61.6,Rd 24,,False,181.0
+Brandon Aubrey,K,DAL,158.0,9.88,16.0,-62.0,Rd 24,,False,
+Emari Demercado,RB,HOU,76.8,5.91,13.0,-62.1,Rd 24,,False,
+Jordan Whittington,WR,LAR,81.7,6.59,12.4,-62.3,Rd 24,,False,
+Jalen Nailor,WR,LV,81.1,6.24,13.0,-62.9,Rd 24,,False,177.0
+Tank Bigsby,RB,PHI,75.9,5.62,13.5,-63.0,Rd 24,,False,
+David Njoku,TE,LAC,60.3,4.16,14.5,-63.2,Rd 24,,False,
+Tyler Badie,RB,DEN,75.6,6.52,11.6,-63.3,Rd 24,,False,
+Ty Johnson,RB,BUF,75.4,5.31,14.2,-63.5,Rd 24,,False,
+Will Shipley,RB,PHI,75.1,6.31,11.9,-63.8,Rd 24,,False,
+Ravens D/ST,DEF,BAL,136.0,8.5,16.0,-64.0,Rd 25,,False,
+Theo Johnson,TE,NYG,59.5,4.05,14.7,-64.0,Rd 25,,False,
+Texans D/ST,DEF,HOU,136.0,8.5,16.0,-64.0,Rd 25,,False,
+Xavier Legette,WR,CAR,79.7,5.69,14.0,-64.3,Rd 25,,False,
+KaVontae Turpin,WR,DAL,79.4,5.71,13.9,-64.6,Rd 25,,False,
+Brock Wright,TE,DET,58.7,4.55,12.9,-64.8,Rd 25,,False,
+Xavier Hutchinson,WR,HOU,79.0,5.64,14.0,-65.0,Rd 25,,False,
+Rams D/ST,DEF,LAR,134.0,8.38,16.0,-66.0,Rd 25,,False,
+Mike Washington Jr.,RB,LV,72.6,4.84,15.0,-66.3,Rd 25,,True,
+Jonnu Smith,TE,GB,56.8,3.62,15.7,-66.7,Rd 25,,False,
+Eagles D/ST,DEF,PHI,133.0,8.31,16.0,-67.0,Rd 25,,False,
+Josh Oliver,TE,MIN,56.3,4.02,14.0,-67.2,Rd 26,,False,
+Jacoby Brissett,QB,ARI,181.5,16.5,11.0,-67.6,Rd 26,      Yes      ,False,141.0
+Olamide Zaccheaus,WR,ATL,75.6,5.48,13.8,-68.4,Rd 26,,False,
+Sterling Shepard,WR,TB,75.6,5.6,13.5,-68.4,Rd 26,,False,
+Tommy Tremble,TE,CAR,55.0,3.79,14.5,-68.5,Rd 26,,False,
+Vikings D/ST,DEF,MIN,131.0,8.19,16.0,-69.0,Rd 26,,False,
+AJ Dillon,RB,CAR,69.3,5.37,12.9,-69.6,Rd 26,,False,
+Tanner Hudson,TE,CIN,53.8,3.9,13.8,-69.7,Rd 26,,False,
+Bryce Young,QB,CAR,178.6,13.53,13.2,-70.5,Rd 26,,False,133.0
+Noah Fant,TE,NO,53.0,3.58,14.8,-70.5,Rd 26,,False,
+Jamari Thrash,WR,CLE,73.3,6.37,11.5,-70.7,Rd 26,,False,
+Darnell Mooney,WR,NYG,72.8,5.02,14.5,-71.2,Rd 27,,False,
+Malachi Corley,WR,CLE,72.5,5.8,12.5,-71.5,Rd 27,,False,
+Malik Washington,WR,MIA,72.0,5.07,14.2,-72.0,Rd 27,,False,
+Cameron Dicker,K,LAC,148.0,9.25,16.0,-72.0,Rd 27,,False,
+Marvin Mims Jr.,WR,DEN,71.6,4.94,14.5,-72.4,Rd 27,,False,
+Elijah Higgins,TE,ARI,50.6,3.44,14.7,-72.9,Rd 27,,False,
+Steelers D/ST,DEF,PIT,127.0,7.94,16.0,-73.0,Rd 27,,False,
+Noah Gray,TE,KC,50.2,3.3,15.2,-73.3,Rd 27,,False,
+John Metchie III,WR,CAR,70.2,5.4,13.0,-73.8,Rd 27,,False,
+Ja'Tavion Sanders,TE,CAR,49.2,3.42,14.4,-74.3,Rd 27,,False,
+Luke Musgrave,TE,GB,48.6,3.5,13.9,-74.9,Rd 27,,False,
+Chargers D/ST,DEF,LAC,125.0,7.81,16.0,-75.0,Rd 28,,False,
+Ka'imi Fairbairn,K,HOU,145.0,9.06,16.0,-75.0,Rd 28,,False,
+De'Zhaun Stribling,WR,SF,68.7,4.58,15.0,-75.3,Rd 28,,True,152.0
+Chris Boswell,K,PIT,144.0,9.0,16.0,-76.0,Rd 28,,False,
+Julius Chestnut,RB,TEN,61.8,5.57,11.1,-77.1,Rd 28,,False,
+Adam Trautman,TE,DEN,46.2,3.14,14.7,-77.3,Rd 28,,False,
+Brian Robinson,RB,ATL,61.1,4.24,14.4,-77.8,Rd 28,      Yes      ,False,149.0
+Lions D/ST,DEF,DET,122.0,7.62,16.0,-78.0,Rd 28,,False,
+Jake Bates,K,DET,142.0,8.88,16.0,-78.0,Rd 28,,False,
+James Conner,RB,ARI,60.3,4.94,12.2,-78.6,Rd 28,,False,
+Calvin Ridley,WR,TEN,65.1,4.86,13.4,-78.9,Rd 28,      Yes      ,False,168.0
+Drew Sample,TE,CIN,44.3,3.26,13.6,-79.2,Rd 29,,False,
+Alvin Kamara,RB,NO,59.6,5.42,11.0,-79.3,Rd 29,      Yes      ,False,139.0
+Jeremy McNichols,RB,WAS,59.6,4.23,14.1,-79.3,Rd 29,,False,
+Samaje Perine,RB,CIN,59.6,4.11,14.5,-79.3,Rd 29,,False,
+Kalif Raymond,WR,CHI,64.5,4.85,13.3,-79.5,Rd 29,,False,
+Harrison Butker,K,KC,140.0,8.75,16.0,-80.0,Rd 29,,False,
+Bills D/ST,DEF,BUF,120.0,7.5,16.0,-80.0,Rd 29,,False,
+Tyler Allgeier,RB,ARI,58.0,3.87,15.0,-80.9,Rd 29,,False,153.0
+Chase McLaughlin,K,TB,139.0,8.69,16.0,-81.0,Rd 29,,False,
+Jeremy Ruckert,TE,NYJ,42.2,2.95,14.3,-81.3,Rd 29,,False,
+Mo Alie-Cox,TE,IND,41.8,3.01,13.9,-81.7,Rd 29,,False,
+Van Jefferson,WR,WAS,62.2,4.38,14.2,-81.8,Rd 30,,False,
+Tyler Loop,K,BAL,138.0,8.62,16.0,-82.0,Rd 30,,False,
+Packers D/ST,DEF,GB,118.0,7.38,16.0,-82.0,Rd 30,,False,
+JuJu Smith-Schuster,WR,KC,61.8,4.58,13.5,-82.2,Rd 30,,False,
+Germie Bernard,WR,PIT,61.4,4.09,15.0,-82.6,Rd 30,,True,
+Greg Dortch,WR,BUF,61.2,4.53,13.5,-82.8,Rd 30,,False,
+Dyami Brown,WR,WAS,61.1,4.63,13.2,-82.9,Rd 30,,False,
+Wil Lutz,K,DEN,137.0,8.56,16.0,-83.0,Rd 30,,False,
+Nick Chubb,RB,HOU,55.2,4.35,12.7,-83.7,Rd 30,      Yes      ,False,
+Tyler Goodson,RB,DAL,55.0,4.78,11.5,-83.9,Rd 30,,False,
+Jason Sanders,K,MIA,136.0,8.5,16.0,-84.0,Rd 30,,False,
+Christian Kirk,WR,SF,59.1,4.69,12.6,-84.9,Rd 31,,False,
+Denzel Boston,WR,CLE,59.0,3.93,15.0,-85.0,Rd 31,,True,164.0
+Evan McPherson,K,CIN,135.0,8.44,16.0,-85.0,Rd 31,,False,
+Max Klare,TE,LAR,37.8,2.52,15.0,-85.7,Rd 31,,True,
+Tyler Bass,K,BUF,134.0,8.38,16.0,-86.0,Rd 31,,False,
+Jalen Tolbert,WR,MIA,57.8,4.41,13.1,-86.2,Rd 31,,False,
+Johnny Mundt,TE,PHI,37.0,2.7,13.7,-86.5,Rd 31,,False,
+Zach Charbonnet,RB,SEA,52.4,6.55,8.0,-86.5,Rd 31,,False,135.0
+Jaleel McLaughlin,RB,CLE,52.3,3.96,13.2,-86.6,Rd 31,,False,
+Jahan Dotson,WR,ATL,57.4,4.16,13.8,-86.6,Rd 31,,False,
+Demarcus Robinson,WR,SF,57.3,4.21,13.6,-86.7,Rd 31,,False,
+Luke Schoonmaker,TE,DAL,36.7,2.62,14.0,-86.8,Rd 32,,False,
+Austin Hooper,TE,ATL,36.6,2.39,15.3,-86.9,Rd 32,,False,
+Jake Elliott,K,PHI,133.0,8.31,16.0,-87.0,Rd 32,,False,
+Tim Patrick,WR,NYJ,56.1,4.22,13.3,-87.9,Rd 32,,False,
+49ers D/ST,DEF,SF,112.0,7.0,16.0,-88.0,Rd 32,,False,
+Marlin Klein,TE,HOU,35.1,2.34,15.0,-88.4,Rd 32,,True,
+Chris Brooks,RB,GB,50.2,6.28,8.0,-88.7,Rd 32,,False,
+Geno Smith,QB,NYJ,160.3,12.05,13.3,-88.8,Rd 32,,False,145.0
+Younghoe Koo,K,NYJ,131.0,8.19,16.0,-89.0,Rd 32,,False,
+John Bates,TE,WAS,34.0,2.48,13.7,-89.5,Rd 32,,False,
+Luke Farrell,TE,SF,33.8,2.52,13.4,-89.7,Rd 32,,False,
+Julian Hill,TE,NE,33.6,2.51,13.4,-89.9,Rd 33,,False,
+Matt Gay,K,WAS,130.0,8.12,16.0,-90.0,Rd 33,,False,
+Rashod Bateman,WR,BAL,54.0,3.94,13.7,-90.0,Rd 33,,False,180.0
+Cardinals D/ST,DEF,ARI,110.0,6.88,16.0,-90.0,Rd 33,,False,
+Cedric Tillman,WR,CLE,53.8,4.2,12.8,-90.2,Rd 33,,False,
+Grant Calcaterra,TE,PHI,33.0,2.54,13.0,-90.5,Rd 33,,False,
+Jonah Coleman,RB,DEN,48.2,3.21,15.0,-90.7,Rd 33,,True,
+Tyler Johnson,WR,NYJ,53.1,4.66,11.4,-90.9,Rd 33,,False,
+Will Dissly,TE,LAC,32.5,2.34,13.9,-91.0,Rd 33,,False,
+Cairo Santos,K,CHI,129.0,8.06,16.0,-91.0,Rd 33,,False,
+Elijah Moore,WR,PHI,52.0,3.97,13.1,-92.0,Rd 33,,False,
+Buccaneers D/ST,DEF,TB,108.0,6.75,16.0,-92.0,Rd 34,,False,
+Will Reichard,K,MIN,128.0,8.0,16.0,-92.0,Rd 34,,False,
+Chris Moore,WR,WAS,51.5,3.96,13.0,-92.5,Rd 34,,False,
+DeAndre Hopkins,WR,BAL,51.5,3.65,14.1,-92.5,Rd 34,      Yes      ,False,
+Josh Palmer,WR,BUF,51.4,3.81,13.5,-92.6,Rd 34,,False,
+Jason Myers,K,SEA,127.0,7.94,16.0,-93.0,Rd 34,,False,
+Chiefs D/ST,DEF,KC,106.0,6.62,16.0,-94.0,Rd 34,,False,
+Commanders D/ST,DEF,WAS,106.0,6.62,16.0,-94.0,Rd 34,,False,
+Daniel Carlson,K,LV,126.0,7.88,16.0,-94.0,Rd 34,,False,
+Nick Folk,K,ATL,126.0,7.88,16.0,-94.0,Rd 34,,False,
+Cam Little,K,JAX,125.0,7.81,16.0,-95.0,Rd 34,,False,
+Tyler Lockett,WR,LV,48.4,3.36,14.4,-95.6,Rd 35,,False,
+Joshua Karty,K,ARI,124.0,7.75,16.0,-96.0,Rd 35,,False,
+Harrison Mevis,K,LAR,124.0,7.75,16.0,-96.0,Rd 35,,False,
+Malachi Fields,WR,NYG,48.0,3.2,15.0,-96.0,Rd 35,,True,
+Brandon McManus,K,GB,123.0,7.69,16.0,-97.0,Rd 35,,False,
+Ian Thomas,TE,LV,25.8,2.1,12.3,-97.7,Rd 35,,False,
+Hunter Renfrow,WR,CAR,46.0,3.74,12.3,-98.0,Rd 35,,False,
+Falcons D/ST,DEF,ATL,102.0,6.38,16.0,-98.0,Rd 35,,False,
+Graham Gano,K,NYG,121.0,7.56,16.0,-99.0,Rd 35,,False,
+Blake Grupe,K,NO,120.0,7.5,16.0,-100.0,Rd 35,,False,
+Jets D/ST,DEF,NYJ,100.0,6.25,16.0,-100.0,Rd 35,,False,
+Jerome Ford,RB,CLE,38.4,2.8,13.7,-100.5,Rd 36,,False,
+Dustin Hopkins,K,CLE,119.0,7.44,16.0,-101.0,Rd 36,,False,
+Hunter Luepke,RB,DAL,37.5,2.91,12.9,-101.4,Rd 36,,False,
+Oscar Delp,TE,NO,21.7,1.55,14.0,-101.8,Rd 36,,True,
+Colts D/ST,DEF,IND,98.0,6.12,16.0,-102.0,Rd 36,,False,
+Connor Heyward,TE,PIT,21.4,1.62,13.2,-102.1,Rd 36,,False,
+Kyle Juszczyk,RB,SF,36.0,2.52,14.3,-102.9,Rd 36,,False,
+Tua Tagovailoa,QB,ATL,146.2,11.6,12.6,-102.9,Rd 36,,False,162.0
+Jake Moody,K,SF,117.0,7.31,16.0,-103.0,Rd 36,,False,
+Nate Boerkircher,TE,JAX,20.2,1.44,14.0,-103.3,Rd 36,,True,
+Treylon Burks,WR,WAS,40.2,3.53,11.4,-103.8,Rd 36,,False,
+Greg Zuerlein,K,NYJ,116.0,7.25,16.0,-104.0,Rd 37,,False,
+Marquez Valdes-Scantling,WR,PIT,38.7,3.0,12.9,-105.3,Rd 37,,False,
+Bears D/ST,DEF,CHI,94.0,5.88,16.0,-106.0,Rd 37,,False,
+Bengals D/ST,DEF,CIN,94.0,5.88,16.0,-106.0,Rd 37,,False,
+Adam Thielen,WR,PIT,36.8,2.79,13.2,-107.2,Rd 37,,False,
+Aaron Rodgers,QB,PIT,141.9,11.35,12.5,-107.2,Rd 37,,False,154.0
+Kirk Cousins,QB,LV,141.3,12.18,11.6,-107.8,Rd 37,      Yes      ,False,
+Ameer Abdullah,RB,JAX,31.0,2.3,13.5,-107.9,Rd 37,,False,
+Cowboys D/ST,DEF,DAL,90.0,5.62,16.0,-110.0,Rd 37,,False,
+Chris Brazzell II,WR,CAR,33.3,2.22,15.0,-110.7,Rd 37,,True,
+Dare Ogunbowale,RB,HOU,27.7,2.25,12.3,-111.2,Rd 37,,False,
+Browns D/ST,DEF,CLE,88.0,5.5,16.0,-112.0,Rd 38,,False,
+Dolphins D/ST,DEF,MIA,88.0,5.5,16.0,-112.0,Rd 38,,False,
+Kaelon Black,RB,SF,25.8,1.84,14.0,-113.1,Rd 38,,True,
+Patriots D/ST,DEF,NE,86.0,5.38,16.0,-114.0,Rd 38,,False,
+Raheem Mostert,RB,LV,24.7,1.86,13.3,-114.2,Rd 38,,False,
+Andrew Beck,RB,NYJ,23.8,2.07,11.5,-115.1,Rd 38,,False,
+Jaguars D/ST,DEF,JAX,84.0,5.25,16.0,-116.0,Rd 38,,False,
+Raiders D/ST,DEF,LV,82.0,5.12,16.0,-118.0,Rd 38,,False,
+Caleb Douglas,WR,MIA,25.3,1.81,14.0,-118.7,Rd 38,,True,170.0
+Nick Westbrook-Ikhine,WR,MIA,25.1,1.98,12.7,-118.9,Rd 38,,False,
+Allen Lazard,WR,NYJ,24.6,1.94,12.7,-119.4,Rd 38,,False,
+Giants D/ST,DEF,NYG,80.0,5.0,16.0,-120.0,Rd 39,,False,
+Joe Flacco,QB,CIN,128.1,11.44,11.2,-121.0,Rd 39,      Yes      ,False,
+Kaytron Allen,RB,MIA,17.8,1.19,15.0,-121.1,Rd 39,,True,
+Adam Prentice,RB,DEN,16.9,1.34,12.6,-122.0,Rd 39,,False,
+Panthers D/ST,DEF,CAR,78.0,4.88,16.0,-122.0,Rd 39,,False,
+Skyy Moore,WR,GB,20.5,1.78,11.5,-123.5,Rd 39,,False,
+Saints D/ST,DEF,NO,76.0,4.75,16.0,-124.0,Rd 39,,False,
+Zachariah Branch,WR,ATL,19.9,1.42,14.0,-124.1,Rd 39,,True,
+Alec Ingold,RB,MIA,13.9,1.21,11.5,-125.0,Rd 39,,False,
+Ja'Kobi Lane,WR,BAL,18.1,1.29,14.0,-125.9,Rd 39,,True,
+Titans D/ST,DEF,TEN,74.0,4.62,16.0,-126.0,Rd 39,,False,
+Fernando Mendoza,QB,LV,86.2,5.39,16.0,-162.9,Rd 40,,True,150.0
+Ty Simpson,QB,LAR,28.7,4.79,6.0,-220.4,Rd 40,,True,
+Drew Allar,QB,PIT,21.2,3.53,6.0,-227.9,Rd 40,,True,
+Carson Beck,QB,ARI,20.5,3.42,6.0,-228.6,Rd 40,,True,
