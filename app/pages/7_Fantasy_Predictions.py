@@ -14,6 +14,7 @@ from utils.styles import NFL_CSS, TEAM_COLORS, PLOTLY_LAYOUT
 from utils.data_loader import load_weekly, load_teams, get_logo, load_depth_charts
 from utils.nav import render_sidebar_nav, render_last_updated
 from utils.tables import UNRANKED_MARK, rank_display
+from utils.fantasy_accuracy import accuracy as fantasy_accuracy
 from model.projection import (
     ProjectionConfig, build_predictions_core, derive_replacement_baseline,
     NFL_GAMES, POSITION_FEATURES, MIN_GAMES_BY_POS,
@@ -1987,6 +1988,72 @@ if len(preds) >= 3:
     st.markdown(cards_html, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MODEL ACCURACY — what the same engine scored on seasons it had not seen
+# ══════════════════════════════════════════════════════════════════════════════
+# Projections above are unfalsifiable until January, so this says how the same
+# code did on the five seasons where the answer is already known. The figures
+# are read from baseline_metrics.json rather than recomputed, so the page can
+# never quote a better number than the committed backtest.
+#
+# There is no single honest "accuracy %" for a projection — a season total is a
+# continuous quantity, so it is never simply right or wrong. The three shown are
+# the ones that answer the question people actually mean: did it get the ORDER
+# right (rho), did it find the players who mattered (hit rate), and by how much
+# does a typical projection miss (MAE).
+
+_acc = fantasy_accuracy(sel_pos)
+
+if _acc:
+    st.markdown(f"### 🎯 Model Accuracy {pos_label_str}")
+    _yrs = _acc["seasons"]
+
+    # rho is the headline because ordering is what a draft board is for: finishing
+    # 40 points below projection matters far less than being drafted two rounds
+    # ahead of someone who outscores you.
+    _tiles = [("Rank correlation", f"{_acc['spearman']:.2f}",
+               "Spearman rho vs actual finish · 1.00 = perfect order")]
+
+    if _acc.get("top24") is not None:
+        _tiles.append(("Top-24 hit rate", f"{_acc['top24']:.0%}",
+                       f"and {_acc['top50']:.0%} of the real top 50 · overall board"))
+    else:
+        _tiles.append((f"Average {sel_pos} rank miss",
+                       f"±{_acc['mean_abs_rank_err']:.0f}",
+                       f"places off, out of ~{_acc['n_per_season']:.0f} ranked {sel_pos}s"))
+
+    # Signed bias sits under MAE because the direction is a usable instruction:
+    # the model runs consistently hot, so a projection is better read as a
+    # ceiling than as a midpoint.
+    _tiles.append(("Average miss", f"±{_acc['mae_pts']:.0f} pts",
+                   f"runs {_acc['bias_pts']:+.0f} pts high on average"))
+
+    _acc_html = '<div style="display:flex;gap:16px;align-items:stretch;margin-bottom:8px;">'
+    for _label, _value, _sub in _tiles:
+        _acc_html += f"""
+        <div class="stat-card" style="flex:1;min-width:0;text-align:center;">
+            <div class="label">{_label}</div>
+            <div style="font-size:1.6rem;font-weight:800;color:#60a5fa;margin:8px 0 2px;">{_value}</div>
+            <div class="sub">{_sub}</div>
+        </div>"""
+    _acc_html += "</div>"
+    st.markdown(_acc_html, unsafe_allow_html=True)
+
+    _scope = ("every graded player" if sel_pos == "All"
+              else f"the ~{_acc['n_per_season']:.0f} graded {sel_pos}s per season")
+    st.caption(
+        f"Walk-forward backtest over {_yrs[0]}–{_yrs[-1]}, covering {_scope}. "
+        f"To grade a season the model is retrained on earlier seasons only and "
+        f"then projects forward, so it never sees the year it is marked against. "
+        f"Averaged per season rather than pooled — a 'top 24' across five pooled "
+        f"seasons would not mean the top 24 of a draft board."
+        + ("" if sel_pos != "All" else
+           " The hit rates and this rho rank players across positions using the "
+           "backtest's older static replacement level, not the dynamic baseline "
+           "the board above now derives, so treat them as a read on the engine "
+           "rather than on today's exact ordering."))
+    st.markdown("<br>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 2026 BIG BOARD
